@@ -1,1 +1,1 @@
-# parallel-path-finding
+# Parallel Path-Finding

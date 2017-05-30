@@ -29,7 +29,13 @@ namespace parPath
 	std::mt19937 gen (rd());
 	std::uniform_int_distribution<> dis(1, 255);
 
-	
+	for (auto& row : m_tiles)
+	{
+	    for (auto& e : row)
+	    {
+		e.cost = static_cast<uchar>(dis (gen));
+	    }
+	}
     }
 
     World::tile_t

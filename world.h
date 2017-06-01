@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <cstddef>
+#include <fstream>
 
 /****************************************************************************************************/
 // Local includes
@@ -21,6 +22,7 @@
 // Using and typedef statements
 
 using std::vector;
+using std::ostream;
 
 typedef unsigned char uchar;
 
@@ -67,7 +69,10 @@ public:
      * @param column   The column we are retrieving from. (x-axis)
      * @return The tile at the specified position in the world is returned.
      */
-    tile_t operator() (size_t row, size_t column);
+    tile_t
+    operator() (size_t row, size_t column);
+
+    friend ostream& operator<< (ostream& stream, const World& world);
     
 private:
     vector<vector<tile_t>> m_tiles;

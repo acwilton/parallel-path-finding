@@ -87,17 +87,8 @@ int main(int args, char* argv[])
 
     World world (height, width);
 
-    /*
-    for (int y = 0; y < height; ++y)
-    {
-	for (int x = 0; x < width; ++x)
-	{
-	    cout << world (y, x).cost << " ";
-	}
-	cout << endl;
-    }
-    */
-
+    worldFile << world;
+    
     worldFile.close();
     
     return EXIT_SUCCESS;

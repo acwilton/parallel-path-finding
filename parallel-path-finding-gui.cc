@@ -68,6 +68,8 @@ bool renderer_init (SDL_Window*& window, SDL_Renderer*& renderer);
 
 bool sdl_init (SDL_Window*& main_window, SDL_Renderer*& main_renderer);
 
+void render_screen (SDL_Renderer* renderer, SDL_Rect* view_port);
+
 /****************************************************************************************************/
 // Constants
 
@@ -90,6 +92,8 @@ int main (int args, char* argv[])
 
     SDL_Event e;
 
+    render_screen (main_renderer, &main_view_port);
+
     // application loop
     while (!quit)
     {
@@ -100,6 +104,7 @@ int main (int args, char* argv[])
 		quit = true;
 	    }
 	}
+	render_screen (main_renderer, &main_view_port);
     }
     
     return EXIT_SUCCESS;
@@ -107,6 +112,14 @@ int main (int args, char* argv[])
 
 /****************************************************************************************************/
 // Function Definitions
+
+void render_screen (SDL_Renderer* renderer, SDL_Rect* view_port)
+{
+    SDL_SetRenderDrawColor (renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+    SDL_RenderSetViewport (renderer, view_port);
+    SDL_RenderFillRect (renderer, nullptr);
+    SDL_RenderPresent (renderer);
+}
 
 bool sdl_init (SDL_Window*& main_window, SDL_Renderer*& main_renderer)
 {

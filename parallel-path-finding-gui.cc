@@ -124,7 +124,7 @@ void render_screen (SDL_Renderer* renderer, SDL_Rect* view_port)
 bool sdl_init (SDL_Window*& main_window, SDL_Renderer*& main_renderer)
 {
     // SDL initialization
-    if (!SDL_Init(SDL_INIT_VIDEO) < 0)
+    if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
 	cout << "Failed to initialized SDL. SDL_Error: " << SDL_GetError () << endl;
 	return false;

@@ -67,5 +67,6 @@ namespace parPath
 		}
 	    }
 	}
+	return stream;
     }
 }

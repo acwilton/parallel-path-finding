@@ -28,3 +28,7 @@ $(foreach target,$(TARGET_NAMES),$(eval $(call TARGET_template,$(target))))
 .PHONY : clean
 clean:
 	rm $(foreach target,$(TARGET_NAMES),$($(target)_OBJECTS)) $(COMMON_OBJECTS) $(TARGETS)
+
+.PHONY : clean_worlds
+clean_worlds:
+	rm worlds/*

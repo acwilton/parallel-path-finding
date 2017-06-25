@@ -1,14 +1,15 @@
 CC		= g++
 CFLAGS		= -c -Wall
+LDLIBS          = -lSDL2 -lSDL2_ttf
 LDFLAGS		=
-SOURCES		= worldGen.cc world.cc
+SOURCES		= world.cc parallel-path-finding-gui.cc
 OBJECTS		= $(SOURCES:*.c=.o)
-EXECUTABLE	= worldGen
+EXECUTABLE	= par-path-finding
 
 all: $(EXECUTABLE)
 
 $(EXECUTABLE) : $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $@ $(LDLIBS)
 
 .cc.o :
 	$(CC) $(CFLAGS) $< -o $@

@@ -1,38 +1,28 @@
 /**
  * File        : world.h
- * Description : Class Declaration of the world class. The world is meant to be the place
- *               in which path-finding takes place in. The Tile struct is also defined in
- *               the class and just represents one location in the world;
+ * Description : The World class is meant to be the place in which path-finding takes place in.
+ *               The Tile struct is also defined in the class and just represents one
+ *               location in the world
  */
 
-#ifndef WORLD_H
-#define WORLD_H
-
-/****************************************************************************************************/
-// Global includes
+#ifndef WORLD_H_
+#define WORLD_H_
 
 #include <vector>
 #include <cstddef>
 #include <fstream>
-
-/****************************************************************************************************/
-// Local includes
-
-/****************************************************************************************************/
-// Using and typedef statements
 
 using std::vector;
 using std::ostream;
 
 typedef unsigned char uchar;
 
-/****************************************************************************************************/
 
 namespace parPath
 {
 
 /**
- * A Wolrd object is what represents the space in which the path-finding algorithms will
+ * A World object is what represents the space in which the path-finding algorithms will
  * take place. It is essentially a grid of tiles with an associated cost for each. Some
  * tiles may not be crossable and are meant to represent some kind of barrier (like a wall)
  */
@@ -78,5 +68,6 @@ private:
     vector<vector<tile_t>> m_tiles;
 };
     
-}
-#endif // WORLD_H
+} /* namespace parPath */
+
+#endif /* WORLD_H_ */

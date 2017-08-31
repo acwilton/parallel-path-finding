@@ -1,25 +1,12 @@
-/**
- * File        : world.cc
- * Description : Class definition of the world class.
- */
+// World.cc
 
-/****************************************************************************************************/
-// Global includes
+#include "World.h"
 
 #include <random>
 #include <functional>
 
-/****************************************************************************************************/
-// Local includes
-
-#include "world.h"
-
-/****************************************************************************************************/
-// Using and typedef statements
 
 typedef unsigned char uchar;
-
-/****************************************************************************************************/
 
 namespace parPath
 {
@@ -69,4 +56,4 @@ namespace parPath
 	}
 	return stream;
     }
-}
+} /* namespace parPath */

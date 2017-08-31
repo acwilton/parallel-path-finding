@@ -1,6 +1,9 @@
 *~
-worldGen
+WorldGen
 worlds/
+.settings/
+.project
+.cproject
 *.o
 
-par-path-finding
+pathFind

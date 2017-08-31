@@ -1,66 +1,21 @@
 /**
  * File        : parallel-path-finding-gui.cc
- * Description : The main GUI interface for running the parallel path-finding algorithms on.
-                 TODO:
-		 #1 - Add ability to view the world files in a new SDL window (hopefully with
-		        scrolling and zooming capabilities)
-		 #2 - Add a generate world button that switches to a parameter window for the
-		        world generation and then creates a world file from those parameters.
-		        Afterwards it could then display the the world file with feature #1.
-		 #3 - Create a run button that runs a certain path-finding algorithm and provides
-		        stats about the run. The button will give the option of specifying a
-			specific .world file or using feature #2 to generate one.
-		 #4 - Ability to select multiple algorithms and then run them and create a stat
-		        table using the stats from feature #3 (and maybe additional ones).
-		 #5 - Add capability to view the individual paths taken by certain units. The
-		        paths could be displayed by coloring the tiles traversed a certain color
-			or maybe drawing lines from the center of each tile. These visualizations
-			would most likely be generated on the fly because there would be too many
-			possible combinations of units to visualize.
-		      The screen could look similar to the following:
-		      ----------------------------
-		      |               | * Unit 1 |
-		      |               | * Unit 2 |
-		      |     Path      |    .     |
-		      | Visualization |    .     |
-		      |               |    .     |
-		      |               | * Unit n |
-		      ----------------------------
-		      Where you can click on each unit you want to see the path for to switch the
-		        visualization.
-		 #6 - Ability to specify whether you want your units to be placed randomly around
-		        the world, or have the option to manually click on the tiles you want each
-			unit to spawn on for path-finding.
-		 #7 - In addition to feature #4, have the ability to select multiple stored stat
-		        files from previous runs to create comparison tables. That way you can
-			compare the performance of algorithms against themselves in different
-			settings or older interesting runs against new ones.
-		 #8 - 
+ * Description : The main GUI interface for running the parallel path-finding algorithms on
  */
-
-/****************************************************************************************************/
-// Global includes
 
 #include <iostream>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
-/****************************************************************************************************/
-// Local includes
 
-#include "world.h"
-
-/****************************************************************************************************/
-// Using and typedef statements
+#include "World.h"
 
 using std::cout;
 using std::endl;
 
-using namespace parPath;
 
-/****************************************************************************************************/
-// Function declaration
+using namespace parPath;
 
 bool window_init (SDL_Window*& window);
 
@@ -70,14 +25,8 @@ bool sdl_init (SDL_Window*& main_window, SDL_Renderer*& main_renderer);
 
 void render_screen (SDL_Renderer* renderer, SDL_Rect* view_port);
 
-/****************************************************************************************************/
-// Constants
-
 const size_t SCREEN_WIDTH = 1280;
 const size_t SCREEN_HEIGHT = 960;
-
-/****************************************************************************************************/
-// Main
 
 int main (int args, char* argv[])
 {

@@ -11,7 +11,7 @@ typedef unsigned char uchar;
 namespace parPath
 {
     World::World (size_t height, size_t width)
-	: m_tiles (height, vector<tile_t>(width))
+	: m_tiles (height, std::vector<tile_t>(width))
     {
 	std::random_device rd;
 	std::mt19937 gen (rd());
@@ -37,8 +37,8 @@ namespace parPath
 	return m_tiles[row][column];
     }
 
-    ostream&
-    operator<< (ostream& stream, const World& world)
+    std::ostream&
+    operator<< (std::ostream& stream, const World& world)
     {
 	for (auto& row : world.m_tiles)
 	{

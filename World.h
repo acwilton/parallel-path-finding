@@ -12,9 +12,6 @@
 #include <cstddef>
 #include <fstream>
 
-using std::vector;
-using std::ostream;
-
 typedef unsigned char uchar;
 
 
@@ -62,10 +59,10 @@ public:
     tile_t
     operator() (size_t row, size_t column);
 
-    friend ostream& operator<< (ostream& stream, const World& world);
+    friend std::ostream& operator<< (std::ostream& stream, const World& world);
     
 private:
-    vector<vector<tile_t>> m_tiles;
+    std::vector<std::vector<tile_t>> m_tiles;
 };
     
 } /* namespace parPath */

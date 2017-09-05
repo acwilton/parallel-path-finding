@@ -23,17 +23,16 @@ public:
      */
     static void logWarning (std::string message);
 
-    Log (const Log&)           = delete;
-    Log& operator=(const Log&) = delete;
+    Log (const Log&) = delete;
+    Log& operator= (const Log&) = delete;
 
 private:
     Log ();
 
-    static Log& get();
+    static Log& get ();
 
     void _logError (std::string message);
     void _logWarning (std::string message);
-
 
     std::ofstream m_errOut;
 };

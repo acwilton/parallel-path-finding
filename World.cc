@@ -9,21 +9,23 @@ typedef unsigned char uchar;
 
 namespace parPath
 {
-World::World(size_t height, size_t width) :
-        m_height (height), m_width (width),
-        m_tiles (height, std::vector<tile_t>(width, {static_cast<uchar>(0)}))
+World::World (size_t height, size_t width)
+        : m_height (height),
+          m_width (width),
+          m_tiles (height, std::vector<tile_t> (width,
+          { static_cast<uchar> (0) }))
 {
     generateMap ();
 }
 
-void World::generateMap()
+void World::generateMap ()
 {
     std::random_device rd;
-    std::minstd_rand0 gen(rd());
+    std::minstd_rand0 gen (rd ());
 
     // Starting position in map
-    size_t x = gen() % m_width;
-    size_t y = gen() % m_height;
+    size_t x = gen () % m_width;
+    size_t y = gen () % m_height;
     m_tiles[y][x].cost = static_cast<uchar> (1);
 
     size_t numCarvedTiles = 1;
@@ -33,7 +35,7 @@ void World::generateMap()
     while (numCarvedTiles < targetNumCarvedTiles)
     {
         // Pick a random direction to walk in
-        switch (gen() % 4)
+        switch (gen () % 4)
         {
         case 0:
             if (x < m_width - 1)
@@ -72,13 +74,13 @@ void World::generateMap()
 
 }
 
-World::tile_t World::operator()(size_t row, size_t column)
+World::tile_t World::operator() (size_t row, size_t column)
 {
     return m_tiles[row][column];
 }
 
 std::ostream&
-operator<<(std::ostream& stream, const World& world)
+operator<< (std::ostream& stream, const World& world)
 {
     for (auto& row : world.m_tiles)
     {

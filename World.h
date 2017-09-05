@@ -32,11 +32,11 @@ public:
      * @param height   The height of the world.
      * @param width    The width of the world.
      */
-    World(size_t height, size_t width);
+    World (size_t height, size_t width);
 
     // We do not want copying to take place.
-    World(const World&) = delete;
-    World& operator=(const World&) = delete;
+    World (const World&) = delete;
+    World& operator= (const World&) = delete;
 
     /**
      * Struct meant to represent a tile in the world where path-finding takes place.
@@ -55,9 +55,9 @@ public:
      * @return The tile at the specified position in the world is returned.
      */
     tile_t
-    operator()(size_t row, size_t column);
+    operator() (size_t row, size_t column);
 
-    friend std::ostream& operator<<(std::ostream& stream, const World& world);
+    friend std::ostream& operator<< (std::ostream& stream, const World& world);
 
 private:
     std::vector<std::vector<tile_t>> m_tiles;

@@ -91,6 +91,8 @@ bool sdl_init(SDL_Window*& main_window, SDL_Renderer*& main_renderer)
         return false;
     }
 
+    SDL_Quit ();
+
     return true;
 }
 

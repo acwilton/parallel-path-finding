@@ -11,9 +11,14 @@ class Log final
 public:
 
     /**
-     * Output error message to "error.log"
+     * Output error message to "gui.log"
      */
     static void logError (std::string message);
+
+    /**
+     * Output warning message to "gui.log"
+     */
+    static void logWarning (std::string message);
 
     Log (const Log&)           = delete;
     Log& operator=(const Log&) = delete;
@@ -24,6 +29,7 @@ private:
     static Log& get();
 
     void _logError (std::string message);
+    void _logWarning (std::string message);
 
 
     std::ofstream m_errOut;

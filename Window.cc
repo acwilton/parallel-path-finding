@@ -37,14 +37,19 @@ void handleEvent (SDL_Event* e)
 
 }
 
-void addViewport (uint key)
+void render ()
 {
 
 }
 
-std::shared_ptr<SDL_Rect> Window::getMutableViewport (uint key)
+std::shared_ptr<Viewport> Window::getMutableViewport (uint key)
 {
     return m_viewports[key];
+}
+
+void addViewport (uint key, std::shared_ptr<Viewport> vp)
+{
+
 }
 
 void Window::removeViewport (uint key)

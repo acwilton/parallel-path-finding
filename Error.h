@@ -3,6 +3,9 @@
  * Description : Holds a singleton class for error logging.
  */
 
+#ifndef ERROR_H
+#define ERROR_H
+
 #include <fstream>
 #include <string>
 
@@ -34,3 +37,5 @@ private:
 
     std::ofstream m_errOut;
 };
+
+#endif /* ERROR_H */

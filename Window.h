@@ -4,17 +4,17 @@
  *               like the renderer, viewports, etc.
  */
 
+#ifndef WINDOW_H_
+#define WINDOW_H_
+
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
 
 #include <map>
 #include <string>
 #include <memory>
 
 #include "Error.h"
-
-#ifndef WINDOW_H_
-#define WINDOW_H_
+#include "Viewport.h"
 
 namespace parPath
 {
@@ -40,9 +40,11 @@ public:
 
     void handleEvent (SDL_Event* e);
 
-    std::shared_ptr<SDL_Rect> getMutableViewport (uint key);
+    void render ();
 
-    void addViewport (uint key);
+    std::shared_ptr<Viewport> getMutableViewport (uint key);
+
+    void addViewport (uint key, std::shared_ptr<Viewport> vp);
     void removeViewport (uint key);
 
     void spawnWindow ();
@@ -54,7 +56,7 @@ private:
 
     SDL_Window* m_window;
     SDL_Renderer* m_renderer;
-    std::map<uint, std::shared_ptr<SDL_Rect>> m_viewports;
+    std::map<uint, std::shared_ptr<Viewport>> m_viewports;
 
     size_t m_width;
     size_t m_height;

@@ -14,7 +14,6 @@
 
 typedef unsigned char uchar;
 
-
 namespace parPath
 {
 
@@ -33,10 +32,10 @@ public:
      * @param height   The height of the world.
      * @param width    The width of the world.
      */
-    World (size_t height, size_t width);
+    World(size_t height, size_t width);
 
     // We do not want copying to take place.
-    World (const World&) = delete;
+    World(const World&) = delete;
     World& operator=(const World&) = delete;
 
     /**
@@ -46,10 +45,10 @@ public:
      */
     struct tile_t
     {
-	uchar cost;
-	bool allowed;
+        uchar cost;
+        bool allowed;
     };
-	
+
     /**
      * Returns the tile at the designated column and row
      * @param row      The row we are retrieving from. (y-axis)
@@ -57,14 +56,14 @@ public:
      * @return The tile at the specified position in the world is returned.
      */
     tile_t
-    operator() (size_t row, size_t column);
+    operator()(size_t row, size_t column);
 
-    friend std::ostream& operator<< (std::ostream& stream, const World& world);
-    
+    friend std::ostream& operator<<(std::ostream& stream, const World& world);
+
 private:
     std::vector<std::vector<tile_t>> m_tiles;
 };
-    
+
 } /* namespace parPath */
 
 #endif /* WORLD_H_ */

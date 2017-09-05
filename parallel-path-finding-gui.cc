@@ -71,7 +71,7 @@ bool sdl_init(SDL_Window*& main_window, SDL_Renderer*& main_renderer)
     // SDL initialization
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
-        Log::logError("Failed to initialized SDL. SDL_Error: " + SDL_GetError() + "\n");
+        Log::logError("Failed to initialized SDL. SDL_Error: " + std::string (SDL_GetError()) + "\n");
         return false;
     }
 
@@ -87,7 +87,7 @@ bool sdl_init(SDL_Window*& main_window, SDL_Renderer*& main_renderer)
 
     if (TTF_Init() == -1)
     {
-        Log::logError("SDL_ttf could not initialize. SDL_ttf Error: " + TTF_GetError() + "\n");
+        Log::logError("SDL_ttf could not initialize. SDL_ttf Error: " + std::string (TTF_GetError()) + "\n");
         return false;
     }
 
@@ -101,7 +101,7 @@ bool window_init(SDL_Window*& window)
     SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (window == nullptr)
     {
-        Log::logError("Failed to initialize window. SDL_ERROR: " + SDL_GetError() + "\n");
+        Log::logError("Failed to initialize window. SDL_ERROR: " + std::string (SDL_GetError()) + "\n");
         return false;
     }
 
@@ -113,7 +113,7 @@ bool renderer_init(SDL_Window*& window, SDL_Renderer*& renderer)
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (renderer == nullptr)
     {
-        Log::logError("Failed to initialize renderer. SDL_ERROR: " + SDL_GetError() + "\n");
+        Log::logError("Failed to initialize renderer. SDL_ERROR: " + std::string (SDL_GetError()) + "\n");
         return false;
     }
 

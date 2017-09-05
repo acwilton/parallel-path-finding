@@ -15,13 +15,13 @@ Window::Window(std::string title, size_t width, size_t height)
     SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
     if (m_window == nullptr)
     {
-        Log::logError("Failed to initialize window. SDL_ERROR: " + SDL_GetError() + "\n");
+        Log::logError("Failed to initialize window. SDL_ERROR: " + std::string (SDL_GetError()) + "\n");
     }
 
     m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED);
     if (m_renderer == nullptr)
     {
-        Log::logError("Failed to initialize renderer. SDL_ERROR: " + SDL_GetError() + "\n");
+        Log::logError("Failed to initialize renderer. SDL_ERROR: " + std::string (SDL_GetError()) + "\n");
     }
 }
 

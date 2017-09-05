@@ -6,7 +6,7 @@ COMMON_SOURCES    = World.cc
 COMMON_OBJECTS	  = World.o
 
 GUI_EXEC	      = pathFind
-GUI_SOURCES       = parallel-path-finding-gui.cc
+GUI_SOURCES       = parallel-path-finding-gui.cc Error.cc
 
 WORLD_GEN_EXEC    = WorldGen
 WORLD_GEN_SOURCES = WorldGen.cc
@@ -27,7 +27,7 @@ $(foreach target,$(TARGET_NAMES),$(eval $(call TARGET_template,$(target))))
 
 .PHONY : clean
 clean:
-	rm $(foreach target,$(TARGET_NAMES),$($(target)_OBJECTS)) $(COMMON_OBJECTS) $(TARGETS)
+	rm $(foreach target,$(TARGET_NAMES),$($(target)_OBJECTS)) $(COMMON_OBJECTS) $(TARGETS) error.log
 
 .PHONY : clean_worlds
 clean_worlds:

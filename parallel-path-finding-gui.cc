@@ -8,9 +8,11 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
+#include "Error.h"
 #include "World.h"
 
 using namespace parPath;
+
 
 bool window_init(SDL_Window*& window);
 
@@ -19,6 +21,7 @@ bool renderer_init(SDL_Window*& window, SDL_Renderer*& renderer);
 bool sdl_init(SDL_Window*& main_window, SDL_Renderer*& main_renderer);
 
 void render_screen(SDL_Renderer* renderer, SDL_Rect* view_port);
+
 
 const size_t SCREEN_WIDTH = 1280;
 const size_t SCREEN_HEIGHT = 960;
@@ -68,8 +71,7 @@ bool sdl_init(SDL_Window*& main_window, SDL_Renderer*& main_renderer)
     // SDL initialization
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
-        std::cout << "Failed to initialized SDL. SDL_Error: " << SDL_GetError()
-                << std::endl;
+        Log::logError("Failed to initialized SDL. SDL_Error: " + SDL_GetError() + "\n");
         return false;
     }
 
@@ -85,8 +87,7 @@ bool sdl_init(SDL_Window*& main_window, SDL_Renderer*& main_renderer)
 
     if (TTF_Init() == -1)
     {
-        std::cout << "SDL_ttf could not initialize. SDL_ttf Error: "
-                << TTF_GetError() << std::endl;
+        Log::logError("SDL_ttf could not initialize. SDL_ttf Error: " + TTF_GetError() + "\n");
         return false;
     }
 
@@ -100,8 +101,7 @@ bool window_init(SDL_Window*& window)
     SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (window == nullptr)
     {
-        std::cout << "Failed to initialize window. SDL_ERROR: " << SDL_GetError()
-                << std::endl;
+        Log::logError("Failed to initialize window. SDL_ERROR: " + SDL_GetError() + "\n");
         return false;
     }
 
@@ -113,8 +113,8 @@ bool renderer_init(SDL_Window*& window, SDL_Renderer*& renderer)
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (renderer == nullptr)
     {
-        std::cout << "Failed to initialize renderer. SDL_Error: " << SDL_GetError()
-                << std::endl;
+        Log::logError("Failed to initialize renderer. SDL_ERROR: " + SDL_GetError() + "\n");
+        return false;
     }
 
     return true;

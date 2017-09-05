@@ -10,6 +10,8 @@
 #include <vector>
 #include <string>
 
+#include "Error.h"
+
 #ifndef WINDOW_H_
 #define WINDOW_H_
 

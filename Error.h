@@ -13,19 +13,18 @@ public:
     /**
      * Output error message to "error.log"
      */
-    void logError (std::string message);
+    static void logError (std::string message);
 
-    Log (const Log&) = delete;
-
+    Log (const Log&)           = delete;
     Log& operator=(const Log&) = delete;
-
-    /**
-     * Get singleton instance of Log
-     */
-    static Log& get() const;
 
 private:
     Log ();
+
+    static Log& get();
+
+    void _logError (std::string message);
+
 
     std::ofstream m_errOut;
 };

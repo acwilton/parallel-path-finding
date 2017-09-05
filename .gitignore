@@ -7,3 +7,4 @@ worlds/
 *.o
 
 pathFind
+error.log

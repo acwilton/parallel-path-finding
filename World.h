@@ -62,6 +62,8 @@ public:
 
 private:
     std::vector<std::vector<tile_t>> m_tiles;
+
+    void generateMap ();
 };
 
 } /* namespace parPath */

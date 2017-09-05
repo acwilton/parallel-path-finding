@@ -10,9 +10,9 @@ typedef unsigned char uchar;
 namespace parPath
 {
 World::World(size_t height, size_t width) :
-        m_tiles(height, std::vector<tile_t>(width))
+        m_tiles(height, std::vector<tile_t>(width, {static_cast<uchar>(0), false}))
 {
-    std::random_device rd;
+    /*std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<uchar> ucharDis(1, 255);
     std::discrete_distribution<bool> boolDis{ 1, 2 };
@@ -27,7 +27,13 @@ World::World(size_t height, size_t width) :
             e.cost = costGen();
             e.allowed = allowedGen();
         }
-    }
+    }*/
+    generateMap ();
+}
+
+void World::generateMap()
+{
+
 }
 
 World::tile_t World::operator()(size_t row, size_t column)

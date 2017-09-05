@@ -46,7 +46,6 @@ public:
     struct tile_t
     {
         uchar cost;
-        bool allowed;
     };
 
     /**
@@ -62,6 +61,8 @@ public:
 
 private:
     std::vector<std::vector<tile_t>> m_tiles;
+    size_t m_width;
+    size_t m_height;
 
     void generateMap ();
 };

@@ -32,29 +32,32 @@ void Window::focus ()
 
 }
 
-void handleEvent (SDL_Event* e)
+void Window::handleEvent (SDL_Event* e)
 {
 
 }
 
-void render ()
+void Window::render ()
 {
-
+    for (auto& vp : m_viewports)
+    {
+        vp->render(m_renderer);
+    }
 }
 
-std::shared_ptr<Viewport> Window::getMutableViewport (uint key)
+std::shared_ptr<Viewport> Window::getViewport (uint pos) const
 {
-    return m_viewports[key];
+    return m_viewports[pos];
 }
 
-void addViewport (uint key, std::shared_ptr<Viewport> vp)
+void Window::addViewport (std::shared_ptr<Viewport> vp)
 {
-
+    m_viewports.push_back (vp);
 }
 
-void Window::removeViewport (uint key)
+void Window::removeViewport (uint pos)
 {
-    m_viewports.erase (key);
+    m_viewports.erase (m_viewports.begin() + pos);
 }
 
 void Window::spawnWindow ()
@@ -81,6 +84,9 @@ void Window::spawnWindow ()
                 "Failed to initialize renderer. SDL_ERROR: "
                         + std::string (SDL_GetError ()) + "\n");
     }
+
+    m_windowID = SDL_GetWindowID (m_window);
+    m_minimized = false;
 }
 
 void Window::closeWindow ()
@@ -103,33 +109,42 @@ void Window::setHeight (size_t height)
 {
     m_height = height;
 }
+void Window::setTitle (std::string title)
+{
+    m_title = title;
+}
 
-size_t Window::getWidth ()
+size_t Window::getWidth () const
 {
     return m_width;
 }
 
-size_t Window::getHeight ()
+size_t Window::getHeight () const
 {
     return m_height;
 }
 
-bool Window::hasMouseFocus ()
+std::string Window::getTitle () const
+{
+    return m_title;
+}
+
+bool Window::hasMouseFocus () const
 {
     return m_mouseFocus;
 }
 
-bool Window::hasKeyFocus ()
+bool Window::hasKeyFocus () const
 {
     return m_keyFocus;
 }
 
-bool Window::isMinimized ()
+bool Window::isMinimized () const
 {
     return m_minimized;
 }
 
-bool Window::isOpen ()
+bool Window::isOpen () const
 {
     return m_window != nullptr;
 }

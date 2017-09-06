@@ -9,7 +9,7 @@
 
 #include <SDL2/SDL.h>
 
-#include <map>
+#include <vector>
 #include <string>
 #include <memory>
 
@@ -23,29 +23,36 @@ class Window final
 {
 public:
 
-    Window(std::string title, size_t width, size_t height);
-    ~Window();
+    Window (std::string title, size_t width, size_t height);
+    ~Window ();
 
-    size_t getWidth ();
-    size_t getHeight ();
-    bool hasMouseFocus ();
-    bool hasKeyFocus ();
-    bool isMinimized ();
-    bool isOpen ();
+    size_t getWidth () const;
+    size_t getHeight () const;
+    std::string getTitle () const;
+    std::shared_ptr<Viewport> getViewport (uint pos) const;
+    bool hasMouseFocus () const;
+    bool hasKeyFocus () const;
+    bool isMinimized () const;
+    bool isOpen () const;
 
     void setWidth (size_t width);
     void setHeight (size_t height);
+    void setTitle (std::string title);
+
+    /**
+     * Add a viewport object into our window for rendering/interaction
+     */
+    void addViewport (std::shared_ptr<Viewport> vp);
+    /**
+     * Remove a viewport object from our window
+     */
+    void removeViewport (uint pos);
 
     void focus ();
 
     void handleEvent (SDL_Event* e);
 
     void render ();
-
-    std::shared_ptr<Viewport> getMutableViewport (uint key);
-
-    void addViewport (uint key, std::shared_ptr<Viewport> vp);
-    void removeViewport (uint key);
 
     void spawnWindow ();
     void closeWindow ();
@@ -56,7 +63,7 @@ private:
 
     SDL_Window* m_window;
     SDL_Renderer* m_renderer;
-    std::map<uint, std::shared_ptr<Viewport>> m_viewports;
+    std::vector<std::shared_ptr<Viewport>> m_viewports;
 
     size_t m_width;
     size_t m_height;

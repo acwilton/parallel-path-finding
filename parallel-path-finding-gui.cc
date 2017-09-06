@@ -4,22 +4,19 @@
  */
 
 #include <iostream>
+#include <memory>
+#include <random>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
 #include "Error.h"
 #include "World.h"
+#include "Window.h"
 
 using namespace parPath;
 
-bool window_init (SDL_Window*& window);
-
-bool renderer_init (SDL_Window*& window, SDL_Renderer*& renderer);
-
-bool sdl_init (SDL_Window*& main_window, SDL_Renderer*& main_renderer);
-
-void render_screen (SDL_Renderer* renderer, SDL_Rect* view_port);
+bool sdl_init ();
 
 const size_t SCREEN_WIDTH = 1280;
 const size_t SCREEN_HEIGHT = 960;
@@ -27,18 +24,35 @@ const size_t SCREEN_HEIGHT = 960;
 int main (int args, char* argv[])
 {
     // SDL variables needed
-    SDL_Window* main_window = nullptr;
+    Window mainWindow ("Parallel Path Finding", SCREEN_WIDTH, SCREEN_HEIGHT);
+
     SDL_Renderer* main_renderer = nullptr;
-    SDL_Rect main_view_port
-    { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+    Viewport mainViewport (
+    { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT });
 
-    sdl_init (main_window, main_renderer);
+    std::random_device rd;
+    std::minstd_rand0 gen (rd ());
 
-    bool quit = false;
+    SDL_Rect xr;
+    auto b = std::make_shared<Button>("Change Color",
+    SDL_Rect{ 10,10, 80, 30 });
+
+    /*auto b = std::make_shared<Button>("Change Color",
+    { (SCREEN_WIDTH / 2) - 40, (SCREEN_HEIGHT / 2) - 15, 80, 30 }, [&]()
+    {   mainViewport.setBackgroundColor(
+                {   static_cast<uchar>(gen() % 255),
+                    static_cast<uchar>(gen() % 255),
+                    static_cast<uchar>(gen() % 255), 0xFF}
+        );
+    });*/
+
+    bool quit = !sdl_init ();
 
     SDL_Event e;
 
-    render_screen (main_renderer, &main_view_port);
+    mainWindow.spawnWindow ();
+
+    mainWindow.render ();
 
     // application loop
     while (!quit)
@@ -50,21 +64,16 @@ int main (int args, char* argv[])
                 quit = true;
             }
         }
-        render_screen (main_renderer, &main_view_port);
+
+        mainWindow.render ();
     }
+
+    SDL_Quit ();
 
     return EXIT_SUCCESS;
 }
 
-void render_screen (SDL_Renderer* renderer, SDL_Rect* view_port)
-{
-    SDL_SetRenderDrawColor (renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-    SDL_RenderSetViewport (renderer, view_port);
-    SDL_RenderFillRect (renderer, nullptr);
-    SDL_RenderPresent (renderer);
-}
-
-bool sdl_init (SDL_Window*& main_window, SDL_Renderer*& main_renderer)
+bool sdl_init ()
 {
     // SDL initialization
     if (SDL_Init (SDL_INIT_VIDEO) < 0)
@@ -75,53 +84,11 @@ bool sdl_init (SDL_Window*& main_window, SDL_Renderer*& main_renderer)
         return false;
     }
 
-    if (!window_init (main_window))
-    {
-        return false;
-    }
-
-    if (!renderer_init (main_window, main_renderer))
-    {
-        return false;
-    }
-
     if (TTF_Init () == -1)
     {
         Log::logError (
                 "SDL_ttf could not initialize. SDL_ttf Error: "
                         + std::string (TTF_GetError ()) + "\n");
-        return false;
-    }
-
-    SDL_Quit ();
-
-    return true;
-}
-
-bool window_init (SDL_Window*& window)
-{
-    // Create Window
-    window = SDL_CreateWindow ("Parallel Path-Finding", SDL_WINDOWPOS_UNDEFINED,
-    SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-    if (window == nullptr)
-    {
-        Log::logError (
-                "Failed to initialize window. SDL_ERROR: "
-                        + std::string (SDL_GetError ()) + "\n");
-        return false;
-    }
-
-    return true;
-}
-
-bool renderer_init (SDL_Window*& window, SDL_Renderer*& renderer)
-{
-    renderer = SDL_CreateRenderer (window, -1, SDL_RENDERER_ACCELERATED);
-    if (renderer == nullptr)
-    {
-        Log::logError (
-                "Failed to initialize renderer. SDL_ERROR: "
-                        + std::string (SDL_GetError ()) + "\n");
         return false;
     }
 

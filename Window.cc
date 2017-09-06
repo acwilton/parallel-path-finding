@@ -32,16 +32,38 @@ void Window::focus ()
 
 }
 
-void Window::handleEvent (SDL_Event* e)
+void Window::handleEvent (SDL_Event& e)
 {
-
+    if (isOpen () && e.window.windowID == m_windowID)
+    {
+        if (e.type == SDL_WINDOWEVENT)
+        {
+            switch (e.window.event)
+            {
+            case SDL_WINDOWEVENT_SHOWN:
+                std::cout << "shown\n";
+            }
+        }
+        else
+        {
+            for (auto& vp : m_viewports)
+            {
+                vp->handleEvent(e);
+            }
+        }
+    }
 }
 
 void Window::render ()
 {
+    if (!isOpen ())
+    {
+        Log::logError("Render calls being made to window that isn't open. Window title: " + m_title);
+        return;
+    }
     for (auto& vp : m_viewports)
     {
-        vp->render(m_renderer);
+        vp->render (m_renderer);
     }
 }
 
@@ -57,12 +79,12 @@ void Window::addViewport (std::shared_ptr<Viewport> vp)
 
 void Window::removeViewport (uint pos)
 {
-    m_viewports.erase (m_viewports.begin() + pos);
+    m_viewports.erase (m_viewports.begin () + pos);
 }
 
 void Window::spawnWindow ()
 {
-    if (m_window != nullptr)
+    if (isOpen ())
     {
         Log::logWarning ("spawnWindow() called but window is already open.");
         return;
@@ -91,7 +113,7 @@ void Window::spawnWindow ()
 
 void Window::closeWindow ()
 {
-    if (m_window == nullptr)
+    if (!isOpen ())
     {
         Log::logWarning ("closeWindow() called but window is not open.");
         return;

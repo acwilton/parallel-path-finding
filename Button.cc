@@ -10,75 +10,138 @@ namespace parPath
 Button::Button (std::string text, SDL_Rect rect, std::function<void ()> funct,
         SDL_Color backgroundColor, SDL_Color textColor)
         : m_text (text),
-          m_rect (rect),
+          m_buttonRect (rect),
           m_funct (funct),
           m_backgroundColor (backgroundColor),
-          m_textColor (textColor)
+          m_textColor (textColor),
+          m_textInitialized (false),
+          m_textTexture (nullptr)
 {
 }
 
 Button::~Button ()
 {
+    destroyResources ();
 }
 
-virtual void Button::render (SDL_Renderer* renderer)
+void Button::render (SDL_Renderer* renderer)
 {
+    if (!m_textInitialized)
+    {
+        initializeTextTexture (renderer);
+    }
+
+    SDL_SetRenderDrawColor (renderer, m_backgroundColor.r, m_backgroundColor.g,
+            m_backgroundColor.b, m_backgroundColor.a);
+    SDL_RenderFillRect (renderer, &m_buttonRect);
+    SDL_SetRenderDrawColor (renderer, m_textColor.r, m_textColor.g,
+            m_textColor.b, m_textColor.a);
+    SDL_RenderDrawRect (renderer, &m_buttonRect);
+    SDL_RenderCopy (renderer, m_textTexture, nullptr, &m_textRect);
 
 }
 
-virtual void Button::execute ()
+void Button::execute ()
 {
     m_funct ();
 }
 
-virtual void Button::setText (std::string text)
+void Button::setText (std::string text)
 {
     m_text = text;
+    m_textInitialized = false;
 }
 
-virtual void Button::setBackgroundColor (SDL_Color color)
+void Button::setBackgroundColor (SDL_Color color)
 {
     m_backgroundColor = color;
 }
 
-virtual void Button::setTextColor (SDL_Color color)
+void Button::setTextColor (SDL_Color color)
 {
     m_textColor = color;
 }
 
-virtual size_t Button::getX () const
+size_t Button::getX () const
 {
-    return m_rect.x;
+    return m_buttonRect.x;
 }
 
-virtual size_t Button::getY () const
+size_t Button::getY () const
 {
-    return m_rect.y;
+    return m_buttonRect.y;
 }
 
-virtual size_t Button::getWidth () const
+size_t Button::getWidth () const
 {
-    return m_rect.w;
+    return m_buttonRect.w;
 }
 
-virtual size_t Button::getHeight () const
+size_t Button::getHeight () const
 {
-    return m_rect.h;
+    return m_buttonRect.h;
 }
 
-virtual std::string Button::getText () const
+std::string Button::getText () const
 {
     return m_text;
 }
 
-virtual SDL_Color Button::getBackgroundColor () const
+SDL_Color Button::getBackgroundColor () const
 {
     return m_backgroundColor;
 }
 
-virtual SDL_Color Button::getTextColor () const
+SDL_Color Button::getTextColor () const
 {
     return m_textColor;
+}
+
+void Button::initializeTextTexture (SDL_Renderer* renderer)
+{
+    destroyResources ();
+    m_textRect = {0, 0, 0, 0};
+
+    if (m_text == "")
+    {
+        m_textInitialized = true;
+        return;
+    }
+
+    TTF_Font* font = TTF_OpenFont ("FreeSans.ttf", 128);
+    SDL_Surface* textSurface = TTF_RenderText_Solid (font, m_text.c_str (),
+            m_textColor);
+    if (textSurface == nullptr)
+    {
+        Log::logError (
+                "Failed to create SDL_Surface from button text: \"" + m_text
+                        + "\" | SDL_ttf Error: " + TTF_GetError ());
+        return;
+    }
+    m_textTexture = SDL_CreateTextureFromSurface (renderer, textSurface);
+    SDL_FreeSurface (textSurface);
+
+    if (m_textTexture == nullptr)
+    {
+        Log::logError (
+                "Failed to create SDL_Texture from button text surface: \""
+                        + m_text + "\" | SDL_ttf Error: " + TTF_GetError ());
+        return;
+    }
+
+    /*uint margin = m_buttonRect.h * 0.1f;
+    SDL_Rect newTextRect = {m_buttonRect.x + margin
+     */
+    m_textRect = m_buttonRect;
+
+    m_textInitialized = true;
+    return;
+}
+
+void Button::destroyResources ()
+{
+    SDL_DestroyTexture (m_textTexture);
+    m_textTexture = nullptr;
 }
 
 } /* namespace parPath */

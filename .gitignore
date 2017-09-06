@@ -5,6 +5,8 @@ worlds/
 .project
 .cproject
 *.o
+*.ttf
 
 pathFind
 error.log
+

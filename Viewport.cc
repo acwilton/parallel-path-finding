@@ -19,27 +19,32 @@ Viewport::~Viewport ()
 
 void Viewport::render (SDL_Renderer* renderer)
 {
+    SDL_RenderSetViewport (renderer, &m_rect);
     for (auto& b : m_buttons)
     {
         b->render (renderer);
     }
 }
 
-void Viewport::handleEvent (SDL_Event* e)
+void Viewport::handleEvent (SDL_Event& e)
 {
-    int mouseX, mouseY;
-    SDL_GetMouseState (&mouseX, &mouseY);
-
-    for (auto& b : m_buttons)
+    if (e.type == SDL_MOUSEBUTTONDOWN)
     {
-        size_t b_globalX = getX () + b->getX ();
-        size_t b_globalY = getY () + b->getY ();
+        int mouseX, mouseY;
+        SDL_GetMouseState (&mouseX, &mouseY);
 
-        if (mouseX > b_globalX && mouseX < (b_globalX + b->getWidth ())
-                && mouseY > b_globalY && mouseY < (b_globalY + b->getHeight ()))
+        for (auto& b : m_buttons)
         {
-            b->execute();
-            break;
+            size_t b_globalX = getX () + b->getX ();
+            size_t b_globalY = getY () + b->getY ();
+
+            if (mouseX > b_globalX && mouseX < (b_globalX + b->getWidth ())
+                    && mouseY > b_globalY
+                    && mouseY < (b_globalY + b->getHeight ()))
+            {
+                b->execute ();
+                break;
+            }
         }
     }
 }
@@ -62,6 +67,11 @@ void Viewport::removeButton (uint pos)
 void Viewport::setBackgroundColor (SDL_Color color)
 {
     m_backgroundColor = color;
+}
+
+SDL_Color Viewport::getBackgroundColor () const
+{
+    return m_backgroundColor;
 }
 
 size_t Viewport::getX () const

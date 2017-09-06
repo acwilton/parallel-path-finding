@@ -50,7 +50,7 @@ public:
 
     void focus ();
 
-    void handleEvent (SDL_Event* e);
+    void handleEvent (SDL_Event& e);
 
     void render ();
 

@@ -39,7 +39,7 @@ public:
 
     virtual void render (SDL_Renderer* renderer);
 
-    virtual void handleEvent (SDL_Event* e);
+    virtual void handleEvent (SDL_Event& e);
 
 protected:
     std::vector<std::shared_ptr<Button>> m_buttons;

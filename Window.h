@@ -29,7 +29,7 @@ public:
     size_t getWidth () const;
     size_t getHeight () const;
     std::string getTitle () const;
-    std::shared_ptr<Viewport> getViewport (uint pos) const;
+    std::shared_ptr<Viewport> getViewport (uint pos);
     bool hasMouseFocus () const;
     bool hasKeyFocus () const;
     bool isMinimized () const;
@@ -54,7 +54,13 @@ public:
 
     void render ();
 
+    /**
+     * Start up the window using the settings given to the object thus far.
+     */
     void spawnWindow ();
+    /**
+     * Close the window that is currently up for this object
+     */
     void closeWindow ();
 
 private:
@@ -68,8 +74,6 @@ private:
     size_t m_width;
     size_t m_height;
     std::string m_title;
-
-    uint m_windowID;
 
     bool m_keyFocus;
     bool m_mouseFocus;

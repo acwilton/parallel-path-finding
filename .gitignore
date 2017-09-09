@@ -8,5 +8,5 @@ worlds/
 *.ttf
 
 pathFind
-error.log
+gui.log
 

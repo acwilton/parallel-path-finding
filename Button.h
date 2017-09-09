@@ -20,9 +20,9 @@ namespace parPath
 class Button
 {
 public:
-    Button (std::string text, SDL_Rect rect, std::function<void ()> funct,
-            SDL_Color backgroundColor =
-            { 0x77, 0x77, 0x77, 0xFF }, SDL_Color textColor =
+    Button (std::string text, SDL_Rect rect, size_t fontSize,
+            std::function<void ()> funct, SDL_Color backgroundColor =
+            { 0x44, 0x44, 0x44, 0xFF }, SDL_Color textColor =
             { 0x00, 0x00, 0x00, 0xFF });
     virtual ~Button ();
 
@@ -31,10 +31,12 @@ public:
     virtual size_t getWidth () const;
     virtual size_t getHeight () const;
     virtual std::string getText () const;
+    virtual size_t getFontSize () const;
     virtual SDL_Color getBackgroundColor () const;
     virtual SDL_Color getTextColor () const;
 
     virtual void setText (std::string text);
+    virtual void setFontSize (size_t fontSize);
     virtual void setBackgroundColor (SDL_Color color);
     virtual void setTextColor (SDL_Color color);
 
@@ -46,6 +48,7 @@ protected:
     virtual void destroyResources ();
 
     std::string m_text;
+    uint m_fontSize;
     SDL_Rect m_buttonRect;
 
     std::function<void ()> m_funct;

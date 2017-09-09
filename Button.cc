@@ -3,14 +3,15 @@
  */
 
 #include "Button.h"
-
 namespace parPath
 {
 
-Button::Button (std::string text, SDL_Rect rect, std::function<void ()> funct,
-        SDL_Color backgroundColor, SDL_Color textColor)
+Button::Button (std::string text, SDL_Rect rect, size_t fontSize,
+        std::function<void ()> funct, SDL_Color backgroundColor,
+        SDL_Color textColor)
         : m_text (text),
           m_buttonRect (rect),
+          m_fontSize (fontSize),
           m_funct (funct),
           m_backgroundColor (backgroundColor),
           m_textColor (textColor),
@@ -30,7 +31,6 @@ void Button::render (SDL_Renderer* renderer)
     {
         initializeTextTexture (renderer);
     }
-
     SDL_SetRenderDrawColor (renderer, m_backgroundColor.r, m_backgroundColor.g,
             m_backgroundColor.b, m_backgroundColor.a);
     SDL_RenderFillRect (renderer, &m_buttonRect);
@@ -50,6 +50,11 @@ void Button::setText (std::string text)
 {
     m_text = text;
     m_textInitialized = false;
+}
+
+void Button::setFontSize (size_t fontSize)
+{
+    m_fontSize = fontSize;
 }
 
 void Button::setBackgroundColor (SDL_Color color)
@@ -85,6 +90,11 @@ size_t Button::getHeight () const
 std::string Button::getText () const
 {
     return m_text;
+}
+
+size_t Button::getFontSize() const
+{
+    return m_fontSize;
 }
 
 SDL_Color Button::getBackgroundColor () const
@@ -129,10 +139,12 @@ void Button::initializeTextTexture (SDL_Renderer* renderer)
         return;
     }
 
-    /*uint margin = m_buttonRect.h * 0.1f;
-    SDL_Rect newTextRect = {m_buttonRect.x + margin
-     */
-    m_textRect = m_buttonRect;
+    int width = m_text.size() * m_fontSize;
+    int height = m_fontSize * 2.25;
+    int x = m_buttonRect.x + (m_buttonRect.w / 2) - (width / 2);
+    int y = m_buttonRect.y + (m_buttonRect.h / 2) - (height / 2);
+    SDL_Rect newTextRect = {x, y, width, height};
+    m_textRect = newTextRect;
 
     m_textInitialized = true;
     return;

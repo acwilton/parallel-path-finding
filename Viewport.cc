@@ -1,7 +1,6 @@
 /**
  * Viewport.cc
  */
-
 #include "Viewport.h"
 
 namespace parPath
@@ -9,7 +8,8 @@ namespace parPath
 
 Viewport::Viewport (SDL_Rect rect, SDL_Color backgroundColor)
         : m_rect (rect),
-          m_backgroundColor (backgroundColor)
+          m_backgroundColor (backgroundColor),
+          m_enabled (false)
 {
 }
 
@@ -19,37 +19,56 @@ Viewport::~Viewport ()
 
 void Viewport::render (SDL_Renderer* renderer)
 {
-    SDL_RenderSetViewport (renderer, &m_rect);
-    for (auto& b : m_buttons)
+    if (m_enabled)
     {
-        b->render (renderer);
+        SDL_RenderSetViewport (renderer, &m_rect);
+        SDL_SetRenderDrawColor (renderer, m_backgroundColor.r, m_backgroundColor.g,
+                m_backgroundColor.b, m_backgroundColor.a);
+        SDL_RenderFillRect (renderer, nullptr);
+        for (auto& b : m_buttons)
+        {
+            b->render (renderer);
+        }
     }
 }
 
 void Viewport::handleEvent (SDL_Event& e)
 {
-    if (e.type == SDL_MOUSEBUTTONDOWN)
+    if (m_enabled)
     {
-        int mouseX, mouseY;
-        SDL_GetMouseState (&mouseX, &mouseY);
-
-        for (auto& b : m_buttons)
+        if (e.type == SDL_MOUSEBUTTONDOWN)
         {
-            size_t b_globalX = getX () + b->getX ();
-            size_t b_globalY = getY () + b->getY ();
+            int mouseX, mouseY;
+            SDL_GetMouseState (&mouseX, &mouseY);
 
-            if (mouseX > b_globalX && mouseX < (b_globalX + b->getWidth ())
-                    && mouseY > b_globalY
-                    && mouseY < (b_globalY + b->getHeight ()))
+            for (auto& b : m_buttons)
             {
-                b->execute ();
-                break;
+                size_t b_globalX = getX () + b->getX ();
+                size_t b_globalY = getY () + b->getY ();
+
+                if (mouseX > b_globalX && mouseX < (b_globalX + b->getWidth ())
+                        && mouseY > b_globalY
+                        && mouseY < (b_globalY + b->getHeight ()))
+                {
+                    b->execute ();
+                    break;
+                }
             }
         }
     }
 }
 
-std::shared_ptr<Button> Viewport::getButton (uint pos) const
+void Viewport::enable ()
+{
+    m_enabled = true;
+}
+
+void Viewport::disable ()
+{
+    m_enabled = false;
+}
+
+std::shared_ptr<Button> Viewport::getButton (uint pos)
 {
     return m_buttons[pos];
 }
@@ -92,6 +111,11 @@ size_t Viewport::getWidth () const
 size_t Viewport::getHeight () const
 {
     return m_rect.h;
+}
+
+bool Viewport::isEnabled () const
+{
+    return m_enabled;
 }
 
 } /* namespace parPath */

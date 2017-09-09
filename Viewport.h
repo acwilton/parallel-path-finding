@@ -29,10 +29,14 @@ public:
     virtual size_t getY () const;
     virtual size_t getWidth () const;
     virtual size_t getHeight () const;
+    virtual bool isEnabled () const;
     virtual SDL_Color getBackgroundColor () const;
-    virtual std::shared_ptr<Button> getButton (uint pos) const;
+    virtual std::shared_ptr<Button> getButton (uint pos);
 
     virtual void setBackgroundColor (SDL_Color color);
+
+    virtual void enable ();
+    virtual void disable ();
 
     virtual void addButton (std::shared_ptr<Button> b);
     virtual void removeButton (uint pos);
@@ -46,6 +50,8 @@ protected:
     SDL_Rect m_rect;
 
     SDL_Color m_backgroundColor;
+
+    bool m_enabled;
 };
 
 } /* namespace parPath */

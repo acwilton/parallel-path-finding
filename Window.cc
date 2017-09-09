@@ -2,8 +2,6 @@
  * Window.cc
  */
 
-#include <iostream>
-
 #include "Window.h"
 
 namespace parPath
@@ -16,7 +14,6 @@ Window::Window (std::string title, size_t width, size_t height)
           m_keyFocus (false),
           m_mouseFocus (false),
           m_minimized (false),
-          m_windowID (0),
           m_window (nullptr),
           m_renderer (nullptr)
 {
@@ -34,14 +31,42 @@ void Window::focus ()
 
 void Window::handleEvent (SDL_Event& e)
 {
-    if (isOpen () && e.window.windowID == m_windowID)
+    if (isOpen ())
     {
         if (e.type == SDL_WINDOWEVENT)
         {
             switch (e.window.event)
             {
             case SDL_WINDOWEVENT_SHOWN:
-                std::cout << "shown\n";
+                m_minimized = false;
+                break;
+            case SDL_WINDOWEVENT_HIDDEN:
+                m_minimized = true;
+                break;
+            case SDL_WINDOWEVENT_ENTER:
+                m_mouseFocus = true;
+                break;
+            case SDL_WINDOWEVENT_LEAVE:
+                m_mouseFocus = false;
+                break;
+            case SDL_WINDOWEVENT_FOCUS_GAINED:
+                m_keyFocus = true;
+                break;
+            case SDL_WINDOWEVENT_FOCUS_LOST:
+                m_keyFocus = false;
+                break;
+            case SDL_WINDOWEVENT_MINIMIZED:
+                m_minimized = true;
+                break;
+            case SDL_WINDOWEVENT_MAXIMIZED:
+                m_minimized = false;
+                break;
+            case SDL_WINDOWEVENT_RESTORED:
+                m_minimized = false;
+                break;
+            case SDL_WINDOWEVENT_CLOSE:
+                closeWindow ();
+                break;
             }
         }
         else
@@ -61,13 +86,21 @@ void Window::render ()
         Log::logError("Render calls being made to window that isn't open. Window title: " + m_title);
         return;
     }
+    else if (isMinimized ())
+    {
+        return;
+    }
+    SDL_SetRenderDrawColor (m_renderer, 0x00, 0x00, 0x00, 0xFF);
+    SDL_RenderClear (m_renderer);
     for (auto& vp : m_viewports)
     {
         vp->render (m_renderer);
     }
+
+    SDL_RenderPresent (m_renderer);
 }
 
-std::shared_ptr<Viewport> Window::getViewport (uint pos) const
+std::shared_ptr<Viewport> Window::getViewport (uint pos)
 {
     return m_viewports[pos];
 }
@@ -107,7 +140,6 @@ void Window::spawnWindow ()
                         + std::string (SDL_GetError ()) + "\n");
     }
 
-    m_windowID = SDL_GetWindowID (m_window);
     m_minimized = false;
 }
 

@@ -23,36 +23,64 @@ const size_t SCREEN_HEIGHT = 960;
 
 int main (int args, char* argv[])
 {
-    // SDL variables needed
-    Window mainWindow ("Parallel Path Finding", SCREEN_WIDTH, SCREEN_HEIGHT);
+    bool quit = !sdl_init ();
 
-    SDL_Renderer* main_renderer = nullptr;
-    Viewport mainViewport (
-    { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT });
+    Window window("Parallel Path Finding", SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    std::shared_ptr<Viewport> mainViewport = std::make_shared<Viewport> (
+            SDL_Rect
+            { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT });
+    std::shared_ptr<Viewport> tbViewport = std::make_shared<Viewport> (
+            SDL_Rect
+            { 0, SCREEN_HEIGHT - 240, SCREEN_WIDTH, 240});
 
     std::random_device rd;
     std::minstd_rand0 gen (rd ());
 
-    SDL_Rect xr;
-    auto b = std::make_shared<Button>("Change Color",
-    SDL_Rect{ 10,10, 80, 30 });
+    auto b = std::make_shared<Button> ("Change Color 1", SDL_Rect
+    { (SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) - 125, 240, 50 }, 16, [&]()
+    {   mainViewport->setBackgroundColor(
+        {
+            static_cast<uchar>(gen() % 255),
+            static_cast<uchar>(gen() % 255),
+            static_cast<uchar>(gen() % 255), 0xFF
+        });
+    });
 
-    /*auto b = std::make_shared<Button>("Change Color",
-    { (SCREEN_WIDTH / 2) - 40, (SCREEN_HEIGHT / 2) - 15, 80, 30 }, [&]()
-    {   mainViewport.setBackgroundColor(
-                {   static_cast<uchar>(gen() % 255),
-                    static_cast<uchar>(gen() % 255),
-                    static_cast<uchar>(gen() % 255), 0xFF}
-        );
-    });*/
+    auto c = std::make_shared<Button> ("Change Color 2", SDL_Rect
+    { (SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) - 50, 240, 50 }, 16, [&]()
+    {   tbViewport->setBackgroundColor(
+        {
+            static_cast<uchar>(gen() % 255),
+            static_cast<uchar>(gen() % 255),
+            static_cast<uchar>(gen() % 255), 0xFF
+        });
+    });
 
-    bool quit = !sdl_init ();
+    auto d = std::make_shared<Button> ("Toggle Viewport", SDL_Rect
+    { (SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) + 25, 240, 50 }, 16, [&]()
+    {
+        tbViewport->isEnabled() ? tbViewport->disable() : tbViewport->enable();
+    });
+
+    auto f = std::make_shared<Button> ("Toggle Viewport", SDL_Rect
+    { (SCREEN_WIDTH / 2) - 120, 0, 240, 50 }, 16, [&]()
+    {
+        mainViewport->isEnabled() ? mainViewport->disable() : mainViewport->enable();
+    });
+
+    mainViewport->addButton (b);
+    mainViewport->addButton (c);
+    mainViewport->addButton (d);
+    tbViewport->addButton (f);
+    tbViewport->enable();
+    window.addViewport (mainViewport);
+    window.addViewport (tbViewport);
 
     SDL_Event e;
 
-    mainWindow.spawnWindow ();
-
-    mainWindow.render ();
+    window.spawnWindow ();
+    window.render ();
 
     // application loop
     while (!quit)
@@ -63,10 +91,15 @@ int main (int args, char* argv[])
             {
                 quit = true;
             }
+            else
+            {
+                window.handleEvent (e);
+            }
         }
-
-        mainWindow.render ();
+        window.render ();
     }
+
+    Log::logInfo ("Exiting program.");
 
     SDL_Quit ();
 

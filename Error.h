@@ -23,6 +23,11 @@ public:
      */
     static void logWarning (std::string message);
 
+    /**
+     * Output info message to "gui.log"
+     */
+    static void logInfo (std::string message);
+
     Log (const Log&) = delete;
     Log& operator= (const Log&) = delete;
 
@@ -33,6 +38,7 @@ private:
 
     void _logError (std::string message);
     void _logWarning (std::string message);
+    void _logInfo (std::string message);
 
     std::ofstream m_errOut;
 };

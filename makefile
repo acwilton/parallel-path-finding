@@ -1,15 +1,19 @@
-CC		  = g++
-CFLAGS		  = -c -Wall
+CC		          = g++
+CFLAGS		      = -c -Wall
 LDLIBS            = -lSDL2 -lSDL2_ttf
-LDFLAGS		  =
-COMMON_SOURCES    = world.cc
-COMMON_OBJECTS	  = world.o
+LDFLAGS		      =
+COMMON_SOURCES    = World.cc
+COMMON_OBJECTS	  = World.o
 
-GUI_EXEC	  = par-path-finding
-GUI_SOURCES       = parallel-path-finding-gui.cc
+GUI_EXEC	      = pathFind
+GUI_SOURCES       = parallel-path-finding-gui.cc \
+					Error.cc \
+					Window.cc \
+					Viewport.cc \
+					Button.cc
 
-WORLD_GEN_EXEC    = worldGen
-WORLD_GEN_SOURCES = worldGen.cc
+WORLD_GEN_EXEC    = WorldGen
+WORLD_GEN_SOURCES = WorldGen.cc
 
 # All of the target executables
 TARGETS           = $(foreach target,$(TARGET_NAMES),$($(target)_EXEC))
@@ -27,7 +31,7 @@ $(foreach target,$(TARGET_NAMES),$(eval $(call TARGET_template,$(target))))
 
 .PHONY : clean
 clean:
-	rm $(foreach target,$(TARGET_NAMES),$($(target)_OBJECTS)) $(COMMON_OBJECTS) $(TARGETS)
+	rm $(foreach target,$(TARGET_NAMES),$($(target)_OBJECTS)) $(COMMON_OBJECTS) $(TARGETS) gui.log
 
 .PHONY : clean_worlds
 clean_worlds:

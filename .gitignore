@@ -1,6 +1,12 @@
 *~
-worldGen
+WorldGen
 worlds/
+.settings/
+.project
+.cproject
 *.o
+*.ttf
 
-par-path-finding
+pathFind
+gui.log
+

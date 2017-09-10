@@ -6,17 +6,20 @@
 namespace parPath
 {
 
-Button::Button (std::string text, SDL_Rect rect, size_t fontSize,
-        std::function<void ()> funct, SDL_Color backgroundColor,
+Button::Button (int vp_x, int vp_y, std::string text, SDL_Rect rect,
+        size_t fontSize, std::function<void ()> funct, SDL_Color backgroundColor,
         SDL_Color textColor)
         : m_text (text),
+          m_viewport_x (vp_x),
+          m_viewport_y (vp_y),
           m_buttonRect (rect),
           m_fontSize (fontSize),
           m_funct (funct),
           m_backgroundColor (backgroundColor),
           m_textColor (textColor),
           m_textInitialized (false),
-          m_textTexture (nullptr)
+          m_textTexture (nullptr),
+          m_enabled (false)
 {
 }
 
@@ -27,6 +30,11 @@ Button::~Button ()
 
 void Button::render (SDL_Renderer* renderer)
 {
+    if (!isEnabled ())
+    {
+        return;
+    }
+
     if (!m_textInitialized)
     {
         initializeTextTexture (renderer);
@@ -41,9 +49,43 @@ void Button::render (SDL_Renderer* renderer)
 
 }
 
+void Button::handleEvent (SDL_Event& e)
+{
+    if (!isEnabled ())
+    {
+        return;
+    }
+
+    if (e.type == SDL_MOUSEBUTTONDOWN)
+    {
+        int mouseX, mouseY;
+        SDL_GetMouseState (&mouseX, &mouseY);
+
+        size_t b_globalX = getX () + m_viewport_x;
+        size_t b_globalY = getY () + m_viewport_y;
+
+        if (mouseX > b_globalX && mouseX < (b_globalX + getWidth ())
+                && mouseY > b_globalY
+                && mouseY < (b_globalY + getHeight ()))
+        {
+            execute ();
+        }
+    }
+}
+
 void Button::execute ()
 {
     m_funct ();
+}
+
+void Button::enable ()
+{
+    m_enabled = true;
+}
+
+void Button::disable ()
+{
+    m_enabled = false;
 }
 
 void Button::setText (std::string text)
@@ -67,22 +109,22 @@ void Button::setTextColor (SDL_Color color)
     m_textColor = color;
 }
 
-size_t Button::getX () const
+int Button::getX () const
 {
     return m_buttonRect.x;
 }
 
-size_t Button::getY () const
+int Button::getY () const
 {
     return m_buttonRect.y;
 }
 
-size_t Button::getWidth () const
+int Button::getWidth () const
 {
     return m_buttonRect.w;
 }
 
-size_t Button::getHeight () const
+int Button::getHeight () const
 {
     return m_buttonRect.h;
 }
@@ -107,15 +149,18 @@ SDL_Color Button::getTextColor () const
     return m_textColor;
 }
 
+bool Button::isEnabled () const
+{
+    return m_enabled;
+}
+
 void Button::initializeTextTexture (SDL_Renderer* renderer)
 {
     destroyResources ();
-    m_textRect = {0, 0, 0, 0};
 
     if (m_text == "")
     {
-        m_textInitialized = true;
-        return;
+        m_text = " ";
     }
 
     TTF_Font* font = TTF_OpenFont ("FreeSans.ttf", 128);

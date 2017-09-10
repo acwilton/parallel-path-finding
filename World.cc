@@ -79,25 +79,35 @@ World::tile_t World::operator() (size_t row, size_t column)
     return m_tiles[row][column];
 }
 
-std::ostream&
-operator<< (std::ostream& stream, const World& world)
+std::ostream& operator<< (std::ostream& stream, const World& world)
 {
+    stream << world.m_height << world.m_width;
     for (auto& row : world.m_tiles)
     {
-        for (auto& e : row)
+        for (auto& t : row)
         {
             //stream << e.cost;
-            if (e.cost == static_cast<uchar> (0))
-            {
-                stream << '#';
-            }
-            else
-            {
-                stream << '.';
-            }
+            stream << static_cast<uchar> (t.cost);
         }
-        stream << '\n';
     }
     return stream;
 }
+
+std::istream& operator>> (std::istream& stream, World& world)
+{
+    size_t height, width;
+    stream >> height >> width;
+    std::vector<std::vector<World::tile_t>> tiles (height, std::vector(width));
+
+    for (auto& row : tiles)
+    {
+        for (auto& t : row)
+        {
+            stream >> t.cost;
+        }
+    }
+
+    return stream;
+}
+
 } /* namespace parPath */

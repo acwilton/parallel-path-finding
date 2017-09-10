@@ -13,6 +13,7 @@
 #include "Error.h"
 #include "World.h"
 #include "Window.h"
+#include "TextInput.h"
 
 using namespace parPath;
 
@@ -28,54 +29,32 @@ int main (int args, char* argv[])
     Window window("Parallel Path Finding", SCREEN_WIDTH, SCREEN_HEIGHT);
 
     std::shared_ptr<Viewport> mainViewport = std::make_shared<Viewport> (
-            SDL_Rect
-            { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT });
-    std::shared_ptr<Viewport> tbViewport = std::make_shared<Viewport> (
-            SDL_Rect
-            { 0, SCREEN_HEIGHT - 240, SCREEN_WIDTH, 240});
+            SDL_Rect { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT },
+            SDL_Color {0xAA, 0x37, 0x4A});
 
     std::random_device rd;
     std::minstd_rand0 gen (rd ());
 
-    auto b = std::make_shared<Button> ("Change Color 1", SDL_Rect
-    { (SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) - 125, 240, 50 }, 16, [&]()
-    {   mainViewport->setBackgroundColor(
-        {
-            static_cast<uchar>(gen() % 255),
-            static_cast<uchar>(gen() % 255),
-            static_cast<uchar>(gen() % 255), 0xFF
-        });
-    });
+    std::shared_ptr<TextInput> c;
+    auto b = std::make_shared<Button> (mainViewport->getX (), mainViewport->getY (),
+            "Change This Text", SDL_Rect
+            { (SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) - 50, 240, 50 }, 16,
+            [&]()
+            {
+                c->enable();
+            });
 
-    auto c = std::make_shared<Button> ("Change Color 2", SDL_Rect
-    { (SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) - 50, 240, 50 }, 16, [&]()
-    {   tbViewport->setBackgroundColor(
-        {
-            static_cast<uchar>(gen() % 255),
-            static_cast<uchar>(gen() % 255),
-            static_cast<uchar>(gen() % 255), 0xFF
-        });
-    });
-
-    auto d = std::make_shared<Button> ("Toggle Viewport", SDL_Rect
-    { (SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) + 25, 240, 50 }, 16, [&]()
-    {
-        tbViewport->isEnabled() ? tbViewport->disable() : tbViewport->enable();
-    });
-
-    auto f = std::make_shared<Button> ("Toggle Viewport", SDL_Rect
-    { (SCREEN_WIDTH / 2) - 120, 0, 240, 50 }, 16, [&]()
-    {
-        mainViewport->isEnabled() ? mainViewport->disable() : mainViewport->enable();
-    });
+    c = std::make_shared<TextInput> (mainViewport->getX (), mainViewport->getY (),
+            (SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) + 25, 16,
+            [&](std::string s)
+            {   b->setText(s);
+            });
 
     mainViewport->addButton (b);
+    b->enable ();
     mainViewport->addButton (c);
-    mainViewport->addButton (d);
-    tbViewport->addButton (f);
-    tbViewport->enable();
+    mainViewport->enable ();
     window.addViewport (mainViewport);
-    window.addViewport (tbViewport);
 
     SDL_Event e;
 

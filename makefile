@@ -10,7 +10,8 @@ GUI_SOURCES       = parallel-path-finding-gui.cc \
 					Error.cc \
 					Window.cc \
 					Viewport.cc \
-					Button.cc
+					Button.cc \
+					TextInput.cc
 
 WORLD_GEN_EXEC    = WorldGen
 WORLD_GEN_SOURCES = WorldGen.cc

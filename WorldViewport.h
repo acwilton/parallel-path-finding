@@ -15,8 +15,18 @@ namespace parPath
 class WorldViewport: public Viewport
 {
 public:
-    WorldViewport ();
+    WorldViewport (SDL_Rect rect, std::string worldFile,
+            SDL_Color backgroundColor = { 0xFF, 0xFF, 0xFF, 0xFF });
     virtual ~WorldViewport ();
+
+    virtual void render (SDL_Renderer* renderer);
+
+    virtual void handleEvent (SDL_Event& e);
+
+    virtual void loadFile (std::string worldFile);
+
+protected:
+    std::string m_worldFile;
 };
 
 } /* namespace parPath */

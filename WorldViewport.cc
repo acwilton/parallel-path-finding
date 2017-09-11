@@ -7,15 +7,31 @@
 namespace parPath
 {
 
-WorldViewport::WorldViewport ()
+WorldViewport::WorldViewport (SDL_Rect rect, std::string worldFile,
+        SDL_Color backgroundColor)
+        : Viewport (rect, backgroundColor),
+          m_worldFile (worldFile)
 {
-    // TODO Auto-generated constructor stub
 
 }
 
 WorldViewport::~WorldViewport ()
 {
-    // TODO Auto-generated destructor stub
+}
+
+void WorldViewport::render (SDL_Renderer* renderer)
+{
+
+}
+
+void WorldViewport::handleEvent (SDL_Event& e)
+{
+
+}
+
+void WorldViewport::loadFile (std::string worldFile)
+{
+
 }
 
 } /* namespace parPath */

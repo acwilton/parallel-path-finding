@@ -11,7 +11,9 @@ GUI_SOURCES       = parallel-path-finding-gui.cc \
 					Window.cc \
 					Viewport.cc \
 					Button.cc \
-					TextInput.cc
+					TextInput.cc \
+					WorldViewport.cc \
+					GraphicTile.cc
 
 WORLD_GEN_EXEC    = WorldGen
 WORLD_GEN_SOURCES = WorldGen.cc

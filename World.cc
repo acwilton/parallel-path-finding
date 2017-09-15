@@ -5,8 +5,8 @@
 #include <random>
 #include <functional>
 #include <cmath>
-#include <iostream>
 
+typedef unsigned int uint;
 typedef unsigned char uchar;
 
 namespace parPath
@@ -79,7 +79,7 @@ void World::generateMap ()
         if (m_tiles[y][x].cost == static_cast<uchar> (0))
         {
             ++numCarvedTiles;
-            m_tiles[y][x].cost = static_cast<uchar> (1);
+            m_tiles[y][x].cost = static_cast<uchar> ((gen () % 255) + 1);
         }
     }
 
@@ -118,6 +118,7 @@ std::ostream& operator<< (std::ostream& stream, const World& world)
 std::istream& operator>> (std::istream& stream, World& world)
 {
     stream >> world.m_height >> world.m_width;
+    stream.ignore (1);
     world.m_tiles.resize(world.m_height);
 
     for (auto& row : world.m_tiles)
@@ -125,7 +126,7 @@ std::istream& operator>> (std::istream& stream, World& world)
         row.resize (world.m_width);
         for (auto& tile : row)
         {
-            stream >> tile.cost;
+            tile.cost = stream.get ();
         }
     }
 

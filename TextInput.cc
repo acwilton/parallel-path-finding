@@ -6,10 +6,10 @@
 namespace parPath
 {
 
-TextInput::TextInput (int vp_x, int vp_y, int x, int y, size_t fontSize,
+TextInput::TextInput (int x, int y, size_t fontSize,
         std::function<void (std::string)> funct,
         SDL_Color backgroundColor, SDL_Color textColor)
-    : Button (vp_x, vp_y, " ", SDL_Rect
+    : Button (0, 0, "", SDL_Rect
             {x, y, static_cast<int>(fontSize), static_cast<int>(fontSize * 2.25f)},
             fontSize, [](){}, backgroundColor, textColor),
       m_stringFunct (funct),
@@ -74,12 +74,23 @@ void TextInput::handleEvent(SDL_Event& e)
             disable ();
             execute ();
         }
+        else if (e.key.keysym.sym == SDLK_ESCAPE)
+        {
+            disable ();
+        }
     }
     else if (e.type == SDL_TEXTINPUT)
     {
         if (!(SDL_GetModState () & KMOD_CTRL))
         {
-            m_text += e.text.text;
+            if (m_text == " ")
+            {
+                m_text = e.text.text;
+            }
+            else
+            {
+                m_text += e.text.text;
+            }
             m_textInitialized = false;
         }
     }

@@ -7,6 +7,8 @@
 #include <memory>
 #include <random>
 
+#include <stdlib.h>
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
@@ -14,6 +16,7 @@
 #include "World.h"
 #include "Window.h"
 #include "TextInput.h"
+#include "WorldViewport.h"
 
 using namespace parPath;
 
@@ -31,30 +34,110 @@ int main (int args, char* argv[])
     std::shared_ptr<Viewport> mainViewport = std::make_shared<Viewport> (
             SDL_Rect { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT },
             SDL_Color {0xAA, 0x37, 0x4A});
+    std::shared_ptr<WorldViewport> worldViewport = std::make_shared<WorldViewport> (
+            SDL_Rect {0, 0, SCREEN_WIDTH, (SCREEN_HEIGHT * 7) / 8 },
+            SDL_Color {0xBB, 0xCC, 0xCC});
+    std::shared_ptr<Viewport> toolbarViewport = std::make_shared<Viewport> (
+            SDL_Rect {0, (SCREEN_HEIGHT * 7) / 8, SCREEN_WIDTH, SCREEN_HEIGHT / 8},
+            SDL_Color {0x88, 0xAA, 0x88});
 
     std::random_device rd;
     std::minstd_rand0 gen (rd ());
 
-    std::shared_ptr<TextInput> c;
-    auto b = std::make_shared<Button> (mainViewport->getX (), mainViewport->getY (),
-            "Change This Text", SDL_Rect
-            { (SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) - 50, 240, 50 }, 16,
+    std::shared_ptr<TextInput> genWorldInput_TI;
+    auto genWorld_B = std::make_shared<Button> (mainViewport->getX (), mainViewport->getY (),
+            "Generate World", SDL_Rect
+            { (SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) - 25, 240, 50 }, 16,
             [&]()
             {
-                c->enable();
+                genWorldInput_TI->enable();
             });
 
-    c = std::make_shared<TextInput> (mainViewport->getX (), mainViewport->getY (),
-            (SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) + 25, 16,
+    std::string worldCommand;
+    std::function<void(std::string)> genWorldFunct = [&](std::string s)
+            {
+                worldCommand = s;
+                std::string command = "./WorldGen " + worldCommand;
+                system (command.c_str ());
+
+                std::string worldName = worldCommand;
+                int pos = worldName.find_first_of(" ");
+                worldName.erase(pos, std::string::npos);
+
+                worldViewport->setFile(worldName);
+                worldViewport->loadFile();
+
+                worldViewport->enable();
+                toolbarViewport->enable();
+                mainViewport->disable();
+                //sizeInput_TI->enable();
+            };
+
+    genWorldInput_TI = std::make_shared<TextInput> (
+            (SCREEN_WIDTH / 2), SCREEN_HEIGHT - 75, 16, genWorldFunct);
+
+    std::shared_ptr<TextInput> viewWorldInput_TI;
+    auto viewWorld_B = std::make_shared<Button> (
+            worldViewport->getX (), worldViewport->getY (),
+            "View World", SDL_Rect
+            {(SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) - 100, 240, 50}, 16,
+            [&]()
+            {
+                viewWorldInput_TI->enable ();
+            });
+
+    viewWorldInput_TI = std::make_shared<TextInput> (
+            (SCREEN_WIDTH / 2), SCREEN_HEIGHT - 75, 16,
             [&](std::string s)
-            {   b->setText(s);
+            {
+                worldViewport->setFile(s);
+                worldViewport->loadFile();
+
+                worldViewport->enable();
+                toolbarViewport->enable();
+                mainViewport->disable();
             });
 
-    mainViewport->addButton (b);
-    b->enable ();
-    mainViewport->addButton (c);
+
+    auto regenerate_B = std::make_shared<Button> (
+            toolbarViewport->getX (), toolbarViewport->getY (),
+            "Regenerate World", SDL_Rect
+            {20, toolbarViewport->getHeight() / 2 - 25, 280, 50}, 16,
+            [&]()
+            {
+                std::string command = "./WorldGen " + worldCommand;
+                system (command.c_str ());
+
+                worldViewport->loadFile();
+            });
+    auto backToMenu_B = std::make_shared<Button> (
+            toolbarViewport->getX (), toolbarViewport->getY (),
+            "Back To Menu", SDL_Rect
+            {320, toolbarViewport->getHeight() / 2 - 25, 280, 50}, 16,
+            [&]()
+            {
+                mainViewport->enable ();
+                worldViewport->disable ();
+                toolbarViewport->disable ();
+            });
+
+    mainViewport->addButton (genWorld_B);
+    mainViewport->addButton (genWorldInput_TI);
+    genWorld_B->enable ();
+    mainViewport->addButton (viewWorld_B);
+    mainViewport->addButton (viewWorldInput_TI);
+    viewWorld_B->enable ();
+
     mainViewport->enable ();
+
+    toolbarViewport->addButton (regenerate_B);
+    toolbarViewport->addButton (backToMenu_B);
+    backToMenu_B->enable ();
+    regenerate_B->enable ();
+
     window.addViewport (mainViewport);
+    window.addViewport (worldViewport);
+    window.addViewport(toolbarViewport);
 
     SDL_Event e;
 
@@ -77,7 +160,6 @@ int main (int args, char* argv[])
         }
         window.render ();
     }
-
     Log::logInfo ("Exiting program.");
 
     SDL_Quit ();

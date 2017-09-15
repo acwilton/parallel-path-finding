@@ -35,7 +35,7 @@ public:
     SDL_Rect getRect () const;
     World::tile_t getTile () const;
 
-    void render (SDL_Renderer* renderer);
+    void render (SDL_Renderer* renderer, SDL_Texture* texture);
 
 protected:
     World::tile_t m_tileData;
@@ -44,13 +44,10 @@ protected:
     SDL_Rect m_textRect;
     SDL_Color m_rectColor;
     SDL_Color m_textColor;
-    SDL_Texture* m_textTexture;
 
-    bool m_textInitialized;
     bool m_textEnabled;
 
-    void initializeTexture (SDL_Renderer* renderer);
-    void destroyResources ();
+    void updateTextRect ();
 };
 
 } /* namespace parPath */

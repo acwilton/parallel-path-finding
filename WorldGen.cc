@@ -37,8 +37,8 @@ int main (int args, char* argv[])
     std::stringstream fileName;
     fileName << worldDir << "/" << argv[1] << worldExt;
 
-    std::ofstream worldFile (fileName.str (),
-            std::ofstream::out | std::ofstream::binary);
+    std::fstream worldFile (fileName.str (),
+            std::fstream::out | std::fstream::binary);
 
     size_t width;
     try
@@ -61,6 +61,7 @@ int main (int args, char* argv[])
     }
 
     World world (height, width);
+    world.generateMap ();
 
     worldFile << world;
 

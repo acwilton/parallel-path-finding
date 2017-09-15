@@ -25,10 +25,10 @@ public:
     { 0xFF, 0xFF, 0xFF, 0xFF });
     virtual ~Viewport ();
 
-    virtual size_t getX () const;
-    virtual size_t getY () const;
-    virtual size_t getWidth () const;
-    virtual size_t getHeight () const;
+    virtual int getX () const;
+    virtual int getY () const;
+    virtual int getWidth () const;
+    virtual int getHeight () const;
     virtual bool isEnabled () const;
     virtual SDL_Color getBackgroundColor () const;
     virtual std::shared_ptr<Button> getButton (uint pos);

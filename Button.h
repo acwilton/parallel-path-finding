@@ -20,20 +20,24 @@ namespace parPath
 class Button
 {
 public:
-    Button (std::string text, SDL_Rect rect, size_t fontSize,
+    Button (int vp_x, int vp_y, std::string text, SDL_Rect rect, size_t fontSize,
             std::function<void ()> funct, SDL_Color backgroundColor =
             { 0x44, 0x44, 0x44, 0xFF }, SDL_Color textColor =
             { 0x00, 0x00, 0x00, 0xFF });
     virtual ~Button ();
 
-    virtual size_t getX () const;
-    virtual size_t getY () const;
-    virtual size_t getWidth () const;
-    virtual size_t getHeight () const;
+    virtual int getX () const;
+    virtual int getY () const;
+    virtual int getWidth () const;
+    virtual int getHeight () const;
     virtual std::string getText () const;
     virtual size_t getFontSize () const;
     virtual SDL_Color getBackgroundColor () const;
     virtual SDL_Color getTextColor () const;
+    virtual bool isEnabled () const;
+
+    virtual void enable ();
+    virtual void disable ();
 
     virtual void setText (std::string text);
     virtual void setFontSize (size_t fontSize);
@@ -41,6 +45,7 @@ public:
     virtual void setTextColor (SDL_Color color);
 
     virtual void render (SDL_Renderer* renderer);
+    virtual void handleEvent (SDL_Event& e);
     virtual void execute ();
 
 protected:
@@ -59,6 +64,10 @@ protected:
     SDL_Texture* m_textTexture;
     SDL_Rect m_textRect;
     bool m_textInitialized;
+
+    bool m_enabled;
+    int m_viewport_x;
+    int m_viewport_y;
 };
 
 } /* namespace parPath */

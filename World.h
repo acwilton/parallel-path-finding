@@ -27,8 +27,13 @@ class World
 public:
 
     /**
+     * Contructs an empty world object
+     */
+    World ();
+
+    /**
      * Constructs a world object with the specified width and height.
-     * Values are randomly assigned.
+     * Each tiles cost is set to 0 by default
      * @param height   The height of the world.
      * @param width    The width of the world.
      */
@@ -57,14 +62,18 @@ public:
     tile_t
     operator() (size_t row, size_t column);
 
+    void generateMap ();
+
+    size_t getWidth () const;
+    size_t getHeight () const;
+
     friend std::ostream& operator<< (std::ostream& stream, const World& world);
+    friend std::istream& operator>> (std::istream& stream, World& world);
 
 private:
     std::vector<std::vector<tile_t>> m_tiles;
     size_t m_width;
     size_t m_height;
-
-    void generateMap ();
 };
 
 } /* namespace parPath */

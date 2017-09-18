@@ -1,36 +1,27 @@
-CC		          = g++
-CFLAGS		      = -c -Wall
+CXX		          = g++
+CXXFLAGS          = -Wall
 LDLIBS            = -lSDL2 -lSDL2_ttf
 LDFLAGS		      =
-COMMON_SOURCES    = World.cc
-COMMON_OBJECTS	  = World.o
+COMMON_SRCS       = World.cc
 
-GUI_EXEC	      = pathFind
-GUI_SOURCES       = parallel-path-finding-gui.cc \
-					Error.cc \
-					Window.cc \
-					Viewport.cc \
-					Button.cc \
-					TextInput.cc \
-					WorldViewport.cc \
-					GraphicTile.cc
+TARGETS          += gui
+gui_SRCS          = src/gui/parallel-path-finding-gui.cc \
+					src/gui/Error.cc \
+					src/gui/Window.cc \
+					src/gui/Viewport.cc \
+					src/gui/Button.cc \
+					src/gui/TextInput.cc \
+					src/gui/WorldViewport.cc \
+					src/gui/GraphicTile.cc
 
-WORLD_GEN_EXEC    = WorldGen
-WORLD_GEN_SOURCES = WorldGen.cc
+TARGETS          += worldGen
+worldGen_SRCS     = src/WorldGen.cc
 
-# All of the target executables
-TARGETS           = $(foreach target,$(TARGET_NAMES),$($(target)_EXEC))
-TARGET_NAMES      = GUI WORLD_GEN
 
 all: $(TARGETS)
 
-define TARGET_template =
-$(1)_OBJECTS += $$(patsubst %.cc,%.o,$$($(1)_SOURCES))
-$$($(1)_EXEC): $(COMMON_OBJECTS) $$($(1)_OBJECTS)
-	$(CC) $(LDFLAGS) $$^ -o $$@ $(LDLIBS)
-endef
-
-$(foreach target,$(TARGET_NAMES),$(eval $(call TARGET_template,$(target))))
+$(TARGETS): $$(patsubst %.cc,%.o,$$($$@_SRCS)) $(patsubst %.cc,%.o,$(COMMON_SRCS))
+	$(CXX) $(CXXFLAGS) $$^ -o $$@ $(LDFLAGS) $(LDLIBS)
 
 .PHONY : clean
 clean:

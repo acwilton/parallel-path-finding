@@ -13,8 +13,8 @@
 #include <string>
 #include <memory>
 
-#include "Error.h"
-#include "Viewport.h"
+#include "gui/Error.h"
+#include "gui/Viewport.h"
 
 namespace parPath
 {

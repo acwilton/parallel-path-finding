@@ -19,5 +19,5 @@ resources/
 gui.log
 
 # Executables
-./gui
-./worldGen
+/gui
+/worldGen

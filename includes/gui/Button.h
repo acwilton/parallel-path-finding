@@ -12,7 +12,7 @@
 #include <functional>
 #include <string>
 
-#include "Error.h"
+#include "gui/Error.h"
 
 namespace parPath
 {

@@ -4,7 +4,7 @@
 
 #include <fstream>
 
-#include "WorldViewport.h"
+#include "gui/WorldViewport.h"
 
 namespace parPath
 {

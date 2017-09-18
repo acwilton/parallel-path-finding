@@ -9,10 +9,10 @@
 #include <vector>
 #include <string>
 
-#include "Error.h"
-#include "Viewport.h"
-#include "World.h"
-#include "GraphicTile.h"
+#include "common/World.h"
+#include "gui/Error.h"
+#include "gui/Viewport.h"
+#include "gui/GraphicTile.h"
 
 namespace parPath
 {

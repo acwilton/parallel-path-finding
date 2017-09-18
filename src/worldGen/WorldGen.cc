@@ -10,7 +10,7 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include "World.h"
+#include "common/World.h"
 
 using namespace parPath;
 

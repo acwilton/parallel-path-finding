@@ -12,11 +12,11 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
-#include "Error.h"
-#include "World.h"
-#include "Window.h"
-#include "TextInput.h"
-#include "WorldViewport.h"
+#include "common/World.h"
+#include "gui/Error.h"
+#include "gui/Window.h"
+#include "gui/TextInput.h"
+#include "gui/WorldViewport.h"
 
 using namespace parPath;
 
@@ -28,6 +28,7 @@ const size_t SCREEN_HEIGHT = 960;
 int main (int args, char* argv[])
 {
     bool quit = !sdl_init ();
+    Log::logInfo("SDL started.");
 
     Window window("Parallel Path Finding", SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -140,10 +141,11 @@ int main (int args, char* argv[])
     window.addViewport(toolbarViewport);
 
     SDL_Event e;
+    std::cout << "hello" << std::endl << std::flush;
 
     window.spawnWindow ();
     window.render ();
-
+    std::cout << "hello" << std::endl << std::flush;
     // application loop
     while (!quit)
     {

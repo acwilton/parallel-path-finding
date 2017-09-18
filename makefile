@@ -1,9 +1,14 @@
+# Built-in Variables
 CXX		          = g++
 CXXFLAGS          = -Wall
+CPPFLAGS          = -Iincludes
 LDLIBS            = -lSDL2 -lSDL2_ttf
 LDFLAGS		      =
-COMMON_SRCS       = World.cc
 
+# Source files that all programs depend on
+COMMON_SRCS       = src/common/World.cc
+
+# Graphical program
 TARGETS          += gui
 gui_SRCS          = src/gui/parallel-path-finding-gui.cc \
 					src/gui/Error.cc \
@@ -14,19 +19,22 @@ gui_SRCS          = src/gui/parallel-path-finding-gui.cc \
 					src/gui/WorldViewport.cc \
 					src/gui/GraphicTile.cc
 
+# World generation program
 TARGETS          += worldGen
-worldGen_SRCS     = src/WorldGen.cc
+worldGen_SRCS     = src/worldGen/WorldGen.cc
 
+#all: worldGen
 
 all: $(TARGETS)
 
-$(TARGETS): $$(patsubst %.cc,%.o,$$($$@_SRCS)) $(patsubst %.cc,%.o,$(COMMON_SRCS))
-	$(CXX) $(CXXFLAGS) $$^ -o $$@ $(LDFLAGS) $(LDLIBS)
+.SECONDEXPANSION:
+$(TARGETS): $$(patsubst %.cc,%.o,$$($$@_SRCS)) $$(patsubst %.cc,%.o,$$(COMMON_SRCS))
+	$(CXX) $(LDFLAGS) $^ -o $@  $(LDLIBS)
 
 .PHONY : clean
 clean:
-	rm $(foreach target,$(TARGET_NAMES),$($(target)_OBJECTS)) $(COMMON_OBJECTS) $(TARGETS) gui.log
+	rm -f $(foreach target,$(TARGETS),$(patsubst %.cc,%.o,$($(target)_SRCS))) $(patsubst %.cc,%.o,$(COMMON_SRCS)) $(TARGETS) gui.log
 
 .PHONY : clean_worlds
 clean_worlds:
-	rm worlds/*
+	rm -f worlds/*

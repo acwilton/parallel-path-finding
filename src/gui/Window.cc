@@ -2,7 +2,7 @@
  * Window.cc
  */
 
-#include "Window.h"
+#include "gui/Window.h"
 
 namespace parPath
 {

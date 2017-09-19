@@ -1,41 +1,39 @@
-CC		          = g++
-CFLAGS		      = -c -Wall
+# Built-in Variables
+CXX		          = g++
+CXXFLAGS          = -Wall
+CPPFLAGS          = -Iincludes
 LDLIBS            = -lSDL2 -lSDL2_ttf
 LDFLAGS		      =
-COMMON_SOURCES    = World.cc
-COMMON_OBJECTS	  = World.o
 
-GUI_EXEC	      = pathFind
-GUI_SOURCES       = parallel-path-finding-gui.cc \
-					Error.cc \
-					Window.cc \
-					Viewport.cc \
-					Button.cc \
-					TextInput.cc \
-					WorldViewport.cc \
-					GraphicTile.cc
+# Source files that all programs depend on
+COMMON_SRCS       = src/common/World.cc
 
-WORLD_GEN_EXEC    = WorldGen
-WORLD_GEN_SOURCES = WorldGen.cc
+# Graphical program
+TARGETS          += gui
+gui_SRCS          = src/gui/parallel-path-finding-gui.cc \
+					src/gui/Error.cc \
+					src/gui/Window.cc \
+					src/gui/Viewport.cc \
+					src/gui/Button.cc \
+					src/gui/TextInput.cc \
+					src/gui/WorldViewport.cc \
+					src/gui/GraphicTile.cc
 
-# All of the target executables
-TARGETS           = $(foreach target,$(TARGET_NAMES),$($(target)_EXEC))
-TARGET_NAMES      = GUI WORLD_GEN
+# World generation program
+TARGETS          += worldGen
+worldGen_SRCS     = src/worldGen/WorldGen.cc
 
 all: $(TARGETS)
 
-define TARGET_template =
-$(1)_OBJECTS += $$(patsubst %.cc,%.o,$$($(1)_SOURCES))
-$$($(1)_EXEC): $(COMMON_OBJECTS) $$($(1)_OBJECTS)
-	$(CC) $(LDFLAGS) $$^ -o $$@ $(LDLIBS)
-endef
-
-$(foreach target,$(TARGET_NAMES),$(eval $(call TARGET_template,$(target))))
+.SECONDEXPANSION:
+$(TARGETS): $$(patsubst %.cc,%.o,$$($$@_SRCS)) $$(patsubst %.cc,%.o,$$(COMMON_SRCS))
+	$(CXX) $(LDFLAGS) $^ -o $@  $(LDLIBS)
 
 .PHONY : clean
 clean:
-	rm $(foreach target,$(TARGET_NAMES),$($(target)_OBJECTS)) $(COMMON_OBJECTS) $(TARGETS) gui.log
+	rm -f $(foreach target,$(TARGETS),$(patsubst %.cc,%.o,$($(target)_SRCS))) \
+	      $(patsubst %.cc,%.o,$(COMMON_SRCS)) $(TARGETS) gui.log
 
 .PHONY : clean_worlds
 clean_worlds:
-	rm worlds/*
+	rm -f worlds/*

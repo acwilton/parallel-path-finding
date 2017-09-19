@@ -1,7 +1,7 @@
 /**
  * Viewport.cc
  */
-#include "Viewport.h"
+#include "gui/Viewport.h"
 
 namespace parPath
 {

@@ -11,8 +11,8 @@
 
 #include <string>
 
-#include "Error.h"
-#include "World.h"
+#include "gui/Error.h"
+#include "common/World.h"
 
 namespace parPath
 {

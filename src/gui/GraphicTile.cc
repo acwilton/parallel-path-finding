@@ -2,7 +2,7 @@
  * GraphicTile.cc
  */
 
-#include "GraphicTile.h"
+#include "gui/GraphicTile.h"
 #include <iostream>
 
 namespace parPath

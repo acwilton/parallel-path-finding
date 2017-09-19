@@ -12,8 +12,8 @@
 #include <vector>
 #include <memory>
 
-#include "Error.h"
-#include "Button.h"
+#include "gui/Error.h"
+#include "gui/Button.h"
 
 namespace parPath
 {

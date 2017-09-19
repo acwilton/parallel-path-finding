@@ -2,7 +2,7 @@
  * Error.cc
  */
 
-#include "Error.h"
+#include "gui/Error.h"
 
 const std::string ERROR_PREFIX = "(EE)";
 const std::string WARNING_PREFIX = "(WW)";

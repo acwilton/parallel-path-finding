@@ -1,7 +1,7 @@
 /*
  * TextInput.cc
  */
-#include "TextInput.h"
+#include "gui/TextInput.h"
 
 namespace parPath
 {

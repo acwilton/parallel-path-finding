@@ -1,6 +1,6 @@
 // World.cc
 
-#include "World.h"
+#include "common/World.h"
 
 #include <random>
 #include <functional>

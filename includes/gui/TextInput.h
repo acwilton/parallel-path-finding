@@ -7,7 +7,7 @@
 #ifndef TEXTINPUT_H_
 #define TEXTINPUT_H_
 
-#include "Button.h"
+#include "gui/Button.h"
 
 namespace parPath
 {

@@ -12,11 +12,11 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
-#include "Error.h"
-#include "World.h"
-#include "Window.h"
-#include "TextInput.h"
-#include "WorldViewport.h"
+#include "common/World.h"
+#include "gui/Error.h"
+#include "gui/Window.h"
+#include "gui/TextInput.h"
+#include "gui/WorldViewport.h"
 
 using namespace parPath;
 
@@ -28,6 +28,7 @@ const size_t SCREEN_HEIGHT = 960;
 int main (int args, char* argv[])
 {
     bool quit = !sdl_init ();
+    Log::logInfo("SDL started.");
 
     Window window("Parallel Path Finding", SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -57,7 +58,7 @@ int main (int args, char* argv[])
     std::function<void(std::string)> genWorldFunct = [&](std::string s)
             {
                 worldCommand = s;
-                std::string command = "./WorldGen " + worldCommand;
+                std::string command = "./worldGen " + worldCommand;
                 system (command.c_str ());
 
                 std::string worldName = worldCommand;
@@ -105,7 +106,7 @@ int main (int args, char* argv[])
             {20, toolbarViewport->getHeight() / 2 - 25, 280, 50}, 16,
             [&]()
             {
-                std::string command = "./WorldGen " + worldCommand;
+                std::string command = "./worldGen " + worldCommand;
                 system (command.c_str ());
 
                 worldViewport->loadFile();

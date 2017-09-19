@@ -1,12 +1,23 @@
+# Backup files
 *~
-WorldGen
+
+# World files
 worlds/
+
+# Eclipse files
 .settings/
 .project
 .cproject
-*.o
-*.ttf
 
-pathFind
+# Object files
+*.o
+
+# Resources
+resources/
+
+# Logging files
 gui.log
 
+# Executables
+/gui
+/worldGen

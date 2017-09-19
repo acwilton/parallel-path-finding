@@ -8,6 +8,10 @@ LDFLAGS		      =
 # Source files that all programs depend on
 COMMON_SRCS       = src/common/World.cc
 
+# Source files that all path finding algorithms use
+COMMON_ALG_SRCS   = src/algorithms/tools/PathTile.cc \
+                    src/algorithms/tools/PriorityQueue.cc
+
 # Graphical program
 TARGETS          += gui
 gui_SRCS          = src/gui/Gui.cc \
@@ -25,7 +29,8 @@ worldGen_SRCS     = src/worldGen/WorldGen.cc
 
 # Djikstra's algorithm
 TARGETS          += dijkstra
-dijkstra_SRCS     = src/dijkstra/Dijsktra.cc
+dijkstra_SRCS     = $(COMMON_ALG_SRCS) \
+                    src/algorithms/dijkstra/Dijkstra.cc
 
 all: $(TARGETS)
 

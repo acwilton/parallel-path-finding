@@ -21,3 +21,4 @@ gui.log
 # Executables
 /gui
 /worldGen
+/dijkstra

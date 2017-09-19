@@ -2,7 +2,7 @@
  * PriorityQueue.cc
  */
 
-#include "algortihms/tools/PriorityQueue.h"
+#include "algorithms/tools/PriorityQueue.h"
 
 namespace parPath
 {

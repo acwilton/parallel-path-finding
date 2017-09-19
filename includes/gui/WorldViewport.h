@@ -14,7 +14,10 @@
 #include "gui/Viewport.h"
 #include "gui/GraphicTile.h"
 
-namespace parPath
+namespace pathFind
+{
+
+namespace gui
 {
 
 class WorldViewport: public Viewport
@@ -61,6 +64,7 @@ protected:
     void destroyResources ();
 };
 
-} /* namespace parPath */
+} /* namespace gui */
+} /* namespace pathFind */
 
 #endif /* WORLDVIEWPORT_H_ */

@@ -6,7 +6,10 @@
 
 #include "gui/WorldViewport.h"
 
-namespace parPath
+namespace pathFind
+{
+
+namespace gui
 {
 
 const uint MIN_TILE_SCALE = 5;
@@ -328,4 +331,5 @@ void WorldViewport::destroyResources ()
     }
 }
 
-} /* namespace parPath */
+} /* namespace gui */
+} /* namespace pathFind */

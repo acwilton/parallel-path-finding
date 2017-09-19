@@ -9,7 +9,10 @@
 
 #include "gui/Button.h"
 
-namespace parPath
+namespace pathFind
+{
+
+namespace gui
 {
 
 class TextInput: public Button
@@ -34,6 +37,7 @@ protected:
     int m_originalY;
 };
 
-} /* namespace parPath */
+} /* namespace gui */
+} /* namespace pathFind */
 
 #endif /* TEXTINPUT_H_ */

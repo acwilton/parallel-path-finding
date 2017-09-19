@@ -10,7 +10,7 @@
 
 #include "common/World.h"
 
-namespace parPath
+namespace pathFind
 {
 
 class PathTile
@@ -20,6 +20,6 @@ public:
     virtual ~PathTile ();
 };
 
-} /* namespace parPath */
+} /* namespace pathFind */
 
 #endif /* PATHTILE_H_ */

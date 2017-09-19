@@ -14,7 +14,7 @@
 
 typedef unsigned char uchar;
 
-namespace parPath
+namespace pathFind
 {
 
 /**
@@ -76,6 +76,6 @@ private:
     size_t m_width;
 };
 
-} /* namespace parPath */
+} /* namespace pathFind */
 
 #endif /* WORLD_H_ */

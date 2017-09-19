@@ -3,7 +3,10 @@
  */
 #include "gui/Viewport.h"
 
-namespace parPath
+namespace pathFind
+{
+
+namespace gui
 {
 
 Viewport::Viewport (SDL_Rect rect, SDL_Color backgroundColor)
@@ -103,4 +106,5 @@ bool Viewport::isEnabled () const
     return m_enabled;
 }
 
-} /* namespace parPath */
+} /* namespace gui */
+} /* namespace pathFind */

@@ -2,9 +2,9 @@
  * PriorityQueue.cc
  */
 
-#include "algorithms/tools/PriorityQueue.h"
+#include "../../../includes/algorithms/tools/PriorityQueue.hpp"
 
-namespace parPath
+namespace pathFind
 {
 
 PriorityQueue::PriorityQueue ()
@@ -18,4 +18,4 @@ PriorityQueue::~PriorityQueue ()
     // TODO Auto-generated destructor stub
 }
 
-} /* namespace parPath */
+} /* namespace pathFind */

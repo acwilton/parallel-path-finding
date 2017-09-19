@@ -9,7 +9,7 @@
 typedef unsigned int uint;
 typedef unsigned char uchar;
 
-namespace parPath
+namespace pathFind
 {
 
 World::World ()
@@ -133,4 +133,4 @@ std::istream& operator>> (std::istream& stream, World& world)
     return stream;
 }
 
-} /* namespace parPath */
+} /* namespace pathFind */

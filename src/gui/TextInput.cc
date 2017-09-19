@@ -3,7 +3,10 @@
  */
 #include "gui/TextInput.h"
 
-namespace parPath
+namespace pathFind
+{
+
+namespace gui
 {
 
 TextInput::TextInput (int x, int y, size_t fontSize,
@@ -115,4 +118,5 @@ void TextInput::render (SDL_Renderer* renderer)
     Button::render(renderer);
 }
 
-} /* namespace parPath */
+} /* namespace gui */
+} /* namespace pathFind */

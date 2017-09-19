@@ -14,7 +14,10 @@
 
 #include "gui/Error.h"
 
-namespace parPath
+namespace pathFind
+{
+
+namespace gui
 {
 
 class Button
@@ -72,6 +75,7 @@ protected:
 
 };
 
-} /* namespace parPath */
+} /* namespace gui */
+} /* namespace pathFind */
 
 #endif /* BUTTON_H_ */

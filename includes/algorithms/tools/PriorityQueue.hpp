@@ -9,8 +9,9 @@
 #define PRIORITYQUEUE_H_
 
 #include <vector>
+#include <functional>
 
-
+template <typename T, typename Compare = std::less<T>>
 namespace parPath
 {
 

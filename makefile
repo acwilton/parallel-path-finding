@@ -9,8 +9,9 @@ LDFLAGS		      =
 COMMON_SRCS       = src/common/World.cc
 
 # Source files that all path finding algorithms use
-COMMON_ALG_SRCS   = src/algorithms/tools/PathTile.cc \
-                    src/algorithms/tools/PriorityQueue.cc
+COMMON_ALG_SRCS   = includes/algorithms/tools/PriorityQueue.hpp \
+                     src/algorithms/tools/PathTile.cc
+
 
 # Graphical program
 TARGETS          += gui

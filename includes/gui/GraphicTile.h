@@ -14,7 +14,10 @@
 #include "gui/Error.h"
 #include "common/World.h"
 
-namespace parPath
+namespace pathFind
+{
+
+namespace gui
 {
 
 class GraphicTile
@@ -50,6 +53,7 @@ protected:
     void updateTextRect ();
 };
 
-} /* namespace parPath */
+} /* namespace gui */
+} /* namespace pathFind */
 
 #endif /* GRAPHICTILE_H_ */

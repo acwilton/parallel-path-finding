@@ -4,7 +4,7 @@
 
 #include "algorithms/tools/PathTile.h"
 
-namespace parPath
+namespace pathFind
 {
 
 PathTile::PathTile ()
@@ -18,4 +18,4 @@ PathTile::~PathTile ()
     // TODO Auto-generated destructor stub
 }
 
-} /* namespace parPath */
+} /* namespace pathFind */

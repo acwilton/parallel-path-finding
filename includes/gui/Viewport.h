@@ -15,7 +15,10 @@
 #include "gui/Error.h"
 #include "gui/Button.h"
 
-namespace parPath
+namespace pathFind
+{
+
+namespace gui
 {
 
 class Viewport
@@ -54,6 +57,7 @@ protected:
     bool m_enabled;
 };
 
-} /* namespace parPath */
+} /* namespace gui */
+} /* namespace pathFind */
 
 #endif /* VIEWPORT_H_ */

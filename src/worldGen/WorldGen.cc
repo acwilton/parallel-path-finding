@@ -12,12 +12,10 @@
 
 #include "common/World.h"
 
-using namespace parPath;
-
 typedef unsigned char uchar;
 
-const std::string worldDir = "worlds";
-const std::string worldExt = ".world";
+const std::string WORLD_DIR = "worlds";
+const std::string WORLD_EXT = ".world";
 
 int main (int args, char* argv[])
 {
@@ -35,10 +33,10 @@ int main (int args, char* argv[])
     // Perhaps exit the program with error message unless the extension
     // is .world
     std::stringstream fileName;
-    fileName << worldDir << "/" << argv[1] << worldExt;
+    fileName << WORLD_DIR << "/" << argv[1] << WORLD_EXT;
 
-    std::fstream worldFile (fileName.str (),
-            std::fstream::out | std::fstream::binary);
+    std::ofstream worldFile (fileName.str (),
+            std::ofstream::out | std::ofstream::binary);
 
     size_t width;
     try
@@ -60,7 +58,7 @@ int main (int args, char* argv[])
         return EXIT_FAILURE;
     }
 
-    World world (height, width);
+    pathFind::World world (height, width);
     world.generateMap ();
 
     worldFile << world;

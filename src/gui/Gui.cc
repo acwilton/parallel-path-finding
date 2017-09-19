@@ -1,5 +1,5 @@
 /**
- * File        : parallel-path-finding-gui.cc
+ * File        : Gui.cc
  * Description : The main GUI interface for running the parallel path-finding algorithms on
  */
 

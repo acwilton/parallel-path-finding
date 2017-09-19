@@ -10,7 +10,7 @@ COMMON_SRCS       = src/common/World.cc
 
 # Graphical program
 TARGETS          += gui
-gui_SRCS          = src/gui/parallel-path-finding-gui.cc \
+gui_SRCS          = src/gui/Gui.cc \
 					src/gui/Error.cc \
 					src/gui/Window.cc \
 					src/gui/Viewport.cc \
@@ -22,6 +22,10 @@ gui_SRCS          = src/gui/parallel-path-finding-gui.cc \
 # World generation program
 TARGETS          += worldGen
 worldGen_SRCS     = src/worldGen/WorldGen.cc
+
+# Djikstra's algorithm
+TARGETS          += dijkstra
+dijkstra_SRCS     = src/dijkstra/Dijsktra.cc
 
 all: $(TARGETS)
 

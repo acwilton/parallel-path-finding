@@ -52,22 +52,24 @@ protected:
     virtual void initializeTextTexture (SDL_Renderer* renderer);
     virtual void destroyResources ();
 
+    int m_viewport_x;
+    int m_viewport_y;
+
     std::string m_text;
-    uint m_fontSize;
     SDL_Rect m_buttonRect;
+    uint m_fontSize;
 
     std::function<void ()> m_funct;
 
     SDL_Color m_backgroundColor;
     SDL_Color m_textColor;
 
+    bool m_textInitialized;
     SDL_Texture* m_textTexture;
     SDL_Rect m_textRect;
-    bool m_textInitialized;
 
     bool m_enabled;
-    int m_viewport_x;
-    int m_viewport_y;
+
 };
 
 } /* namespace parPath */

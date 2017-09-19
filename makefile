@@ -23,8 +23,6 @@ gui_SRCS          = src/gui/parallel-path-finding-gui.cc \
 TARGETS          += worldGen
 worldGen_SRCS     = src/worldGen/WorldGen.cc
 
-#all: worldGen
-
 all: $(TARGETS)
 
 .SECONDEXPANSION:
@@ -33,7 +31,8 @@ $(TARGETS): $$(patsubst %.cc,%.o,$$($$@_SRCS)) $$(patsubst %.cc,%.o,$$(COMMON_SR
 
 .PHONY : clean
 clean:
-	rm -f $(foreach target,$(TARGETS),$(patsubst %.cc,%.o,$($(target)_SRCS))) $(patsubst %.cc,%.o,$(COMMON_SRCS)) $(TARGETS) gui.log
+	rm -f $(foreach target,$(TARGETS),$(patsubst %.cc,%.o,$($(target)_SRCS))) \
+	      $(patsubst %.cc,%.o,$(COMMON_SRCS)) $(TARGETS) gui.log
 
 .PHONY : clean_worlds
 clean_worlds:

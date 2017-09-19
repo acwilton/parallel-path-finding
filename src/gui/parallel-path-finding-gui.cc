@@ -58,7 +58,7 @@ int main (int args, char* argv[])
     std::function<void(std::string)> genWorldFunct = [&](std::string s)
             {
                 worldCommand = s;
-                std::string command = "./WorldGen " + worldCommand;
+                std::string command = "./worldGen " + worldCommand;
                 system (command.c_str ());
 
                 std::string worldName = worldCommand;
@@ -106,7 +106,7 @@ int main (int args, char* argv[])
             {20, toolbarViewport->getHeight() / 2 - 25, 280, 50}, 16,
             [&]()
             {
-                std::string command = "./WorldGen " + worldCommand;
+                std::string command = "./worldGen " + worldCommand;
                 system (command.c_str ());
 
                 worldViewport->loadFile();
@@ -141,11 +141,10 @@ int main (int args, char* argv[])
     window.addViewport(toolbarViewport);
 
     SDL_Event e;
-    std::cout << "hello" << std::endl << std::flush;
 
     window.spawnWindow ();
     window.render ();
-    std::cout << "hello" << std::endl << std::flush;
+
     // application loop
     while (!quit)
     {

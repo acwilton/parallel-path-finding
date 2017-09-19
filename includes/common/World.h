@@ -72,8 +72,8 @@ public:
 
 private:
     std::vector<std::vector<tile_t>> m_tiles;
-    size_t m_width;
     size_t m_height;
+    size_t m_width;
 };
 
 } /* namespace parPath */

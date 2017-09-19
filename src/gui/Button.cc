@@ -3,15 +3,16 @@
  */
 
 #include "gui/Button.h"
+
 namespace parPath
 {
 
 Button::Button (int vp_x, int vp_y, std::string text, SDL_Rect rect,
         size_t fontSize, std::function<void ()> funct, SDL_Color backgroundColor,
         SDL_Color textColor)
-        : m_text (text),
-          m_viewport_x (vp_x),
+        : m_viewport_x (vp_x),
           m_viewport_y (vp_y),
+          m_text (text),
           m_buttonRect (rect),
           m_fontSize (fontSize),
           m_funct (funct),
@@ -39,6 +40,7 @@ void Button::render (SDL_Renderer* renderer)
     {
         initializeTextTexture (renderer);
     }
+
     SDL_SetRenderDrawColor (renderer, m_backgroundColor.r, m_backgroundColor.g,
             m_backgroundColor.b, m_backgroundColor.a);
     SDL_RenderFillRect (renderer, &m_buttonRect);
@@ -61,8 +63,8 @@ void Button::handleEvent (SDL_Event& e)
         int mouseX, mouseY;
         SDL_GetMouseState (&mouseX, &mouseY);
 
-        size_t b_globalX = getX () + m_viewport_x;
-        size_t b_globalY = getY () + m_viewport_y;
+        int b_globalX = getX () + m_viewport_x;
+        int b_globalY = getY () + m_viewport_y;
 
         if (mouseX > b_globalX && mouseX < (b_globalX + getWidth ())
                 && mouseY > b_globalY
@@ -163,7 +165,7 @@ void Button::initializeTextTexture (SDL_Renderer* renderer)
         m_text = " ";
     }
 
-    TTF_Font* font = TTF_OpenFont ("FreeSans.ttf", 128);
+    TTF_Font* font = TTF_OpenFont ("resources/FreeSans.ttf", 128);
     SDL_Surface* textSurface = TTF_RenderText_Solid (font, m_text.c_str (),
             m_textColor);
     if (textSurface == nullptr)

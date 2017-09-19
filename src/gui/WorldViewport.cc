@@ -291,7 +291,7 @@ void WorldViewport::initializeTextures (SDL_Renderer* renderer)
     {
         std::string text = std::to_string (i);
 
-        TTF_Font* font = TTF_OpenFont ("FreeSans.ttf", 128);
+        TTF_Font* font = TTF_OpenFont ("resources/FreeSans.ttf", 128);
         SDL_Surface* textSurface = TTF_RenderText_Solid (font,
                 text.c_str(),
                 {0x00,0x00,0x00});

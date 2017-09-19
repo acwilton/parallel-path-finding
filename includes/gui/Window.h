@@ -67,17 +67,17 @@ private:
 
     void destroyResources ();
 
-    SDL_Window* m_window;
-    SDL_Renderer* m_renderer;
-    std::vector<std::shared_ptr<Viewport>> m_viewports;
-
+    std::string m_title;
     size_t m_width;
     size_t m_height;
-    std::string m_title;
 
     bool m_keyFocus;
     bool m_mouseFocus;
     bool m_minimized;
+
+    SDL_Window* m_window;
+    SDL_Renderer* m_renderer;
+    std::vector<std::shared_ptr<Viewport>> m_viewports;
 };
 
 } /* namespace parPath */

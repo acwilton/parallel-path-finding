@@ -11,18 +11,26 @@
 #include <vector>
 #include <functional>
 
-template <typename T, typename Compare = std::less<T>>
-namespace parPath
+
+namespace pathFind
 {
 
+template <typename T, typename Compare = std::less<T>>
 class PriorityQueue
 {
 public:
-    PriorityQueue ();
-    virtual ~PriorityQueue ();
+    PriorityQueue ()
+    {
+
+    }
+
+    virtual ~PriorityQueue ()
+    {
+
+    }
 
 private:
-
+    int x;
 };
 
 } /* namespace parPath */

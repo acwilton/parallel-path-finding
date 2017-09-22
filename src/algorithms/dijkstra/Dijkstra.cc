@@ -4,13 +4,12 @@
  *               from the worlds folder.
  */
 
-#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
 #include "algorithms/tools/PathTile.h"
-#include "algorithms/tools/PriorityQueue.hpp"
+#include "algorithms/tools/PriorityQueue.h"
 
 const std::string WORLD_DIR = "worlds";
 const std::string WORLD_EXT = ".world";
@@ -35,7 +34,19 @@ int main (int args, char* argv[])
 
     worldFile >> world;
 
-    pathFind::PriorityQueue<int>unvisitedTiles;
+    std::vector<int> test;
+    for (size_t y = 0; y < world.getHeight (); ++y)
+    {
+        for (size_t x = 0; x < world.getWidth (); ++x)
+        {
+            if (static_cast<int> (world (y, x).cost) != 0 )
+            {
+                test.emplace_back(static_cast<int> (world (y, x).cost));
+            }
+        }
+    }
+
+    pathFind::PriorityQueue unvisitedTiles;
 
     return EXIT_SUCCESS;
 }

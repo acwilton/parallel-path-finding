@@ -33,7 +33,7 @@ void World::generateMap (float percentCarved)
         percentCarved = 1.0f;
     }
 
-    m_tiles = std::vector<tile_t>(m_height * m_height,
+    m_tiles = std::vector<tile_t>(m_height * m_width,
             { static_cast<uchar> (0), 0 });
 
     for (uint i = 0; i < m_tiles.size (); ++i)
@@ -159,11 +159,18 @@ std::istream& operator>> (std::istream& stream, World& world)
     stream.ignore (1);
     world.m_tiles.resize(world.m_height * world.m_width);
 
+    for (uint i = 0; i < world.m_tiles.size (); ++i)
+    {
+        world.m_tiles[i].cost = stream.get ();
+        world.m_tiles[i].id = i;
+    }
+
+/*
     for (auto& tile : world.m_tiles)
     {
         tile.cost = stream.get ();
     }
-
+*/
     return stream;
 }
 

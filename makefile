@@ -1,6 +1,6 @@
 # Built-in Variables
 CXX		              = g++
-CXXFLAGS              = -Wall
+CXXFLAGS              = -Wall -std=c++14
 CPPFLAGS              = -Iincludes
 LDLIBS                =
 LDFLAGS		          =

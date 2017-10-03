@@ -43,6 +43,8 @@ public:
     World (const World&) = delete;
     World& operator= (const World&) = delete;
 
+    uint getID (uint y, uint x) const;
+
     /**
      * Struct meant to represent a tile in the world where path-finding takes place.
      * Each tile has a cost to enter, but some may not be able to be entered in which
@@ -51,6 +53,7 @@ public:
     struct tile_t
     {
         uchar cost;
+        uint id;
     };
 
     /**
@@ -62,18 +65,27 @@ public:
     tile_t
     operator() (size_t row, size_t column);
 
-    void generateMap ();
+    void generateMap (float percentCarved);
 
     size_t getWidth () const;
     size_t getHeight () const;
+    size_t getNumOpenTiles () const;
 
     friend std::ostream& operator<< (std::ostream& stream, const World& world);
     friend std::istream& operator>> (std::istream& stream, World& world);
 
+    std::vector<tile_t>::iterator begin ();
+    std::vector<tile_t>::const_iterator begin () const;
+
+    std::vector<tile_t>::iterator end ();
+    std::vector<tile_t>::const_iterator end () const;
 private:
-    std::vector<std::vector<tile_t>> m_tiles;
+
+    std::vector<tile_t> m_tiles;
     size_t m_height;
     size_t m_width;
+
+    size_t m_openTiles;
 };
 
 } /* namespace pathFind */

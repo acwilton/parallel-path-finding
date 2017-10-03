@@ -46,7 +46,14 @@ int main (int args, char* argv[])
         }
     }
 
-    pathFind::PriorityQueue unvisitedTiles;
+    pathFind::PriorityQueue unvisitedTiles (world);
+
+    for (uint i = 0; i < world.getNumOpenTiles(); ++i)
+    {
+        std::cout << "top: " << unvisitedTiles.top().getBestCost() << std::endl;
+    }
+
+
 
     return EXIT_SUCCESS;
 }

@@ -10,8 +10,9 @@ COMMON_SRCS           = src/common/World.cc
 COMMON_HEADERS        = includes/common/World.h
 
 # Files that all path finding algorithms depend on
-COMMON_ALG_SRCS       = src/algorithms/tools/PathTile.cc
-COMMON_ALG_HEADERS    = includes/algorithms/tools/PriorityQueue.hpp \
+COMMON_ALG_SRCS       = src/algorithms/tools/PathTile.cc \
+                        src/algorithms/tools/PriorityQueue.cc
+COMMON_ALG_HEADERS    = includes/algorithms/tools/PriorityQueue.h \
                         includes/algorithms/tools/PathTile.cc
 
 

@@ -13,16 +13,24 @@ namespace pathFind
 
 PathTile::PathTile ()
     : m_bestCost (INF),
-      m_neighbors {nullptr, nullptr, nullptr, nullptr},
-      m_index (0)
+      m_x (0),
+      m_y (0)
 {
 }
 
 PathTile::PathTile (World::tile_t tile)
     : m_tile (tile),
       m_bestCost (INF),
-      m_neighbors {nullptr, nullptr, nullptr, nullptr},
-      m_index (0)
+      m_x (0),
+      m_y (0)
+{
+}
+
+PathTile::PathTile (const PathTile& other)
+    : m_tile (other.m_tile),
+      m_bestCost (other.m_bestCost),
+      m_x (other.m_x),
+      m_y (other.m_y)
 {
 }
 
@@ -50,29 +58,39 @@ uint PathTile::getBestCost () const
     return m_bestCost;
 }
 
-void PathTile::setIndex (uint index)
+void PathTile::setX (uint x)
 {
-    m_index = index;
+    m_x = x;
 }
 
-uint PathTile::getIndex () const
+uint PathTile::getX () const
 {
-    return m_index;
+    return m_x;
 }
 
-void PathTile::setNeighbor (Direction dir, const std::shared_ptr<PathTile>& neighbor)
+void PathTile::setY (uint y)
 {
-    m_neighbors[static_cast<uint> (dir)] = neighbor;
+    m_y = y;
 }
 
-std::shared_ptr<PathTile> PathTile::getNeighbor (Direction dir) const
+uint PathTile::getY () const
 {
-    return m_neighbors[static_cast<uint> (dir)];
+    return m_y;
+}
+
+uint PathTile::getID () const
+{
+    return m_tile.id;
 }
 
 bool PathTile::operator< (const PathTile& rhs) const
 {
     return m_bestCost < rhs.m_bestCost;
+}
+
+bool PathTile::operator>= (const PathTile& rhs) const
+{
+    return !(*this < rhs);
 }
 
 } /* namespace pathFind */

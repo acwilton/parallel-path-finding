@@ -59,7 +59,7 @@ int main (int args, char* argv[])
     }
 
     pathFind::World world (height, width);
-    world.generateMap ();
+    world.generateMap (0.5f);
 
     worldFile << world;
 

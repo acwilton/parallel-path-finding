@@ -22,17 +22,11 @@ class PathTile
 {
 public:
 
-    enum Direction {
-        NORTH = 0,
-        EAST = 1,
-        SOUTH = 2,
-        WEST = 3
-    };
-
     const uint INF = std::numeric_limits<uint>::max();
 
     PathTile ();
     PathTile (World::tile_t tile);
+    PathTile (const PathTile& other);
     virtual ~PathTile ();
 
     void setTile (World::tile_t tile);
@@ -41,20 +35,22 @@ public:
     void setBestCost (uint bestCost);
     uint getBestCost () const;
 
-    void setIndex (uint index);
-    uint getIndex () const;
+    void setX (uint x);
+    uint getX () const;
 
-    void setNeighbor (Direction dir, const std::shared_ptr<PathTile>& neighbor);
-    std::shared_ptr<PathTile> getNeighbor (Direction dir) const;
+    void setY (uint y);
+    uint getY () const;
+
+    uint getID () const;
 
     bool operator< (const PathTile& rhs) const;
+    bool operator>=(const PathTile& rhs) const;
 
 private:
     World::tile_t m_tile;
     uint m_bestCost;
-    std::shared_ptr<PathTile> m_neighbors[4];
-
-    uint m_index;
+    uint m_x;
+    uint m_y;
 };
 
 } /* namespace pathFind */

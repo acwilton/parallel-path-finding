@@ -13,15 +13,15 @@ namespace pathFind
 {
 
 World::World ()
-        : m_height (0),
-          m_width (0),
+        : m_width (0),
+          m_height (0),
           m_openTiles (0)
 {
 }
 
-World::World (size_t height, size_t width)
-        : m_height (height),
-          m_width (width),
+World::World (size_t width, size_t height)
+        : m_width (width),
+          m_height (height),
           m_openTiles (0)
 {
 }
@@ -33,7 +33,7 @@ void World::generateMap (float percentCarved)
         percentCarved = 1.0f;
     }
 
-    m_tiles = std::vector<tile_t>(m_height * m_width,
+    m_tiles = std::vector<tile_t>(m_width * m_height,
             { static_cast<uchar> (0), 0 });
 
     for (uint i = 0; i < m_tiles.size (); ++i)
@@ -49,7 +49,7 @@ void World::generateMap (float percentCarved)
     uint yMiddle = ceil (static_cast<float>(m_height) / 2);
     uint x = gen () % xMiddle + (xMiddle / 2);
     uint y = gen () % yMiddle + (yMiddle / 2);
-    m_tiles[getID (y, x)].cost = static_cast<uchar> ((gen () % 255) + 1);
+    m_tiles[getID (x, y)].cost = static_cast<uchar> ((gen () % 255) + 1);
 
     size_t numCarvedTiles = 1;
     m_openTiles = (m_width * m_height) * percentCarved;
@@ -88,10 +88,10 @@ void World::generateMap (float percentCarved)
         }
 
         // If current tile is a "wall" then carve it out into open space
-        if (m_tiles[getID (y, x)].cost == static_cast<uchar> (0))
+        if (m_tiles[getID (x, y)].cost == static_cast<uchar> (0))
         {
             ++numCarvedTiles;
-            m_tiles[getID (y, x)].cost = static_cast<uchar> ((gen () % 255) + 1);
+            m_tiles[getID (x, y)].cost = static_cast<uchar> ((gen () % 255) + 1);
         }
     }
 
@@ -112,12 +112,12 @@ size_t World::getNumOpenTiles() const
     return m_openTiles;
 }
 
-World::tile_t World::operator() (uint row, uint column) const
+World::tile_t World::operator() (uint column, uint row) const
 {
-    return m_tiles[getID (row, column)];
+    return m_tiles[getID (column, row)];
 }
 
-uint World::getID(uint y, uint x) const
+uint World::getID(uint x, uint y) const
 {
     return (m_width * y) + x;
 }
@@ -144,7 +144,7 @@ std::vector<World::tile_t>::const_iterator World::end () const
 
 std::ostream& operator<< (std::ostream& stream, const World& world)
 {
-    stream << world.m_height << "\n" << world.m_width << "\n";
+    stream << world.m_width << "\n" << world.m_height << "\n";
     for (auto& tile : world.m_tiles)
     {
         stream << static_cast<uchar> (tile.cost);
@@ -155,9 +155,9 @@ std::ostream& operator<< (std::ostream& stream, const World& world)
 
 std::istream& operator>> (std::istream& stream, World& world)
 {
-    stream >> world.m_height >> world.m_width;
+    stream >> world.m_width >> world.m_height;
     stream.ignore (1);
-    world.m_tiles.resize(world.m_height * world.m_width);
+    world.m_tiles.resize(world.m_width * world.m_height);
 
     for (uint i = 0; i < world.m_tiles.size (); ++i)
     {
@@ -169,12 +169,6 @@ std::istream& operator>> (std::istream& stream, World& world)
         }
     }
 
-/*
-    for (auto& tile : world.m_tiles)
-    {
-        tile.cost = stream.get ();
-    }
-*/
     return stream;
 }
 

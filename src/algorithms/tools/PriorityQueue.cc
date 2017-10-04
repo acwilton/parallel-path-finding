@@ -17,11 +17,11 @@ PriorityQueue::PriorityQueue(const World& world)
     {
         for (uint x = 0; x < m_worldHeight; ++x)
         {
-            World::tile_t t = world (y, x);
+            World::tile_t t = world (x, y);
             if (t.cost != static_cast<uchar>(0))
             {
                 m_heap.emplace_back (std::make_shared<handle_t>(
-                        PathTile{t, y, x}, m_heap.size ()));
+                        PathTile{t, x, y}, m_heap.size ()));
                 m_hashTable[t.id] = m_heap.back ();
             }
         }
@@ -64,9 +64,9 @@ PathTile PriorityQueue::top () const
     return m_heap[0]->tile;
 }
 
-void PriorityQueue::changeBestCost (uint y, uint x, uint bestCost)
+void PriorityQueue::changeBestCost (uint x, uint y, uint bestCost)
 {
-    auto handle = getHandle (y, x);
+    auto handle = getHandle (x, y);
     if (handle != nullptr)
     {
         handle->tile.setBestCost(bestCost);
@@ -74,20 +74,20 @@ void PriorityQueue::changeBestCost (uint y, uint x, uint bestCost)
     }
 }
 
-bool PriorityQueue::isValid (uint y, uint x) const
+bool PriorityQueue::isValid (uint x, uint y) const
 {
-    return getHandle (y, x) != nullptr;
+    return getHandle (x, y) != nullptr;
 }
 
-PathTile PriorityQueue::getPathTile (uint y, uint x) const
+PathTile PriorityQueue::getPathTile (uint x, uint y) const
 {
-    return getHandle(y, x)->tile;
+    return getHandle(x, y)->tile;
 }
 
-std::shared_ptr<PriorityQueue::handle_t> PriorityQueue::getHandle (uint y, uint x) const
+std::shared_ptr<PriorityQueue::handle_t> PriorityQueue::getHandle (uint x, uint y) const
 {
     std::shared_ptr<handle_t> handle = nullptr;
-    if (y < m_worldHeight && x < m_worldWidth)
+    if (x < m_worldHeight && y < m_worldWidth)
     {
         auto ptr = m_hashTable.find ((m_worldWidth * y) + x);
         if (ptr != m_hashTable.end ())

@@ -25,7 +25,7 @@ public:
     const uint INF = std::numeric_limits<uint>::max();
 
     PathTile ();
-    PathTile (World::tile_t tile, uint y, uint x);
+    PathTile (World::tile_t tile, uint x, uint y);
     PathTile (const PathTile& other);
     virtual ~PathTile ();
 

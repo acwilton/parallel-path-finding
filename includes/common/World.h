@@ -37,13 +37,13 @@ public:
      * @param height   The height of the world.
      * @param width    The width of the world.
      */
-    World (size_t height, size_t width);
+    World (size_t width, size_t height);
 
     // We do not want copying to take place.
     World (const World&) = delete;
     World& operator= (const World&) = delete;
 
-    uint getID (uint y, uint x) const;
+    uint getID (uint x, uint y) const;
 
     /**
      * Struct meant to represent a tile in the world where path-finding takes place.
@@ -58,12 +58,12 @@ public:
 
     /**
      * Returns the tile at the designated column and row
-     * @param row      The row we are retrieving from. (y-axis)
      * @param column   The column we are retrieving from. (x-axis)
+     * @param row      The row we are retrieving from. (y-axis)
      * @return The tile at the specified position in the world is returned.
      */
     tile_t
-    operator() (uint row, uint column) const;
+    operator() (uint column, uint row) const;
 
     void generateMap (float percentCarved);
 
@@ -82,8 +82,8 @@ public:
 private:
 
     std::vector<tile_t> m_tiles;
-    size_t m_height;
     size_t m_width;
+    size_t m_height;
 
     size_t m_openTiles;
 };

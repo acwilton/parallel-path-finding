@@ -34,11 +34,11 @@ public:
     void pop ();
     PathTile top () const;
 
-    void changeBestCost (uint y, uint x, uint bestCost);
+    void changeBestCost (uint x, uint y, uint bestCost);
 
-    bool isValid (uint y, uint x) const;
+    bool isValid (uint x, uint y) const;
     // Assumes that user already checked that (x, y) is valid
-    PathTile getPathTile (uint y, uint x) const;
+    PathTile getPathTile (uint x, uint y) const;
 
 private:
 
@@ -55,7 +55,7 @@ private:
 
     // Get a handle of a PathTile at a specific position. If out
     // of bounds or doesn't exist (is a wall) then nullptr returned
-    std::shared_ptr<handle_t> getHandle (uint y, uint x) const;
+    std::shared_ptr<handle_t> getHandle (uint x, uint y) const;
 
     uint getLeftChild (uint index) const;
     uint getRightChild (uint index) const;

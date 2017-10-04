@@ -58,7 +58,7 @@ int main (int args, char* argv[])
         return EXIT_FAILURE;
     }
 
-    pathFind::World world (height, width);
+    pathFind::World world (width, height);
     world.generateMap (0.5f);
 
     worldFile << world;

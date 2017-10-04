@@ -39,9 +39,9 @@ int main (int args, char* argv[])
     {
         for (uint x = 0; x < world.getWidth (); ++x)
         {
-            if (static_cast<int> (world (y, x).cost) != 0 )
+            if (static_cast<int> (world (x, y).cost) != 0 )
             {
-                test.emplace_back(static_cast<int> (world (y, x).cost));
+                test.emplace_back(static_cast<int> (world (x, y).cost));
             }
         }
     }
@@ -56,14 +56,14 @@ int main (int args, char* argv[])
         unvisitedTiles.pop();
     }
 
-    auto x = tmp.getPathTile (0, 1);
+    auto x = tmp.getPathTile (1, 0);
     std::cout << "0 1 BC: " << x.getBestCost();
     std::cout << " x: " << x.x() << " y: " << x.y() << " id: " << x.getID() << std::endl;
-    tmp.changeBestCost(x.y(), x.x(), 74);
-    auto y = tmp.getPathTile (1, 2);
+    tmp.changeBestCost(x.x(), x.y(), 74);
+    auto y = tmp.getPathTile (2, 1);
     std::cout << "1 2 BC: " << y.getBestCost();
     std::cout << " x: " << y.x() << " y: " << y.y() << " id: " << y.getID() << std::endl;
-    tmp.changeBestCost (y.y(), y.x(), 21);
+    tmp.changeBestCost (y.x(), y.y(), 21);
 
     for (uint i = 0; i < world.getNumOpenTiles (); ++i)
     {

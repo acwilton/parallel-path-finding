@@ -20,7 +20,7 @@ PathTile::PathTile ()
 
 PathTile::PathTile (World::tile_t tile, uint x, uint y)
     : m_tile (tile),
-      m_bestCost (tile.cost),
+      m_bestCost (INF),
       m_x (x),
       m_y (y)
 {

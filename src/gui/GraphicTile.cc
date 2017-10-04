@@ -3,7 +3,6 @@
  */
 
 #include "gui/GraphicTile.h"
-#include <iostream>
 
 namespace pathFind
 {

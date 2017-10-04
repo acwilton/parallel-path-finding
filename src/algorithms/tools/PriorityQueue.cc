@@ -1,7 +1,6 @@
 /*
  * PriorityQueue.cc
  */
-#include <iostream>
 
 #include "algorithms/tools/PriorityQueue.h"
 

@@ -8,6 +8,8 @@
 #include <fstream>
 #include <sstream>
 
+#include <boost/lexical_cast.hpp>
+
 #include "algorithms/tools/PathTile.h"
 #include "algorithms/tools/PriorityQueue.h"
 
@@ -16,14 +18,16 @@ const std::string WORLD_EXT = ".world";
 
 int main (int args, char* argv[])
 {
-    // Program should be started with 1 command line parameter
-    // that specifies the name of the world file to read from
-    if (args != 2)
+    // Program should be started with 5 command line parameter
+    // that specifies the name of the world file to read from,
+    // the start x, start y, end x, and end y
+    if (args != 6 )
     {
-        std::cout << "Incorrect inputs. Usage: <filename>" << std::endl;
+        std::cout << "Incorrect inputs. Usage: <filename> <start x> <start y> <end x> <end y>" << std::endl;
         return EXIT_FAILURE;
     }
 
+    // Parse the world file
     std::stringstream filename;
     filename << WORLD_DIR << "/" << argv[1] << WORLD_EXT;
 
@@ -34,42 +38,35 @@ int main (int args, char* argv[])
 
     worldFile >> world;
 
-    std::vector<int> test;
-    for (uint y = 0; y < world.getHeight (); ++y)
+    // Parse the start and end points
+    uint startX, startY, endX, endY;
+    try
     {
-        for (uint x = 0; x < world.getWidth (); ++x)
-        {
-            if (static_cast<int> (world (x, y).cost) != 0 )
-            {
-                test.emplace_back(static_cast<int> (world (x, y).cost));
-            }
-        }
+        startX = boost::lexical_cast<uint> (argv[2]);
+        startY = boost::lexical_cast<uint> (argv[3]);
+        endX = boost::lexical_cast<uint> (argv[4]);
+        endY = boost::lexical_cast<uint> (argv[5]);
+    } catch (boost::bad_lexical_cast &e)
+    {
+        std::cout << "Start and end points failed to convert to numeric types" << std::endl;
+        return EXIT_FAILURE;
     }
 
-    pathFind::PriorityQueue unvisitedTiles (world);
-    pathFind::PriorityQueue tmp (world);
+    pathFind::PriorityQueue openTiles (world);
 
-    for (uint i = 0; i < world.getNumOpenTiles(); ++i)
+    // Ensure that start and end points are valid
+    if (!openTiles.isValid (startX, startY))
     {
-        pathFind::PathTile x = unvisitedTiles.top();
-        std::cout << "top: " << x.getBestCost() << std::endl;
-        unvisitedTiles.pop();
+        std::cout << "Start point either is a wall or isn't out of the world bounds" << std::endl;
+        return EXIT_FAILURE;
+    }
+    if (!openTiles.isValid (endX, endY))
+    {
+        std::cout << "End point either is a wall or isn't out of the world bounds" << std::endl;
+        return EXIT_FAILURE;
     }
 
-    auto x = tmp.getPathTile (1, 0);
-    std::cout << "0 1 BC: " << x.getBestCost();
-    std::cout << " x: " << x.x() << " y: " << x.y() << " id: " << x.getID() << std::endl;
-    tmp.changeBestCost(x.x(), x.y(), 74);
-    auto y = tmp.getPathTile (2, 1);
-    std::cout << "1 2 BC: " << y.getBestCost();
-    std::cout << " x: " << y.x() << " y: " << y.y() << " id: " << y.getID() << std::endl;
-    tmp.changeBestCost (y.x(), y.y(), 21);
-
-    for (uint i = 0; i < world.getNumOpenTiles (); ++i)
-    {
-        std::cout << "top2: " << tmp.top().getBestCost() << std::endl;
-        tmp.pop ();
-    }
+    openTiles.changeBestCost(startX, startY, 0);
 
     return EXIT_SUCCESS;
 }

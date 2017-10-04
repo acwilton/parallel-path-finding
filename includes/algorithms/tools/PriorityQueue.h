@@ -12,7 +12,6 @@
 #include <vector>
 #include <unordered_map>
 #include <functional>
-#include <iostream>
 #include <memory>
 
 #include "algorithms/tools/PathTile.h"

@@ -112,7 +112,7 @@ size_t World::getNumOpenTiles() const
     return m_openTiles;
 }
 
-World::tile_t World::operator() (size_t row, size_t column)
+World::tile_t World::operator() (uint row, uint column) const
 {
     return m_tiles[getID (row, column)];
 }
@@ -163,6 +163,10 @@ std::istream& operator>> (std::istream& stream, World& world)
     {
         world.m_tiles[i].cost = stream.get ();
         world.m_tiles[i].id = i;
+        if (world.m_tiles[i].cost != static_cast<uchar> (0))
+        {
+            ++world.m_openTiles;
+        }
     }
 
 /*

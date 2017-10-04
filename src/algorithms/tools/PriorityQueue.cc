@@ -1,52 +1,32 @@
 /*
  * PriorityQueue.cc
  */
+#include <iostream>
 
 #include "algorithms/tools/PriorityQueue.h"
 
 namespace pathFind
 {
 
-PriorityQueue::PriorityQueue ()
-{
-}
-
 PriorityQueue::PriorityQueue(const World& world)
+    : m_worldWidth (world.getWidth()),
+      m_worldHeight (world.getHeight())
 {
     m_heap.reserve(world.getNumOpenTiles ());
-    for (const auto& t : world)
+    for (uint y = 0; y < m_worldWidth; ++y)
     {
-        if (t.cost != static_cast<uchar>(0))
+        for (uint x = 0; x < m_worldHeight; ++x)
         {
-            m_heap.emplace_back (std::make_shared<handle_t>(
-                    std::make_shared<PathTile>(t), t.id));
-            m_hashTable[t.id] = m_heap.back ();
+            World::tile_t t = world (y, x);
+            if (t.cost != static_cast<uchar>(0))
+            {
+                m_heap.emplace_back (std::make_shared<handle_t>(
+                        PathTile{t, y, x}, m_heap.size ()));
+                m_hashTable[t.id] = m_heap.back ();
+            }
         }
     }
-}
-
-PriorityQueue::PriorityQueue (const std::vector<PathTile>& unheapedElements)
-{
-    m_heap.reserve(unheapedElements.size());
-    for (const auto& e : unheapedElements)
-    {
-        m_heap.emplace_back (std::make_shared<handle_t>(
-                std::make_shared<PathTile>(e), e.getID()));
-        m_hashTable[e.getID ()] = m_heap.back ();
-    }
-    makeHeap ();
-}
-
-PriorityQueue::PriorityQueue (std::vector<std::shared_ptr<PathTile>>&& unheapedElements)
-{
-    m_heap.reserve(unheapedElements.size());
-    for (const auto& e : unheapedElements)
-    {
-        m_heap.emplace_back (std::make_shared<handle_t>(
-                e, e->getID()));
-        m_hashTable[e->getID ()] = m_heap.back ();
-    }
-    makeHeap ();
+    makeHeap();
 }
 
 PriorityQueue::~PriorityQueue ()
@@ -56,17 +36,8 @@ PriorityQueue::~PriorityQueue ()
 void PriorityQueue::push (const PathTile& element)
 {
     std::shared_ptr<handle_t> newHandle = std::make_shared<handle_t> (
-            std::make_shared<PathTile> (element), m_heap.size());
-    m_hashTable[element.getID()] = newHandle;
-    m_heap.emplace_back(newHandle);
-    upHeap (m_heap.size() - 1);
-}
-
-void PriorityQueue::push (std::shared_ptr<PathTile>& element)
-{
-    std::shared_ptr<handle_t> newHandle = std::make_shared<handle_t> (
             element, m_heap.size());
-    m_hashTable[element->getID()] = newHandle;
+    m_hashTable[element.getID()] = newHandle;
     m_heap.emplace_back(newHandle);
     upHeap (m_heap.size() - 1);
 }
@@ -78,34 +49,53 @@ void PriorityQueue::pop ()
         return;
     }
 
-    m_hashTable.erase (m_heap[0]->tile().getID());
+    m_hashTable.erase (m_heap[0]->tile.getID());
     m_heap[0] = m_heap.back ();
     m_heap.pop_back ();
+    if (m_heap.empty())
+    {
+        return;
+    }
     downHeap (0);
 }
 
 PathTile PriorityQueue::top () const
 {
-    return m_heap[0]->tile();
+    return m_heap[0]->tile;
 }
 
-void PriorityQueue::changeBestCost (std::shared_ptr<PathTile> tile, uint bestCost)
+void PriorityQueue::changeBestCost (uint y, uint x, uint bestCost)
 {
-    changeBestCost (tile->getID(), bestCost);
+    auto handle = getHandle (y, x);
+    if (handle != nullptr)
+    {
+        handle->tile.setBestCost(bestCost);
+        upHeap (handle->index);
+    }
 }
 
-void PriorityQueue::changeBestCost (uint id, uint bestCost)
+bool PriorityQueue::isValid (uint y, uint x) const
 {
-    m_hashTable[id]->tile().setBestCost (bestCost);
+    return getHandle (y, x) != nullptr;
 }
 
-std::shared_ptr<PathTile> PriorityQueue::getPathTile (uint id) const
+PathTile PriorityQueue::getPathTile (uint y, uint x) const
 {
-    auto ptr = m_hashTable.find (id);
-    std::shared_ptr<PathTile> tile = (ptr == m_hashTable.end ()) ?
-            nullptr :
-            ptr->second->tilePtr;
-    return tile;
+    return getHandle(y, x)->tile;
+}
+
+std::shared_ptr<PriorityQueue::handle_t> PriorityQueue::getHandle (uint y, uint x) const
+{
+    std::shared_ptr<handle_t> handle = nullptr;
+    if (y < m_worldHeight && x < m_worldWidth)
+    {
+        auto ptr = m_hashTable.find ((m_worldWidth * y) + x);
+        if (ptr != m_hashTable.end ())
+        {
+            handle = ptr->second;
+        }
+    }
+    return handle;
 }
 
 uint PriorityQueue::getLeftChild (uint index) const
@@ -129,12 +119,12 @@ void PriorityQueue::downHeap (uint index)
     size_t c;
     while ((c = getLeftChild (index)) < m_heap.size ())
     {
-        if (c + 1 < m_heap.size () && m_heap[c + 1]->tile() < m_heap[c]->tile())
+        if (c + 1 < m_heap.size () && m_heap[c + 1]->tile < m_heap[c]->tile)
         {
             ++c;
         }
 
-        if (m_heap[c]->tile() >= value->tile())
+        if (m_heap[c]->tile >= value->tile)
         {
             break;
         }
@@ -157,7 +147,7 @@ void PriorityQueue::upHeap (uint index)
     while (index != 0)
     {
         size_t p = getParent (index);
-        if (value->tile() >= m_heap[p]->tile())
+        if (value->tile >= m_heap[p]->tile)
         {
             break;
         }

@@ -63,7 +63,7 @@ public:
      * @return The tile at the specified position in the world is returned.
      */
     tile_t
-    operator() (size_t row, size_t column);
+    operator() (uint row, uint column) const;
 
     void generateMap (float percentCarved);
 

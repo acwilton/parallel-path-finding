@@ -25,7 +25,7 @@ public:
     const uint INF = std::numeric_limits<uint>::max();
 
     PathTile ();
-    PathTile (World::tile_t tile);
+    PathTile (World::tile_t tile, uint y, uint x);
     PathTile (const PathTile& other);
     virtual ~PathTile ();
 
@@ -35,12 +35,8 @@ public:
     void setBestCost (uint bestCost);
     uint getBestCost () const;
 
-    void setX (uint x);
-    uint getX () const;
-
-    void setY (uint y);
-    uint getY () const;
-
+    uint x () const;
+    uint y () const;
     uint getID () const;
 
     bool operator< (const PathTile& rhs) const;

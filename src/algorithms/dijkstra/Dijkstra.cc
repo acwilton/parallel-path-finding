@@ -35,9 +35,9 @@ int main (int args, char* argv[])
     worldFile >> world;
 
     std::vector<int> test;
-    for (size_t y = 0; y < world.getHeight (); ++y)
+    for (uint y = 0; y < world.getHeight (); ++y)
     {
-        for (size_t x = 0; x < world.getWidth (); ++x)
+        for (uint x = 0; x < world.getWidth (); ++x)
         {
             if (static_cast<int> (world (y, x).cost) != 0 )
             {
@@ -47,13 +47,29 @@ int main (int args, char* argv[])
     }
 
     pathFind::PriorityQueue unvisitedTiles (world);
+    pathFind::PriorityQueue tmp (world);
 
     for (uint i = 0; i < world.getNumOpenTiles(); ++i)
     {
-        std::cout << "top: " << unvisitedTiles.top().getBestCost() << std::endl;
+        pathFind::PathTile x = unvisitedTiles.top();
+        std::cout << "top: " << x.getBestCost() << std::endl;
+        unvisitedTiles.pop();
     }
 
+    auto x = tmp.getPathTile (0, 1);
+    std::cout << "0 1 BC: " << x.getBestCost();
+    std::cout << " x: " << x.x() << " y: " << x.y() << " id: " << x.getID() << std::endl;
+    tmp.changeBestCost(x.y(), x.x(), 74);
+    auto y = tmp.getPathTile (1, 2);
+    std::cout << "1 2 BC: " << y.getBestCost();
+    std::cout << " x: " << y.x() << " y: " << y.y() << " id: " << y.getID() << std::endl;
+    tmp.changeBestCost (y.y(), y.x(), 21);
 
+    for (uint i = 0; i < world.getNumOpenTiles (); ++i)
+    {
+        std::cout << "top2: " << tmp.top().getBestCost() << std::endl;
+        tmp.pop ();
+    }
 
     return EXIT_SUCCESS;
 }

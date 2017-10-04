@@ -18,11 +18,11 @@ PathTile::PathTile ()
 {
 }
 
-PathTile::PathTile (World::tile_t tile)
+PathTile::PathTile (World::tile_t tile, uint y, uint x)
     : m_tile (tile),
-      m_bestCost (INF),
-      m_x (0),
-      m_y (0)
+      m_bestCost (tile.cost),
+      m_x (x),
+      m_y (y)
 {
 }
 
@@ -58,22 +58,12 @@ uint PathTile::getBestCost () const
     return m_bestCost;
 }
 
-void PathTile::setX (uint x)
-{
-    m_x = x;
-}
-
-uint PathTile::getX () const
+uint PathTile::x () const
 {
     return m_x;
 }
 
-void PathTile::setY (uint y)
-{
-    m_y = y;
-}
-
-uint PathTile::getY () const
+uint PathTile::y () const
 {
     return m_y;
 }

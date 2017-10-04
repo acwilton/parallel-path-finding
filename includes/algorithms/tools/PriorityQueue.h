@@ -2,7 +2,8 @@
  * File        : PriorityQueue.h
  * Description : An implementation of a priority queue using a binary heap.
  *               Gives the ability to change the priority of an element while
- *               it is in the heap.
+ *               it is in the heap. Modified specificly for pathfinding in a
+ *               "world" by holding onto information about a world.
  */
 
 #ifndef PRIORITYQUEUE_H_
@@ -15,6 +16,7 @@
 #include <memory>
 
 #include "algorithms/tools/PathTile.h"
+#include "common/World.h"
 
 namespace pathFind
 {
@@ -23,47 +25,48 @@ class PriorityQueue
 {
 public:
 
-    PriorityQueue ();
+    PriorityQueue () = delete;
     PriorityQueue (const World& world);
-    PriorityQueue (const std::vector<PathTile>& unheapedElements);
-    PriorityQueue (std::vector<std::shared_ptr<PathTile>>&& unheapedElements);
 
     ~PriorityQueue ();
 
     void push (const PathTile& element);
-    void push (std::shared_ptr<PathTile>& element);
     void pop ();
     PathTile top () const;
 
-    void changeBestCost (std::shared_ptr<PathTile> tile, uint bestCost);
-    void changeBestCost (uint id, uint bestCost);
+    void changeBestCost (uint y, uint x, uint bestCost);
 
-    std::shared_ptr<PathTile> getPathTile (uint id) const;
+    bool isValid (uint y, uint x) const;
+    // Assumes that user already checked that (x, y) is valid
+    PathTile getPathTile (uint y, uint x) const;
 
 private:
 
     struct handle_t
     {
-        handle_t (std::shared_ptr<PathTile> p_tilePtr, uint p_index)
-            : tilePtr(p_tilePtr), index(p_index)
+        handle_t (PathTile p_tile, uint p_index)
+            : tile(p_tile), index(p_index)
         {
-        }
-        PathTile& tile ()
-        {
-            return *tilePtr;
         }
 
-        std::shared_ptr<PathTile> tilePtr;
+        PathTile tile;
         uint index;
     };
 
-    uint getLeftChild (uint) const;
+    // Get a handle of a PathTile at a specific position. If out
+    // of bounds or doesn't exist (is a wall) then nullptr returned
+    std::shared_ptr<handle_t> getHandle (uint y, uint x) const;
+
+    uint getLeftChild (uint index) const;
     uint getRightChild (uint index) const;
     uint getParent (uint index) const;
 
     void downHeap (uint index);
     void upHeap (uint index);
     void makeHeap ();
+
+    size_t m_worldWidth;
+    size_t m_worldHeight;
 
     std::vector<std::shared_ptr<handle_t>> m_heap;
     std::unordered_map<uint, std::shared_ptr<handle_t>> m_hashTable;

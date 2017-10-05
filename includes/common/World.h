@@ -12,8 +12,6 @@
 #include <cstddef>
 #include <fstream>
 
-typedef unsigned char uchar;
-
 namespace pathFind
 {
 
@@ -52,7 +50,7 @@ public:
      */
     struct tile_t
     {
-        uchar cost;
+        uint cost;
         uint id;
     };
 

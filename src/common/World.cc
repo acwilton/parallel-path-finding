@@ -34,7 +34,7 @@ void World::generateMap (float percentCarved)
     }
 
     m_tiles = std::vector<tile_t>(m_width * m_height,
-            { static_cast<uchar> (0), 0 });
+            {0, 0});
 
     for (uint i = 0; i < m_tiles.size (); ++i)
     {
@@ -49,7 +49,7 @@ void World::generateMap (float percentCarved)
     uint yMiddle = ceil (static_cast<float>(m_height) / 2);
     uint x = gen () % xMiddle + (xMiddle / 2);
     uint y = gen () % yMiddle + (yMiddle / 2);
-    m_tiles[getID (x, y)].cost = static_cast<uchar> ((gen () % 255) + 1);
+    m_tiles[getID (x, y)].cost = (gen () % 255) + 1;
 
     size_t numCarvedTiles = 1;
     m_openTiles = (m_width * m_height) * percentCarved;
@@ -88,10 +88,10 @@ void World::generateMap (float percentCarved)
         }
 
         // If current tile is a "wall" then carve it out into open space
-        if (m_tiles[getID (x, y)].cost == static_cast<uchar> (0))
+        if (m_tiles[getID (x, y)].cost == 0)
         {
             ++numCarvedTiles;
-            m_tiles[getID (x, y)].cost = static_cast<uchar> ((gen () % 255) + 1);
+            m_tiles[getID (x, y)].cost = (gen () % 255) + 1;
         }
     }
 
@@ -163,7 +163,7 @@ std::istream& operator>> (std::istream& stream, World& world)
     {
         world.m_tiles[i].cost = stream.get ();
         world.m_tiles[i].id = i;
-        if (world.m_tiles[i].cost != static_cast<uchar> (0))
+        if (world.m_tiles[i].cost != 0)
         {
             ++world.m_openTiles;
         }

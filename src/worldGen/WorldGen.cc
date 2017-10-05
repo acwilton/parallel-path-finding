@@ -12,8 +12,6 @@
 
 #include "common/World.h"
 
-typedef unsigned char uchar;
-
 const std::string WORLD_DIR = "worlds";
 const std::string WORLD_EXT = ".world";
 

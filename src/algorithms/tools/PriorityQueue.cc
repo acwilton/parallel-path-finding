@@ -17,7 +17,7 @@ PriorityQueue::PriorityQueue(const World& world)
         for (uint x = 0; x < m_worldHeight; ++x)
         {
             World::tile_t t = world (x, y);
-            if (t.cost != static_cast<uchar>(0))
+            if (t.cost != 0)
             {
                 m_heap.emplace_back (std::make_shared<handle_t>(
                         PathTile{t, x, y}, m_heap.size ()));

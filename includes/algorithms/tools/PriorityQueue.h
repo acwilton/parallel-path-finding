@@ -37,7 +37,7 @@ public:
 
     bool isValid (uint x, uint y) const;
     // Assumes that user already checked that (x, y) is valid
-    PathTile getPathTile (uint x, uint y) const;
+    PathTile& getPathTile (uint x, uint y) const;
 
 private:
 

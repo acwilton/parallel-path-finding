@@ -161,7 +161,7 @@ std::istream& operator>> (std::istream& stream, World& world)
 
     for (uint i = 0; i < world.m_tiles.size (); ++i)
     {
-        world.m_tiles[i].cost = stream.get ();
+        world.m_tiles[i].cost = static_cast<uint> (stream.get ());
         world.m_tiles[i].id = i;
         if (world.m_tiles[i].cost != 0)
         {

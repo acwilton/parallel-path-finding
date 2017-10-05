@@ -7,14 +7,20 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <unordered_map>
 
 #include <boost/lexical_cast.hpp>
 
 #include "algorithms/tools/PathTile.h"
 #include "algorithms/tools/PriorityQueue.h"
 
+using namespace pathFind;
+
 const std::string WORLD_DIR = "worlds";
 const std::string WORLD_EXT = ".world";
+
+void updateNeighbor (PriorityQueue& pq, const PathTile& tile,
+                     uint neighborX, uint neighborY);
 
 int main (int args, char* argv[])
 {
@@ -52,7 +58,7 @@ int main (int args, char* argv[])
         return EXIT_FAILURE;
     }
 
-    pathFind::PriorityQueue openTiles (world);
+    PriorityQueue openTiles (world);
 
     // Ensure that start and end points are valid
     if (!openTiles.isValid (startX, startY))
@@ -68,5 +74,41 @@ int main (int args, char* argv[])
 
     openTiles.changeBestCost(startX, startY, 0);
 
+    std::unordered_map<uint, PathTile> expandedTiles;
+    PathTile tile = openTiles.top();
+    while (tile.x () != endX || tile.y () != endY)
+    {
+        openTiles.pop ();
+        expandedTiles[tile.getTile ().id] = tile;
+        // Check each neighbor
+        updateNeighbor (openTiles, tile, tile.x () + 1, tile.y ());
+        updateNeighbor (openTiles, tile, tile.x (), tile.y () + 1);
+        updateNeighbor (openTiles, tile, tile.x () - 1, tile.y ());
+        updateNeighbor (openTiles, tile, tile.x (), tile.y () - 1);
+
+        tile = openTiles.top ();
+    }
+
+    while (tile.x () != startX || tile.y () != startY)
+    {
+        std::cout << "x: " << tile.x () << " y: " << tile.y () << std::endl;
+        tile = expandedTiles[(tile.bestY () * world.getWidth()) + tile.bestX ()];
+    }
+
     return EXIT_SUCCESS;
+}
+
+void updateNeighbor (PriorityQueue& pq, const PathTile& tile,
+                     uint neighborX, uint neighborY)
+{
+    if (pq.isValid (neighborX, neighborY))
+    {
+        PathTile& neighborTile = pq.getPathTile (neighborX, neighborY);
+        uint totalCost = tile.getBestCost() + neighborTile.getTile().cost;
+        if (totalCost < neighborTile.getBestCost())
+        {
+            neighborTile.setBestTile(tile.x (), tile.y ());
+            pq.changeBestCost(neighborX, neighborY, totalCost);
+        }
+    }
 }

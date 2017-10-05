@@ -29,6 +29,8 @@ public:
     PathTile (const PathTile& other);
     virtual ~PathTile ();
 
+    PathTile& operator= (const PathTile& rhs);
+
     void setTile (World::tile_t tile);
     World::tile_t getTile () const;
 
@@ -37,7 +39,10 @@ public:
 
     uint x () const;
     uint y () const;
-    uint getID () const;
+
+    uint bestX () const;
+    uint bestY () const;
+    void setBestTile (uint x, uint y);
 
     bool operator< (const PathTile& rhs) const;
     bool operator>=(const PathTile& rhs) const;
@@ -47,6 +52,9 @@ private:
     uint m_bestCost;
     uint m_x;
     uint m_y;
+
+    uint m_bestX;
+    uint m_bestY;
 };
 
 } /* namespace pathFind */

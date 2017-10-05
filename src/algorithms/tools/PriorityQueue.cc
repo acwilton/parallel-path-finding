@@ -36,7 +36,7 @@ void PriorityQueue::push (const PathTile& element)
 {
     std::shared_ptr<handle_t> newHandle = std::make_shared<handle_t> (
             element, m_heap.size());
-    m_hashTable[element.getID()] = newHandle;
+    m_hashTable[element.getTile ().id] = newHandle;
     m_heap.emplace_back(newHandle);
     upHeap (m_heap.size() - 1);
 }
@@ -48,7 +48,7 @@ void PriorityQueue::pop ()
         return;
     }
 
-    m_hashTable.erase (m_heap[0]->tile.getID());
+    m_hashTable.erase (m_heap[0]->tile.getTile ().id);
     m_heap[0] = m_heap.back ();
     m_heap.pop_back ();
     if (m_heap.empty())
@@ -78,7 +78,8 @@ bool PriorityQueue::isValid (uint x, uint y) const
     return getHandle (x, y) != nullptr;
 }
 
-PathTile PriorityQueue::getPathTile (uint x, uint y) const
+PathTile&
+PriorityQueue::getPathTile (uint x, uint y) const
 {
     return getHandle(x, y)->tile;
 }

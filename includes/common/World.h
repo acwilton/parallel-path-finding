@@ -12,9 +12,7 @@
 #include <cstddef>
 #include <fstream>
 
-typedef unsigned char uchar;
-
-namespace parPath
+namespace pathFind
 {
 
 /**
@@ -37,11 +35,13 @@ public:
      * @param height   The height of the world.
      * @param width    The width of the world.
      */
-    World (size_t height, size_t width);
+    World (size_t width, size_t height);
 
     // We do not want copying to take place.
     World (const World&) = delete;
     World& operator= (const World&) = delete;
+
+    uint getID (uint x, uint y) const;
 
     /**
      * Struct meant to represent a tile in the world where path-finding takes place.
@@ -50,32 +50,42 @@ public:
      */
     struct tile_t
     {
-        uchar cost;
+        uint cost;
+        uint id;
     };
 
     /**
      * Returns the tile at the designated column and row
-     * @param row      The row we are retrieving from. (y-axis)
      * @param column   The column we are retrieving from. (x-axis)
+     * @param row      The row we are retrieving from. (y-axis)
      * @return The tile at the specified position in the world is returned.
      */
     tile_t
-    operator() (size_t row, size_t column);
+    operator() (uint column, uint row) const;
 
-    void generateMap ();
+    void generateMap (float percentCarved);
 
     size_t getWidth () const;
     size_t getHeight () const;
+    size_t getNumOpenTiles () const;
 
     friend std::ostream& operator<< (std::ostream& stream, const World& world);
     friend std::istream& operator>> (std::istream& stream, World& world);
 
+    std::vector<tile_t>::iterator begin ();
+    std::vector<tile_t>::const_iterator begin () const;
+
+    std::vector<tile_t>::iterator end ();
+    std::vector<tile_t>::const_iterator end () const;
 private:
-    std::vector<std::vector<tile_t>> m_tiles;
-    size_t m_height;
+
+    std::vector<tile_t> m_tiles;
     size_t m_width;
+    size_t m_height;
+
+    size_t m_openTiles;
 };
 
-} /* namespace parPath */
+} /* namespace pathFind */
 
 #endif /* WORLD_H_ */

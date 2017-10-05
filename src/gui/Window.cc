@@ -4,7 +4,10 @@
 
 #include "gui/Window.h"
 
-namespace parPath
+namespace pathFind
+{
+
+namespace gui
 {
 
 Window::Window (std::string title, size_t width, size_t height)
@@ -212,4 +215,5 @@ void Window::destroyResources ()
     m_renderer == nullptr;
 }
 
-} /* namespace parPath */
+} /* namespace gui */
+} /* namespace pathFind */

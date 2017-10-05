@@ -14,7 +14,10 @@
 #include "gui/Viewport.h"
 #include "gui/GraphicTile.h"
 
-namespace parPath
+namespace pathFind
+{
+
+namespace gui
 {
 
 class WorldViewport: public Viewport
@@ -42,8 +45,12 @@ public:
     virtual void setTextEnabled (bool textEnabled);
 
 protected:
+    uint getIndex (uint x, uint y) const;
+
     std::string m_worldFileName;
-    std::vector<std::vector<GraphicTile>> m_gTiles;
+    std::vector<GraphicTile> m_gTiles;
+    size_t m_worldWidth;
+    size_t m_worldHeight;
 
     uint m_cameraX;
     uint m_cameraY;
@@ -61,6 +68,7 @@ protected:
     void destroyResources ();
 };
 
-} /* namespace parPath */
+} /* namespace gui */
+} /* namespace pathFind */
 
 #endif /* WORLDVIEWPORT_H_ */

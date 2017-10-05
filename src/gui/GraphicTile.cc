@@ -3,9 +3,11 @@
  */
 
 #include "gui/GraphicTile.h"
-#include <iostream>
 
-namespace parPath
+namespace pathFind
+{
+
+namespace gui
 {
 
 GraphicTile::GraphicTile (World::tile_t tileData, SDL_Rect rect)
@@ -103,4 +105,5 @@ void GraphicTile::updateTextRect ()
     m_textRect = {m_rect.x + 2, m_rect.y + 2, m_rect.w - 4, m_rect.h - 4};
 }
 
-} /* namespace parPath */
+} /* namespace gui */
+} /* namespace pathFind */

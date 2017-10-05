@@ -16,7 +16,10 @@
 #include "gui/Error.h"
 #include "gui/Viewport.h"
 
-namespace parPath
+namespace pathFind
+{
+
+namespace gui
 {
 
 class Window final
@@ -80,6 +83,7 @@ private:
     std::vector<std::shared_ptr<Viewport>> m_viewports;
 };
 
-} /* namespace parPath */
+} /* namespace gui */
+} /* namespace pathFind */
 
 #endif /* WINDOW_H_ */

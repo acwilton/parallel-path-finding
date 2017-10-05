@@ -6,7 +6,10 @@
 
 #include "gui/WorldViewport.h"
 
-namespace parPath
+namespace pathFind
+{
+
+namespace gui
 {
 
 const uint MIN_TILE_SCALE = 5;
@@ -16,6 +19,8 @@ const uint DEFAULT_TILE_SCALE = 10;
 WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
         : Viewport (rect, backgroundColor),
           m_worldFileName (" "),
+          m_worldWidth (0),
+          m_worldHeight (0),
           m_cameraX (0),
           m_cameraY (0),
           m_tileScale (DEFAULT_TILE_SCALE),
@@ -44,19 +49,19 @@ void WorldViewport::render (SDL_Renderer* renderer)
         SDL_SetRenderDrawColor (renderer, m_backgroundColor.r, m_backgroundColor.g,
                         m_backgroundColor.b, m_backgroundColor.a);
         SDL_RenderFillRect (renderer, nullptr);
-        for (uint y = m_cameraY; y < m_gTiles.size (); ++y)
+        for (uint y = m_cameraY; y < m_worldHeight; ++y)
         {
-            for (uint x = m_cameraX; x < m_gTiles[y].size (); ++x)
+            for (uint x = m_cameraX; x < m_worldWidth; ++x)
             {
 
-                if (m_gTiles[y][x].getRect ().x > getWidth ()
-                    || m_gTiles[y][x].getRect ().y > getHeight ())
+                if (m_gTiles[getIndex (x, y)].getRect ().x > getWidth ()
+                    || m_gTiles[getIndex (x, y)].getRect ().y > getHeight ())
                 {
                     break;
                 }
 
-                m_gTiles[y][x].render (renderer,
-                        m_textTextures[static_cast<int>(m_gTiles[y][x].getTile().cost)]);
+                m_gTiles[getIndex (x, y)].render (renderer,
+                    m_textTextures[static_cast<int>(m_gTiles[getIndex (x, y)].getTile().cost)]);
             }
         }
     }
@@ -90,13 +95,13 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 break;
             case SDLK_DOWN:
             case SDLK_s:
-                if (getCameraOppY () + moveSpeed <= m_gTiles.size ())
+                if (getCameraOppY () + moveSpeed <= m_worldHeight)
                 {
                     setCameraY (getCameraY () + moveSpeed);
                 }
                 else
                 {
-                    setCameraY (m_gTiles.size () - (m_rect.h / m_tileScale));
+                    setCameraY (m_worldHeight - (m_rect.h / m_tileScale));
                 }
                 break;
             case SDLK_LEFT:
@@ -112,13 +117,13 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 break;
             case SDLK_RIGHT:
             case SDLK_d:
-                if (getCameraOppX () + moveSpeed < m_gTiles.back ().size ())
+                if (getCameraOppX () + moveSpeed < m_worldWidth)
                 {
                     setCameraX (getCameraX () + moveSpeed);
                 }
                 else
                 {
-                    setCameraX (m_gTiles.back ().size () - (m_rect.w / m_tileScale));
+                    setCameraX (m_worldWidth - (m_rect.w / m_tileScale));
                 }
                 break;
             case SDLK_PLUS:
@@ -174,14 +179,15 @@ void WorldViewport::loadFile ()
     World world;
     worldFile >> world;
 
-    m_gTiles.resize(world.getHeight ());
+    m_worldWidth = world.getWidth ();
+    m_worldHeight= world.getHeight ();
+    m_gTiles.reserve(m_worldWidth * m_worldHeight);
 
-    for (uint y = 0; y < m_gTiles.size (); ++y)
+    for (uint y = 0; y < m_worldHeight; ++y)
     {
-        m_gTiles[y].reserve(world.getWidth ());
-        for (uint x = 0; x < world.getWidth (); ++x)
+        for (uint x = 0; x < m_worldWidth; ++x)
         {
-            m_gTiles[y].emplace_back (world(y, x),
+            m_gTiles.emplace_back (world(x, y),
                     SDL_Rect {static_cast<int> (x * m_tileScale),
                               static_cast<int> (y * m_tileScale),
                               static_cast<int> (m_tileScale),
@@ -197,11 +203,11 @@ void WorldViewport::setCameraX (int x)
         x = 0;
     }
     m_cameraX = x;
-    for (uint y = 0; y < m_gTiles.size (); ++y)
+    for (uint y = 0; y < m_worldHeight; ++y)
     {
-        for (uint x = 0; x < m_gTiles[y].size (); ++x)
+        for (uint x = 0; x < m_worldWidth; ++x)
         {
-            m_gTiles[y][x].setX((x - m_cameraX) * m_tileScale);
+            m_gTiles[getIndex (x, y)].setX((x - m_cameraX) * m_tileScale);
         }
     }
 }
@@ -213,11 +219,11 @@ void WorldViewport::setCameraY (int y)
         y = 0;
     }
     m_cameraY = y;
-    for (uint y = 0; y < m_gTiles.size (); ++y)
+    for (uint y = 0; y < m_worldHeight; ++y)
     {
-        for (uint x = 0; x < m_gTiles[y].size (); ++x)
+        for (uint x = 0; x < m_worldWidth; ++x)
         {
-            m_gTiles[y][x].setY((y - m_cameraY) * m_tileScale);
+            m_gTiles[getIndex (x, y)].setY((y - m_cameraY) * m_tileScale);
         }
     }
 }
@@ -226,23 +232,23 @@ void WorldViewport::setTileScale (int scale)
 {
     m_tileScale = scale;
 
-    if (getCameraOppY () > m_gTiles.size ())
+    if (getCameraOppY () > m_worldHeight)
     {
-        setCameraY (getCameraY () - (getCameraOppY () - m_gTiles.size ()));
+        setCameraY (getCameraY () - (getCameraOppY () - m_worldHeight));
     }
-    if (getCameraOppX () > m_gTiles.back ().size ())
+    if (getCameraOppX () > m_worldWidth)
     {
-        setCameraX (getCameraX () - (getCameraOppX () - m_gTiles.back ().size ()));
+        setCameraX (getCameraX () - (getCameraOppX () - m_worldWidth));
     }
 
-    for (uint y = 0; y < m_gTiles.size (); ++y)
+    for (uint y = 0; y < m_worldHeight; ++y)
     {
-        for (uint x = 0; x < m_gTiles[y].size (); ++x)
+        for (uint x = 0; x < m_worldWidth; ++x)
         {
-            m_gTiles[y][x].setW (m_tileScale);
-            m_gTiles[y][x].setH (m_tileScale);
-            m_gTiles[y][x].setX((x - m_cameraX) * m_tileScale);
-            m_gTiles[y][x].setY((y - m_cameraY) * m_tileScale);
+            m_gTiles[getIndex (x, y)].setW (m_tileScale);
+            m_gTiles[getIndex (x, y)].setH (m_tileScale);
+            m_gTiles[getIndex (x, y)].setX((x - m_cameraX) * m_tileScale);
+            m_gTiles[getIndex (x, y)].setY((y - m_cameraY) * m_tileScale);
         }
     }
 }
@@ -250,12 +256,9 @@ void WorldViewport::setTileScale (int scale)
 void WorldViewport::setTextEnabled (bool textEnabled)
 {
     m_textEnabled = textEnabled;
-    for (auto& row : m_gTiles)
+    for (auto& t : m_gTiles)
     {
-        for (auto& t : row)
-        {
-            t.setTextEnabled(m_textEnabled);
-        }
+        t.setTextEnabled(m_textEnabled);
     }
 }
 
@@ -272,6 +275,11 @@ uint WorldViewport::getCameraY () const
 uint WorldViewport::getTileScale () const
 {
     return m_tileScale;
+}
+
+uint WorldViewport::getIndex (uint x, uint y) const
+{
+    return (m_worldWidth * y) + x;
 }
 
 uint WorldViewport::getCameraOppX () const
@@ -328,4 +336,5 @@ void WorldViewport::destroyResources ()
     }
 }
 
-} /* namespace parPath */
+} /* namespace gui */
+} /* namespace pathFind */

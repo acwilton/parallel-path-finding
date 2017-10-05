@@ -4,7 +4,10 @@
 
 #include "gui/Button.h"
 
-namespace parPath
+namespace pathFind
+{
+
+namespace gui
 {
 
 Button::Button (int vp_x, int vp_y, std::string text, SDL_Rect rect,
@@ -203,4 +206,5 @@ void Button::destroyResources ()
     m_textTexture = nullptr;
 }
 
-} /* namespace parPath */
+} /* namespace gui */
+} /* namespace pathFind */

@@ -1,5 +1,5 @@
 /**
- * File        : parallel-path-finding-gui.cc
+ * File        : Gui.cc
  * Description : The main GUI interface for running the parallel path-finding algorithms on
  */
 
@@ -18,7 +18,7 @@
 #include "gui/TextInput.h"
 #include "gui/WorldViewport.h"
 
-using namespace parPath;
+using namespace pathFind;
 
 bool sdl_init ();
 
@@ -30,23 +30,23 @@ int main (int args, char* argv[])
     bool quit = !sdl_init ();
     Log::logInfo("SDL started.");
 
-    Window window("Parallel Path Finding", SCREEN_WIDTH, SCREEN_HEIGHT);
+    gui::Window window("Parallel Path Finding", SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    std::shared_ptr<Viewport> mainViewport = std::make_shared<Viewport> (
+    std::shared_ptr<gui::Viewport> mainViewport = std::make_shared<gui::Viewport> (
             SDL_Rect { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT },
             SDL_Color {0xAA, 0x37, 0x4A});
-    std::shared_ptr<WorldViewport> worldViewport = std::make_shared<WorldViewport> (
+    std::shared_ptr<gui::WorldViewport> worldViewport = std::make_shared<gui::WorldViewport> (
             SDL_Rect {0, 0, SCREEN_WIDTH, (SCREEN_HEIGHT * 7) / 8 },
             SDL_Color {0xBB, 0xCC, 0xCC});
-    std::shared_ptr<Viewport> toolbarViewport = std::make_shared<Viewport> (
+    std::shared_ptr<gui::Viewport> toolbarViewport = std::make_shared<gui::Viewport> (
             SDL_Rect {0, (SCREEN_HEIGHT * 7) / 8, SCREEN_WIDTH, SCREEN_HEIGHT / 8},
             SDL_Color {0x88, 0xAA, 0x88});
 
     std::random_device rd;
     std::minstd_rand0 gen (rd ());
 
-    std::shared_ptr<TextInput> genWorldInput_TI;
-    auto genWorld_B = std::make_shared<Button> (mainViewport->getX (), mainViewport->getY (),
+    std::shared_ptr<gui::TextInput> genWorldInput_TI;
+    auto genWorld_B = std::make_shared<gui::Button> (mainViewport->getX (), mainViewport->getY (),
             "Generate World", SDL_Rect
             { (SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) - 25, 240, 50 }, 16,
             [&]()
@@ -74,11 +74,11 @@ int main (int args, char* argv[])
                 //sizeInput_TI->enable();
             };
 
-    genWorldInput_TI = std::make_shared<TextInput> (
+    genWorldInput_TI = std::make_shared<gui::TextInput> (
             (SCREEN_WIDTH / 2), SCREEN_HEIGHT - 75, 16, genWorldFunct);
 
-    std::shared_ptr<TextInput> viewWorldInput_TI;
-    auto viewWorld_B = std::make_shared<Button> (
+    std::shared_ptr<gui::TextInput> viewWorldInput_TI;
+    auto viewWorld_B = std::make_shared<gui::Button> (
             worldViewport->getX (), worldViewport->getY (),
             "View World", SDL_Rect
             {(SCREEN_WIDTH / 2) - 120, (SCREEN_HEIGHT / 2) - 100, 240, 50}, 16,
@@ -87,7 +87,7 @@ int main (int args, char* argv[])
                 viewWorldInput_TI->enable ();
             });
 
-    viewWorldInput_TI = std::make_shared<TextInput> (
+    viewWorldInput_TI = std::make_shared<gui::TextInput> (
             (SCREEN_WIDTH / 2), SCREEN_HEIGHT - 75, 16,
             [&](std::string s)
             {
@@ -100,7 +100,7 @@ int main (int args, char* argv[])
             });
 
 
-    auto regenerate_B = std::make_shared<Button> (
+    auto regenerate_B = std::make_shared<gui::Button> (
             toolbarViewport->getX (), toolbarViewport->getY (),
             "Regenerate World", SDL_Rect
             {20, toolbarViewport->getHeight() / 2 - 25, 280, 50}, 16,
@@ -111,7 +111,7 @@ int main (int args, char* argv[])
 
                 worldViewport->loadFile();
             });
-    auto backToMenu_B = std::make_shared<Button> (
+    auto backToMenu_B = std::make_shared<gui::Button> (
             toolbarViewport->getX (), toolbarViewport->getY (),
             "Back To Menu", SDL_Rect
             {320, toolbarViewport->getHeight() / 2 - 25, 280, 50}, 16,

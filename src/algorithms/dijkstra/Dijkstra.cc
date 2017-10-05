@@ -8,6 +8,8 @@
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
+#include <stack>
+#include <chrono>
 
 #include <boost/lexical_cast.hpp>
 
@@ -18,6 +20,8 @@ using namespace pathFind;
 
 const std::string WORLD_DIR = "worlds";
 const std::string WORLD_EXT = ".world";
+
+const std::string RESULTS_DIR = "results";
 
 void updateNeighbor (PriorityQueue& pq, const PathTile& tile,
                      uint neighborX, uint neighborY);
@@ -66,12 +70,14 @@ int main (int args, char* argv[])
         std::cout << "Start point either is a wall or isn't out of the world bounds" << std::endl;
         return EXIT_FAILURE;
     }
+    // Check each neighbor
     if (!openTiles.isValid (endX, endY))
     {
         std::cout << "End point either is a wall or isn't out of the world bounds" << std::endl;
         return EXIT_FAILURE;
     }
 
+    // Dijkstra's algorithm
     openTiles.changeBestCost(startX, startY, 0);
 
     std::unordered_map<uint, PathTile> expandedTiles;
@@ -81,14 +87,37 @@ int main (int args, char* argv[])
         openTiles.pop ();
         expandedTiles[tile.getTile ().id] = tile;
         // Check each neighbor
-        updateNeighbor (openTiles, tile, tile.x () + 1, tile.y ());
-        updateNeighbor (openTiles, tile, tile.x (), tile.y () + 1);
-        updateNeighbor (openTiles, tile, tile.x () - 1, tile.y ());
-        updateNeighbor (openTiles, tile, tile.x (), tile.y () - 1);
+        updateNeighbor (openTiles, tile, tile.x () + 1, tile.y ()); // east
+        updateNeighbor (openTiles, tile, tile.x (), tile.y () + 1); // south
+        updateNeighbor (openTiles, tile, tile.x () - 1, tile.y ()); // west
+        updateNeighbor (openTiles, tile, tile.x (), tile.y () - 1); // north
 
         tile = openTiles.top ();
     }
 
+
+    // Setup results file
+    auto now = std::chrono::system_clock::now ();
+    std::time_t tt = std::chrono::system_clock::to_time_t (now);
+    tm local_tm = *localtime (&tt);
+
+    std::stringstream resultsFilename;
+    resultsFilename << RESULTS_DIR << "/" << argv[1];
+    resultsFilename << "_" << local_tm.tm_year + 1900 << "_" << local_tm.tm_yday;
+    uint sec = local_tm.tm_hour * 3600 + local_tm.tm_min * 60 + local_tm.tm_sec;
+    resultsFilename << "_" << sec;
+
+    std::ifstream testFile (resultsFilename.str () + "_0");
+    uint copyNum = 0;
+    while (testFile)
+    {
+        ++copyNum;
+        testFile.open(resultsFilename.str () + "_" + std::to_string(copyNum));
+    }
+    resultsFilename << "_" << std::to_string (copyNum);
+    std::cout << "filename: " << resultsFilename.str () << std::endl;
+
+    std::ofstream resultFile (resultsFilename.str ());
     while (tile.x () != startX || tile.y () != startY)
     {
         std::cout << "x: " << tile.x () << " y: " << tile.y () << std::endl;

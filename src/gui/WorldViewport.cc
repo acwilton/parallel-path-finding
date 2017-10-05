@@ -18,7 +18,7 @@ const uint DEFAULT_TILE_SCALE = 10;
 
 WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
         : Viewport (rect, backgroundColor),
-          m_worldFileName (" "),
+          m_worldName (" "),
           m_worldWidth (0),
           m_worldHeight (0),
           m_cameraX (0),
@@ -155,24 +155,24 @@ void WorldViewport::handleEvent (SDL_Event& e)
     }
 }
 
-void WorldViewport::setFile (std::string worldFileName)
+void WorldViewport::setWorld (std::string worldName)
 {
-    m_worldFileName = worldFileName;
+    m_worldName = worldName;
 }
 
-void WorldViewport::loadFile ()
+void WorldViewport::loadWorld ()
 {
     m_gTiles.clear();
     m_cameraX = 0;
     m_cameraY = 0;
 
-    std::string trueWorldName = "worlds/" + m_worldFileName + ".world";
-    Log::logInfo("Created world: " + trueWorldName);
-    std::ifstream worldFile(trueWorldName, std::ifstream::in | std::ifstream::binary);
+    std::string worldFileName = "worlds/" + m_worldName + ".world";
+    Log::logInfo("Created world: " + worldFileName);
+    std::ifstream worldFile(worldFileName, std::ifstream::in | std::ifstream::binary);
     if (!worldFile)
     {
         Log::logError ("WorldViewport either could not find or could not open "
-                + trueWorldName);
+                + worldFileName);
         return;
     }
 

@@ -65,8 +65,8 @@ int main (int args, char* argv[])
                 int pos = worldName.find_first_of(" ");
                 worldName.erase(pos, std::string::npos);
 
-                worldViewport->setFile(worldName);
-                worldViewport->loadFile();
+                worldViewport->setWorld(worldName);
+                worldViewport->loadWorld();
 
                 worldViewport->enable();
                 toolbarViewport->enable();
@@ -91,8 +91,8 @@ int main (int args, char* argv[])
             (SCREEN_WIDTH / 2), SCREEN_HEIGHT - 75, 16,
             [&](std::string s)
             {
-                worldViewport->setFile(s);
-                worldViewport->loadFile();
+                worldViewport->setWorld(s);
+                worldViewport->loadWorld();
 
                 worldViewport->enable();
                 toolbarViewport->enable();
@@ -109,7 +109,7 @@ int main (int args, char* argv[])
                 std::string command = "./worldGen " + worldCommand;
                 system (command.c_str ());
 
-                worldViewport->loadFile();
+                worldViewport->loadWorld();
             });
     auto backToMenu_B = std::make_shared<gui::Button> (
             toolbarViewport->getX (), toolbarViewport->getY (),

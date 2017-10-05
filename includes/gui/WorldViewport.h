@@ -31,8 +31,8 @@ public:
 
     virtual void handleEvent (SDL_Event& e);
 
-    virtual void setFile (std::string worldFileName);
-    virtual void loadFile ();
+    virtual void setWorld (std::string worldFileName);
+    virtual void loadWorld ();
 
     virtual uint getCameraX () const;
     virtual uint getCameraY () const;
@@ -47,7 +47,7 @@ public:
 protected:
     uint getIndex (uint x, uint y) const;
 
-    std::string m_worldFileName;
+    std::string m_worldName;
     std::vector<GraphicTile> m_gTiles;
     size_t m_worldWidth;
     size_t m_worldHeight;

@@ -23,9 +23,6 @@ const std::string WORLD_EXT = ".world";
 
 const std::string RESULTS_DIR = "results";
 
-void updateNeighbor (PriorityQueue& pq, const PathTile& tile,
-                     uint neighborX, uint neighborY);
-
 int main (int args, char* argv[])
 {
     // Program should be started with 5 command line parameter
@@ -82,15 +79,15 @@ int main (int args, char* argv[])
 
     std::unordered_map<uint, PathTile> expandedTiles;
     PathTile tile = openTiles.top();
-    while (tile.x () != endX || tile.y () != endY)
+    while (tile.xy ().x != endX || tile.xy ().y != endY)
     {
         openTiles.pop ();
         expandedTiles[tile.getTile ().id] = tile;
         // Check each neighbor
-        updateNeighbor (openTiles, tile, tile.x () + 1, tile.y ()); // east
-        updateNeighbor (openTiles, tile, tile.x (), tile.y () + 1); // south
-        updateNeighbor (openTiles, tile, tile.x () - 1, tile.y ()); // west
-        updateNeighbor (openTiles, tile, tile.x (), tile.y () - 1); // north
+        openTiles.tryUpdateBestCost (tile.xy ().x + 1, tile.xy ().y, tile); // east
+        openTiles.tryUpdateBestCost (tile.xy ().x, tile.xy ().y + 1, tile); // south
+        openTiles.tryUpdateBestCost (tile.xy ().x - 1, tile.xy ().y, tile); // west
+        openTiles.tryUpdateBestCost (tile.xy ().x, tile.xy ().y - 1, tile); // north
 
         tile = openTiles.top ();
     }
@@ -118,26 +115,12 @@ int main (int args, char* argv[])
     std::cout << "filename: " << resultsFilename.str () << std::endl;
 
     std::ofstream resultFile (resultsFilename.str ());
-    while (tile.x () != startX || tile.y () != startY)
+
+    while (tile.xy ().x != startX || tile.xy ().y != startY)
     {
-        std::cout << "x: " << tile.x () << " y: " << tile.y () << std::endl;
-        tile = expandedTiles[(tile.bestY () * world.getWidth()) + tile.bestX ()];
+        std::cout << "x: " << tile.xy ().x << " y: " << tile.xy ().y << std::endl;
+        tile = expandedTiles[(tile.bestTile ().y * world.getWidth()) + tile.bestTile ().x];
     }
 
     return EXIT_SUCCESS;
-}
-
-void updateNeighbor (PriorityQueue& pq, const PathTile& tile,
-                     uint neighborX, uint neighborY)
-{
-    if (pq.isValid (neighborX, neighborY))
-    {
-        PathTile& neighborTile = pq.getPathTile (neighborX, neighborY);
-        uint totalCost = tile.getBestCost() + neighborTile.getTile().cost;
-        if (totalCost < neighborTile.getBestCost())
-        {
-            neighborTile.setBestTile(tile.x (), tile.y ());
-            pq.changeBestCost(neighborX, neighborY, totalCost);
-        }
-    }
 }

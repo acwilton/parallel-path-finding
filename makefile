@@ -7,13 +7,14 @@ LDFLAGS		          =
 
 # Files that all programs depend on
 COMMON_SRCS           = src/common/World.cc
-COMMON_HEADERS        = includes/common/World.h
+COMMON_HEADERS        = includes/common/World.h \
+                        includes/common/Point.h
 
 # Files that all path finding algorithms depend on
 COMMON_ALG_SRCS       = src/algorithms/tools/PathTile.cc \
                         src/algorithms/tools/PriorityQueue.cc
 COMMON_ALG_HEADERS    = includes/algorithms/tools/PriorityQueue.h \
-                        includes/algorithms/tools/PathTile.cc
+                        includes/algorithms/tools/PathTile.h
 
 
 # Graphical program
@@ -59,9 +60,10 @@ dijkstra_OBJS         = $(patsubst %.cc,%.o,$(filter %.cc,$(dijkstra_SRCS)))
 all: $(TARGETS)
 
 .SECONDEXPANSION:
-$(TARGETS): $$($$@_OBJS)
-	$(CXX) $(LDFLAGS) $^ -o $@  $(LDLIBS) $($@_LIBS)
+$(TARGETS): $$($$@_OBJS) $$($$@_HEADERS)
+	$(CXX) $(LDFLAGS) $($@_OBJS) -o $@  $(LDLIBS) $($@_LIBS)
 
+$(foreach target, $(TARGETS), $($(target)_HEADERS)):
 
 .PHONY : clean
 clean:

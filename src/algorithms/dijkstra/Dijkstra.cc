@@ -8,20 +8,20 @@
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
-#include <stack>
-#include <chrono>
+#include <vector>
 
 #include <boost/lexical_cast.hpp>
 
 #include "algorithms/tools/PathTile.h"
 #include "algorithms/tools/PriorityQueue.h"
+#include "common/Results.h"
 
 using namespace pathFind;
 
 const std::string WORLD_DIR = "worlds";
 const std::string WORLD_EXT = ".world";
 
-const std::string RESULTS_DIR = "results";
+const std::string ALG_NAME = "dijkstra";
 
 int main (int args, char* argv[])
 {
@@ -41,6 +41,11 @@ int main (int args, char* argv[])
     std::ifstream worldFile (filename.str (),
             std::ifstream::in | std::ifstream::binary);
 
+    if (!worldFile)
+    {
+        std::cout << "World file doesn't exist." << std::endl;
+        return EXIT_FAILURE;
+    }
     pathFind::World world;
 
     worldFile >> world;
@@ -92,35 +97,16 @@ int main (int args, char* argv[])
         tile = openTiles.top ();
     }
 
-
-    // Setup results file
-    auto now = std::chrono::system_clock::now ();
-    std::time_t tt = std::chrono::system_clock::to_time_t (now);
-    tm local_tm = *localtime (&tt);
-
-    std::stringstream resultsFilename;
-    resultsFilename << RESULTS_DIR << "/" << argv[1];
-    resultsFilename << "_" << local_tm.tm_year + 1900 << "_" << local_tm.tm_yday;
-    uint sec = local_tm.tm_hour * 3600 + local_tm.tm_min * 60 + local_tm.tm_sec;
-    resultsFilename << "_" << sec;
-
-    std::ifstream testFile (resultsFilename.str () + "_0");
-    uint copyNum = 0;
-    while (testFile)
-    {
-        ++copyNum;
-        testFile.open(resultsFilename.str () + "_" + std::to_string(copyNum));
-    }
-    resultsFilename << "_" << std::to_string (copyNum);
-    std::cout << "filename: " << resultsFilename.str () << std::endl;
-
-    std::ofstream resultFile (resultsFilename.str ());
-
+    // Parse results into a stack
+    std::vector<Point> finalPath;
     while (tile.xy ().x != startX || tile.xy ().y != startY)
     {
-        std::cout << "x: " << tile.xy ().x << " y: " << tile.xy ().y << std::endl;
+        finalPath.emplace_back(tile.xy ());
         tile = expandedTiles[(tile.bestTile ().y * world.getWidth()) + tile.bestTile ().x];
     }
+    finalPath.emplace_back(tile.xy ());
+
+    writeResults (finalPath, argv[1], ALG_NAME);
 
     return EXIT_SUCCESS;
 }

@@ -4,6 +4,9 @@
 # World files
 worlds/
 
+# Result files
+results/
+
 # Eclipse files
 .settings/
 .project

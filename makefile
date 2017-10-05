@@ -2,13 +2,14 @@
 CXX		              = g++
 CXXFLAGS              = -Wall -std=c++14
 CPPFLAGS              = -Iincludes
-LDLIBS                =
+LDLIBS                = -lboost_system -lboost_filesystem
 LDFLAGS		          =
 
 # Files that all programs depend on
 COMMON_SRCS           = src/common/World.cc
 COMMON_HEADERS        = includes/common/World.h \
-                        includes/common/Point.h
+                        includes/common/Point.h \
+                        includes/common/Results.h
 
 # Files that all path finding algorithms depend on
 COMMON_ALG_SRCS       = src/algorithms/tools/PathTile.cc \
@@ -73,3 +74,7 @@ clean:
 .PHONY : clean_worlds
 clean_worlds:
 	rm -f worlds/*
+
+.PHONY : clean_results
+clean_results:
+	rm -f -r results/*

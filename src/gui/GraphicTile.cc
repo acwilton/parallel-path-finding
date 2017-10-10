@@ -86,6 +86,11 @@ World::tile_t GraphicTile::getTile () const
     return m_tileData;
 }
 
+void GraphicTile::setRectColor(SDL_Color color)
+{
+    m_rectColor = color;
+}
+
 void GraphicTile::render (SDL_Renderer* renderer, SDL_Texture* texture)
 {
     SDL_SetRenderDrawColor (renderer, m_rectColor.r, m_rectColor.g,

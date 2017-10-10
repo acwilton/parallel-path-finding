@@ -6,7 +6,8 @@ LDLIBS                = -lboost_system -lboost_filesystem
 LDFLAGS		          =
 
 # Files that all programs depend on
-COMMON_SRCS           = src/common/World.cc
+COMMON_SRCS           = src/common/World.cc \
+                        src/common/Results.cc
 COMMON_HEADERS        = includes/common/World.h \
                         includes/common/Point.h \
                         includes/common/Results.h

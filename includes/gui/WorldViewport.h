@@ -10,6 +10,8 @@
 #include <string>
 
 #include "common/World.h"
+#include "common/Point.h"
+#include "common/Results.h"
 #include "gui/Error.h"
 #include "gui/Viewport.h"
 #include "gui/GraphicTile.h"
@@ -31,9 +33,13 @@ public:
 
     virtual void handleEvent (SDL_Event& e);
 
-    virtual void setWorld (std::string worldFileName);
+    virtual void setWorld (const std::string& worldFileName);
     virtual void loadWorld ();
 
+    /*virtual void loadResults (const Point& start, const Point& end,
+                             const std::string& algName);
+    virtual void setResultsEnabled (bool resultsEnabled);
+*/
     virtual uint getCameraX () const;
     virtual uint getCameraY () const;
     virtual uint getTileScale () const;
@@ -58,6 +64,9 @@ protected:
 
     bool m_textEnabled;
     bool m_textInitialized;
+
+    std::vector<Point> m_results;
+    bool m_resultsEnabled;
 
     SDL_Texture* m_textTextures[256];
 

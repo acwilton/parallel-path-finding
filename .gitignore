@@ -25,3 +25,6 @@ gui.log
 /gui
 /worldGen
 /dijkstra
+
+# makefile dependency file
+makefile.deps

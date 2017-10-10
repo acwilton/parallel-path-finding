@@ -23,7 +23,7 @@ namespace pathFind
 const std::string RESULTS_DIR = "results";
 const std::string RESULTS_EXT = ".res";
 
-void writeResults (const std::vector<Point>& path, const std::string& worldName,
+inline void writeResults (const std::vector<Point>& path, const std::string& worldName,
                    const std::string& algName)
 {
     std::stringstream dirName;
@@ -40,7 +40,7 @@ void writeResults (const std::vector<Point>& path, const std::string& worldName,
     }
 }
 
-void readResults (std::vector<Point>& path, const std::string& worldName,
+inline void readResults (std::vector<Point>& path, const std::string& worldName,
                   const std::string& algName)
 {
     std::stringstream fileName;

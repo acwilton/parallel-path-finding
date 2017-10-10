@@ -12,8 +12,8 @@ results/
 .project
 .cproject
 
-# Object files
-*.o
+# Object and dependency files
+build/
 
 # Resources
 resources/

@@ -1,10 +1,15 @@
 # Built-in Variables
 CXX		              = g++
 CXXFLAGS              = -Wall -std=c++14
-CPPFLAGS              = -Iincludes
+CPPFLAGS              = -Iincludes -MMD -MP
 LDLIBS                = -lboost_system -lboost_filesystem
 LDFLAGS		          =
-SRCSUFFIX          = .cc
+
+# Helpful Variables
+SRCSUFFIX             = cc
+SRCFOLDER             = src
+OBJFOLDER             = build
+MKDIR_P               = mkdir -p
 
 # Files that all programs depend on
 COMMON_SRCS           = src/common/World.cc
@@ -25,24 +30,23 @@ gui_SRCS              = $(COMMON_SRCS) \
                         src/gui/TextInput.cc \
                         src/gui/WorldViewport.cc \
                         src/gui/GraphicTile.cc
-gui_OBJS              = $(patsubst %$(SRCSUFFIX),%.o,$(filter %$(SRCSUFFIX),$(gui_SRCS)))
+gui_OBJS              = $(gui_SRCS:$(SRCFOLDER)/%.$(SRCSUFFIX)=$(OBJFOLDER)/%.o)
 
 # World generation program
 TARGETS              += worldGen
 worldGen_SRCS         = $(COMMON_SRCS) \
                         src/worldGen/WorldGen.cc
-worldGen_OBJS         = $(patsubst %$(SRCSUFFIX),%.o,$(filter %$(SRCSUFFIX),$(worldGen_SRCS)))
+worldGen_OBJS         = $(worldGen_SRCS:$(SRCFOLDER)/%.$(SRCSUFFIX)=$(OBJFOLDER)/%.o)
 
 # Djikstra's algorithm
 TARGETS              += dijkstra
 dijkstra_SRCS         = $(COMMON_SRCS) \
                         $(COMMON_ALG_SRCS) \
                         src/algorithms/dijkstra/Dijkstra.cc
-dijkstra_OBJS         = $(patsubst %$(SRCSUFFIX),%.o,$(filter %$(SRCSUFFIX),$(dijkstra_SRCS))) 
+dijkstra_OBJS         = $(dijkstra_SRCS:$(SRCFOLDER)/%.$(SRCSUFFIX)=$(OBJFOLDER)/%.o)
 
-MAKEDEPENDS           = $(CXX) $(CPPFLAGS) $(CXXFLAGS) -MM -MP
-
-SRCS                  = $(foreach target,$(TARGETS),$(sort $($(target)_SRCS)))
+OBJS                  = $(sort $(foreach target,$(TARGETS),$($(target)_OBJS)))
+DEPS                  = $(OBJS:.o=.d)
 
 .PHONY : all
 all: $(TARGETS)
@@ -51,14 +55,16 @@ all: $(TARGETS)
 $(TARGETS): $$($$@_OBJS)
 	$(CXX) $(LDFLAGS) $^ -o $@  $(LDLIBS) $($@_LIBS)
 
-#$(foreach target, $(TARGETS), $($(target)_HEADERS)):
+$(OBJFOLDER)/%.o : $(SRCFOLDER)/%.$(SRCSUFFIX)
+	@$(MKDIR_P) $(dir $@)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
--include makefile.deps
+-include $(DEPS)
 
+# Make cleanup targets
 .PHONY : clean
 clean:
-	rm -f $(patsubst %$(SRCSUFFIX),%.o,$(SRCS)) \
-	      $(TARGETS) gui.log
+	rm -f -r $(OBJFOLDER) $(TARGETS) gui.log
 
 .PHONY : clean_worlds
 clean_worlds:
@@ -68,6 +74,4 @@ clean_worlds:
 clean_results:
 	rm -f -r results/*
 
-.PHONY : makefile.deps
-makefile.deps :
-	$(MAKEDEPENDS) $(SRCS) > makefile.deps
+# Some help taken from https://spin.atomicobject.com/2016/08/26/makefile-c-projects/

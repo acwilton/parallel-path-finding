@@ -50,8 +50,12 @@ public:
 
     virtual void setTextEnabled (bool textEnabled);
 
+    virtual void setShowEndPoints (bool showEndPoints);
+
 protected:
-    uint getIndex (uint x, uint y) const;
+    enum Mode {VIEW, SELECT};
+
+    Mode m_mode;
 
     std::string m_worldName;
     std::vector<GraphicTile> m_gTiles;
@@ -68,13 +72,29 @@ protected:
     std::vector<Point> m_results;
     bool m_resultsEnabled;
 
+    bool m_showEndPoints;
+    Point m_start;
+    Point m_end;
+
     SDL_Texture* m_textTextures[256];
+    SDL_Texture* m_startTexture;
+    SDL_Texture* m_endTexture;
 
-    uint getCameraOppX () const;
-    uint getCameraOppY () const;
+    virtual void setMode (Mode mode);
 
-    void initializeTextures (SDL_Renderer* renderer);
-    void destroyResources ();
+    virtual bool trySelectTile (int mouseX, int mouseY, Point& tile);
+
+    uint getIndex (uint x, uint y) const;
+
+    virtual uint getCameraOppX () const;
+    virtual uint getCameraOppY () const;
+
+    virtual void resetEndPoints ();
+
+    virtual void initializeTextures (SDL_Renderer* renderer);
+    virtual void initializeTexture (SDL_Renderer* renderer, SDL_Texture*& texture,
+                                    const std::string& text);
+    virtual void destroyResources ();
 };
 
 } /* namespace gui */

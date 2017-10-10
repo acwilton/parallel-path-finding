@@ -23,6 +23,7 @@ const SDL_Color DIJKSTRA_COLOR = {0xFF, 0xF4, 0x7F, 0xFF};
 
 WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
         : Viewport (rect, backgroundColor),
+          m_mode (VIEW),
           m_worldName (" "),
           m_worldWidth (0),
           m_worldHeight (0),
@@ -31,7 +32,12 @@ WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
           m_tileScale (DEFAULT_TILE_SCALE),
           m_textEnabled (false),
           m_textInitialized (false),
-          m_resultsEnabled (false)
+          m_resultsEnabled (false),
+          m_showEndPoints (false),
+          m_start (0, 0),
+          m_end (0, 0),
+          m_startTexture (nullptr),
+          m_endTexture (nullptr)
 {
     for (uint i = 0; i < 255; ++i)
     {
@@ -59,15 +65,27 @@ void WorldViewport::render (SDL_Renderer* renderer)
         {
             for (uint x = m_cameraX; x < m_worldWidth; ++x)
             {
+                GraphicTile& t = m_gTiles[getIndex (x, y)];
 
-                if (m_gTiles[getIndex (x, y)].getRect ().x > getWidth ()
-                    || m_gTiles[getIndex (x, y)].getRect ().y > getHeight ())
+                if (t.getRect ().x > getWidth ()
+                    || t.getRect ().y > getHeight ())
                 {
                     break;
                 }
 
-                m_gTiles[getIndex (x, y)].render (renderer,
-                    m_textTextures[static_cast<int>(m_gTiles[getIndex (x, y)].getTile().cost)]);
+                SDL_Texture* renderTexture = m_textTextures[t.getTile().cost];
+                if (m_showEndPoints)
+                {
+                    if (m_start.x == x && m_start.y == y)
+                    {
+                        renderTexture = m_startTexture;
+                    }
+                    else if (m_end.x == x && m_end.y == y)
+                    {
+                        renderTexture = m_endTexture;
+                    }
+                }
+                t.render (renderer, renderTexture);
             }
         }
     }
@@ -156,6 +174,61 @@ void WorldViewport::handleEvent (SDL_Event& e)
             case SDLK_t:
                 setTextEnabled (!m_textEnabled);
                 break;
+            case SDLK_LALT:
+                if (m_mode == VIEW)
+                {
+                    m_showEndPoints = true;
+                }
+                break;
+            }
+        }
+        else if (e.type == SDL_KEYUP)
+        {
+            switch (e.key.keysym.sym)
+            {
+            case SDLK_LALT:
+                if (m_mode == VIEW)
+                {
+                    m_showEndPoints = false;
+                }
+            }
+        }
+        else if (e.type == SDL_MOUSEBUTTONDOWN)
+        {
+            int mouseX = e.button.x - getX ();
+            int mouseY = e.button.y - getY ();
+
+            if (mouseX > 0 && mouseX < getWidth () &&
+                mouseY > 0 && mouseY < getHeight ())
+            {
+                if (m_mode == VIEW)
+                {
+                    if (trySelectTile (mouseX, mouseY, m_start))
+                    {
+                        setMode (SELECT);
+                        m_end.x = m_worldWidth;
+                        m_end.y = m_worldHeight;
+                    }
+                }
+                else if (m_mode == SELECT)
+                {
+                    if (m_end.x == m_worldWidth && m_end.y == m_worldHeight)
+                    {
+                        trySelectTile (mouseX, mouseY, m_end);
+                    }
+                    else
+                    {
+                        setMode (VIEW);
+                        m_gTiles[getIndex (m_start.x, m_start.y)].setRectColor(DEFAULT_COLOR);
+                        m_gTiles[getIndex (m_end.x, m_end.y)].setRectColor(DEFAULT_COLOR);
+                        resetEndPoints ();
+                        if (!m_results.empty())
+                        {
+                            m_start = m_results.front();
+                            m_end = m_results.back();
+                        }
+                    }
+                }
             }
         }
     }
@@ -168,6 +241,7 @@ void WorldViewport::setWorld (const std::string& worldName)
 
 void WorldViewport::loadWorld ()
 {
+    m_results.clear();
     m_gTiles.clear();
     m_cameraX = 0;
     m_cameraY = 0;
@@ -187,6 +261,9 @@ void WorldViewport::loadWorld ()
 
     m_worldWidth = world.getWidth ();
     m_worldHeight= world.getHeight ();
+
+    resetEndPoints ();
+
     m_gTiles.reserve(m_worldWidth * m_worldHeight);
 
     for (uint y = 0; y < m_worldHeight; ++y)
@@ -208,11 +285,20 @@ void WorldViewport::loadResults (const Point& start, const Point& end,
 {
     m_results.clear();
     readResults (m_results, start, end, m_worldName, algName);
+    if (m_mode == VIEW)
+    {
+        if (!m_results.empty())
+        {
+            m_start = m_results.front();
+            m_end = m_results.back();
+        }
+    }
 }
 
 void WorldViewport::setResultsEnabled (bool resultsEnabled)
 {
-    SDL_Color color = resultsEnabled ? DIJKSTRA_COLOR : DEFAULT_COLOR;
+    m_resultsEnabled = resultsEnabled;
+    SDL_Color color = m_resultsEnabled ? DIJKSTRA_COLOR : DEFAULT_COLOR;
     for (auto& r : m_results)
     {
         m_gTiles[getIndex (r.x, r.y)].setRectColor(color);
@@ -284,6 +370,10 @@ void WorldViewport::setTextEnabled (bool textEnabled)
         t.setTextEnabled(m_textEnabled);
     }
 }
+void WorldViewport::setShowEndPoints(bool showEndPoints)
+{
+    m_showEndPoints = showEndPoints;
+}
 
 uint WorldViewport::getCameraX () const
 {
@@ -298,6 +388,38 @@ uint WorldViewport::getCameraY () const
 uint WorldViewport::getTileScale () const
 {
     return m_tileScale;
+}
+
+void WorldViewport::setMode (Mode mode)
+{
+    m_mode = mode;
+    switch (m_mode)
+    {
+    case VIEW:
+        m_showEndPoints = false;
+        break;
+    case SELECT:
+        m_showEndPoints = true;
+        break;
+    }
+}
+
+bool WorldViewport::trySelectTile (int mouseX, int mouseY, Point& tile)
+{
+    uint tileX = m_cameraX + (static_cast<uint> (mouseX) / m_tileScale);
+    uint tileY = m_cameraY + (static_cast<uint> (mouseY) / m_tileScale);
+    if (tileX < m_worldWidth && tileY < m_worldHeight)
+    {
+        GraphicTile& t = m_gTiles[getIndex (tileX, tileY)];
+        if (t.getTile().cost != 0)
+        {
+            tile.x = tileX;
+            tile.y = tileY;
+            t.setRectColor(SELECT_COLOR);
+            return true;
+        }
+    }
+    return false;
 }
 
 uint WorldViewport::getIndex (uint x, uint y) const
@@ -315,39 +437,50 @@ uint WorldViewport::getCameraOppY () const
     return (m_rect.h / m_tileScale) + m_cameraY;
 }
 
+void WorldViewport::resetEndPoints()
+{
+    m_start.x = m_end.x = m_worldWidth;
+    m_start.y = m_end.y = m_worldHeight;
+}
+
 void WorldViewport::initializeTextures (SDL_Renderer* renderer)
 {
     destroyResources ();
     for (uint i = 0; i < 256; ++i)
     {
-        std::string text = std::to_string (i);
-
-        TTF_Font* font = TTF_OpenFont ("resources/FreeSans.ttf", 128);
-        SDL_Surface* textSurface = TTF_RenderText_Solid (font,
-                text.c_str(),
-                {0x00,0x00,0x00});
-        if (textSurface == nullptr)
-        {
-            Log::logError (
-                    "Failed to create SDL_Surface from tile data: \"" + text
-                            + "\" | SDL_ttf Error: " + TTF_GetError ());
-            return;
-        }
-        m_textTextures[i] = SDL_CreateTextureFromSurface (renderer, textSurface);
-        SDL_FreeSurface (textSurface);
-
-        if (m_textTextures[i] == nullptr)
-        {
-            Log::logError (
-                    "Failed to create SDL_Texture from tile data text surface: \""
-                            + text + "\" | SDL_ttf Error: " + TTF_GetError ());
-            return;
-        }
+        initializeTexture (renderer, m_textTextures[i], std::to_string (i));
     }
+    initializeTexture (renderer, m_startTexture, "S");
+    initializeTexture (renderer, m_endTexture, "E");
 
     m_textInitialized = true;
 
     return;
+}
+
+void WorldViewport::initializeTexture(SDL_Renderer* renderer, SDL_Texture*& texture,
+                                      const std::string& text)
+{
+    TTF_Font* font = TTF_OpenFont ("resources/FreeSans.ttf", 128);
+    SDL_Surface* textSurface = TTF_RenderText_Solid (font, text.c_str(),
+                                                     {0x00,0x00,0x00});
+    if (textSurface == nullptr)
+    {
+        Log::logError (
+                "Failed to create SDL_Surface from tile data: \"" + text
+                        + "\" | SDL_ttf Error: " + TTF_GetError ());
+        return;
+    }
+    texture = SDL_CreateTextureFromSurface (renderer, textSurface);
+    SDL_FreeSurface (textSurface);
+
+    if (texture == nullptr)
+    {
+        Log::logError (
+                "Failed to create SDL_Texture from tile data text surface: \""
+                        + text + "\" | SDL_ttf Error: " + TTF_GetError ());
+        return;
+    }
 }
 
 void WorldViewport::destroyResources ()
@@ -357,6 +490,10 @@ void WorldViewport::destroyResources ()
         SDL_DestroyTexture (m_textTextures[i]);
         m_textTextures[i] = nullptr;
     }
+    SDL_DestroyTexture (m_startTexture);
+    m_startTexture = nullptr;
+    SDL_DestroyTexture (m_endTexture);
+    m_endTexture = nullptr;
 }
 
 } /* namespace gui */

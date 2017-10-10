@@ -20,7 +20,7 @@ namespace pathFind
 namespace gui
 {
 
-
+const SDL_Color DEFAULT_COLOR = {0xFF, 0xFF, 0xFF, 0xFF};
 
 class GraphicTile
 {

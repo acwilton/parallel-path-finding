@@ -24,7 +24,7 @@ const std::string RESULTS_DIR = "results";
 const std::string RESULTS_EXT = ".res";
 
 inline void writeResults (const std::vector<Point>& path, const std::string& worldName,
-                   const std::string& algName)
+                          const std::string& algName)
 {
     std::stringstream dirName;
     dirName << RESULTS_DIR << "/" << worldName << "_"
@@ -40,13 +40,13 @@ inline void writeResults (const std::vector<Point>& path, const std::string& wor
     }
 }
 
-inline void readResults (std::vector<Point>& path, const std::string& worldName,
-                  const std::string& algName)
+inline void readResults (std::vector<Point>& path, const Point& start, const Point& end,
+                         const std::string& worldName, const std::string& algName)
 {
     std::stringstream fileName;
     fileName << RESULTS_DIR << "/" << worldName << "_"
-             << path.back ().x << "_" << path.back ().y << "_"
-             << path.front ().x << "_" << path.front ().y
+             << start.x << "_" << start.y << "_"
+             << end.x << "_" << end.y
              << "/" << algName << RESULTS_EXT;
 
     std::ifstream resultFile (fileName.str ());

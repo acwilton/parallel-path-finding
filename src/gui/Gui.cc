@@ -117,17 +117,17 @@ int main (int args, char* argv[])
             [&]()
             {
                 mainViewport->enable ();
-                //worldViewport->setResultsEnabled(false);
+                worldViewport->setResultsEnabled(false);
                 worldViewport->disable ();
                 toolbarViewport->disable ();
             });
-/*
+
     std::shared_ptr<gui::TextInput> viewResult_TI;
 
     std::shared_ptr<gui::Button> viewResult_B = std::make_shared<gui::Button> (
             toolbarViewport->getX (), toolbarViewport->getY (),
             "View Results", SDL_Rect
-            {420, toolbarViewport->getHeight () / 2 - 25, 280, 50}, 16,
+            {620, toolbarViewport->getHeight () / 2 - 25, 280, 50}, 16,
             [&]()
             {
                 viewResult_TI->enable();
@@ -135,17 +135,17 @@ int main (int args, char* argv[])
             });
 
     viewResult_TI = std::make_shared<gui::TextInput> (
-            560, toolbarViewport->getHeight () / 2 - 25, 16,
+            920, toolbarViewport->getHeight () / 2 - 25, 16,
             [&](std::string s)
             {
                 std::stringstream input (s);
                 uint sx, sy, ex, ey;
                 input >> sx >> sy >> ex >> ey;
-                worldViewport->loadResults({sx, sy}, {ex, ey}, "djisktra");
+                worldViewport->loadResults({sx, sy}, {ex, ey}, "dijkstra");
                 worldViewport->setResultsEnabled(true);
                 viewResult_B->enable ();
             });
-*/
+
     mainViewport->addButton (genWorld_B);
     mainViewport->addButton (genWorldInput_TI);
     genWorld_B->enable ();
@@ -157,11 +157,11 @@ int main (int args, char* argv[])
 
     toolbarViewport->addButton (regenerate_B);
     toolbarViewport->addButton (backToMenu_B);
-    //toolbarViewport->addButton (viewResult_B);
-    //toolbarViewport->addButton (viewResult_TI);
+    toolbarViewport->addButton (viewResult_B);
+    toolbarViewport->addButton (viewResult_TI);
     backToMenu_B->enable ();
     regenerate_B->enable ();
-    //viewResult_B->enable ();
+    viewResult_B->enable ();
 
     window.addViewport (mainViewport);
     window.addViewport (worldViewport);

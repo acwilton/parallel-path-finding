@@ -36,10 +36,10 @@ public:
     virtual void setWorld (const std::string& worldFileName);
     virtual void loadWorld ();
 
-    /*virtual void loadResults (const Point& start, const Point& end,
+    virtual void loadResults (const Point& start, const Point& end,
                              const std::string& algName);
     virtual void setResultsEnabled (bool resultsEnabled);
-*/
+
     virtual uint getCameraX () const;
     virtual uint getCameraY () const;
     virtual uint getTileScale () const;

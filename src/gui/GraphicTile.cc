@@ -23,7 +23,7 @@ GraphicTile::GraphicTile (World::tile_t tileData, SDL_Rect rect)
     }
     else
     {
-        m_rectColor = {0xFF, 0xFF, 0xFF, 0xFF};
+        m_rectColor = DEFAULT_COLOR;
         m_textColor = {0x00, 0x00, 0x00, 0xFF};
     }
 }

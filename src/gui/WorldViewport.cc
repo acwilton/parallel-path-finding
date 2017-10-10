@@ -6,6 +6,7 @@
 #include <fstream>
 
 #include "gui/WorldViewport.h"
+#include "common/Results.h"
 
 namespace pathFind
 {
@@ -17,7 +18,8 @@ const uint MIN_TILE_SCALE = 5;
 const uint MAX_TILE_SCALE = 75;
 const uint DEFAULT_TILE_SCALE = 10;
 
-const SDL_Color DIJKSTRA_COLOR = {0x99, 0x99, 0x00, 0xFF};
+const SDL_Color SELECT_COLOR = {0xFF, 0x77, 0x00, 0xFF};
+const SDL_Color DIJKSTRA_COLOR = {0xFF, 0xF4, 0x7F, 0xFF};
 
 WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
         : Viewport (rect, backgroundColor),
@@ -196,26 +198,27 @@ void WorldViewport::loadWorld ()
                               static_cast<int> (y * m_tileScale),
                               static_cast<int> (m_tileScale),
                               static_cast<int> (m_tileScale)});
+            m_gTiles.back().setTextEnabled(m_textEnabled);
         }
     }
 }
-/*
+
 void WorldViewport::loadResults (const Point& start, const Point& end,
                                 const std::string& algName)
 {
+    m_results.clear();
     readResults (m_results, start, end, m_worldName, algName);
 }
 
 void WorldViewport::setResultsEnabled (bool resultsEnabled)
 {
-    SDL_Color color = resultsEnabled ? SDL_Color{0x0F, 0xFF, 0xFF, 0xFF} :
-                                       SDL_Color {0xFF, 0xFF, 0xFF, 0xFF};
+    SDL_Color color = resultsEnabled ? DIJKSTRA_COLOR : DEFAULT_COLOR;
     for (auto& r : m_results)
     {
         m_gTiles[getIndex (r.x, r.y)].setRectColor(color);
     }
 }
-*/
+
 void WorldViewport::setCameraX (int x)
 {
     if (x < 0)
@@ -314,9 +317,7 @@ uint WorldViewport::getCameraOppY () const
 
 void WorldViewport::initializeTextures (SDL_Renderer* renderer)
 {
-    std::cout << "woo\n" << std::flush;
     destroyResources ();
-    std::cout << "wow\n" << std::flush;
     for (uint i = 0; i < 256; ++i)
     {
         std::string text = std::to_string (i);
@@ -343,7 +344,6 @@ void WorldViewport::initializeTextures (SDL_Renderer* renderer)
             return;
         }
     }
-    std::cout << "woo\n" << std::flush;
 
     m_textInitialized = true;
 

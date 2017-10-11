@@ -54,6 +54,8 @@ int main (int args, char* argv[])
                 genWorldInput_TI->enable();
             });
 
+    std::shared_ptr<gui::Button> regenerate_B;
+
     std::string worldCommand;
     std::function<void(std::string)> genWorldFunct = [&](std::string s)
             {
@@ -70,8 +72,8 @@ int main (int args, char* argv[])
 
                 worldViewport->enable();
                 toolbarViewport->enable();
+                regenerate_B->enable ();
                 mainViewport->disable();
-                //sizeInput_TI->enable();
             };
 
     genWorldInput_TI = std::make_shared<gui::TextInput> (
@@ -87,6 +89,8 @@ int main (int args, char* argv[])
                 viewWorldInput_TI->enable ();
             });
 
+    std::shared_ptr<gui::Button> viewResult_B;
+
     viewWorldInput_TI = std::make_shared<gui::TextInput> (
             (SCREEN_WIDTH / 2), SCREEN_HEIGHT - 75, 16,
             [&](std::string s)
@@ -96,13 +100,28 @@ int main (int args, char* argv[])
 
                 worldViewport->enable();
                 toolbarViewport->enable();
+                viewResult_B->enable();
                 mainViewport->disable();
             });
 
-    auto regenerate_B = std::make_shared<gui::Button> (
+    auto backToMenu_B = std::make_shared<gui::Button> (
+            toolbarViewport->getX (), toolbarViewport->getY (),
+            "Back To Menu", SDL_Rect
+            {20, toolbarViewport->getHeight() / 2 - 25, 280, 50}, 16,
+            [&]()
+            {
+                mainViewport->enable ();
+                worldViewport->setResultsEnabled(false);
+                worldViewport->disable ();
+                viewResult_B->disable ();
+                regenerate_B->disable ();
+                toolbarViewport->disable ();
+            });
+
+    regenerate_B = std::make_shared<gui::Button> (
             toolbarViewport->getX (), toolbarViewport->getY (),
             "Regenerate World", SDL_Rect
-            {20, toolbarViewport->getHeight() / 2 - 25, 280, 50}, 16,
+            {320, toolbarViewport->getHeight() / 2 - 25, 280, 50}, 16,
             [&]()
             {
                 std::string command = "./worldGen " + worldCommand;
@@ -110,24 +129,13 @@ int main (int args, char* argv[])
 
                 worldViewport->loadWorld();
             });
-    auto backToMenu_B = std::make_shared<gui::Button> (
-            toolbarViewport->getX (), toolbarViewport->getY (),
-            "Back To Menu", SDL_Rect
-            {320, toolbarViewport->getHeight() / 2 - 25, 280, 50}, 16,
-            [&]()
-            {
-                mainViewport->enable ();
-                worldViewport->setResultsEnabled(false);
-                worldViewport->disable ();
-                toolbarViewport->disable ();
-            });
 
     std::shared_ptr<gui::TextInput> viewResult_TI;
 
-    std::shared_ptr<gui::Button> viewResult_B = std::make_shared<gui::Button> (
+    viewResult_B = std::make_shared<gui::Button> (
             toolbarViewport->getX (), toolbarViewport->getY (),
             "View Results", SDL_Rect
-            {620, toolbarViewport->getHeight () / 2 - 25, 280, 50}, 16,
+            {320, toolbarViewport->getHeight () / 2 - 25, 280, 50}, 16,
             [&]()
             {
                 viewResult_TI->enable();
@@ -135,7 +143,7 @@ int main (int args, char* argv[])
             });
 
     viewResult_TI = std::make_shared<gui::TextInput> (
-            920, toolbarViewport->getHeight () / 2 - 25, 16,
+            460, toolbarViewport->getHeight () / 2 - 25, 16,
             [&](std::string s)
             {
                 std::stringstream input (s);
@@ -160,8 +168,6 @@ int main (int args, char* argv[])
     toolbarViewport->addButton (viewResult_B);
     toolbarViewport->addButton (viewResult_TI);
     backToMenu_B->enable ();
-    regenerate_B->enable ();
-    viewResult_B->enable ();
 
     window.addViewport (mainViewport);
     window.addViewport (worldViewport);

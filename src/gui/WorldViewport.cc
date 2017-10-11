@@ -39,7 +39,7 @@ WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
           m_startTexture (nullptr),
           m_endTexture (nullptr)
 {
-    for (uint i = 0; i < 255; ++i)
+    for (uint i = 0; i < 256; ++i)
     {
         m_textTextures[i] = nullptr;
     }
@@ -180,6 +180,24 @@ void WorldViewport::handleEvent (SDL_Event& e)
                     m_showEndPoints = true;
                 }
                 break;
+            case SDLK_RETURN:
+                if (m_mode == SELECT && !isNull (m_start) && !isNull (m_end))
+                {
+                    setMode (VIEW);
+                    std::string command;
+                    command = "./dijkstra " + m_worldName + " " +
+                            std::to_string (m_start.x) + " " +
+                            std::to_string (m_start.y) + " " +
+                            std::to_string (m_end.x) + " " +
+                            std::to_string (m_end.y);
+                    system (command.c_str ());
+                    loadResults (m_start, m_end, "dijkstra");
+                    setResultsEnabled (true);
+                }
+                else
+                {
+                    setResultsEnabled (!m_resultsEnabled);
+                }
             }
         }
         else if (e.type == SDL_KEYUP)
@@ -203,24 +221,36 @@ void WorldViewport::handleEvent (SDL_Event& e)
             {
                 if (m_mode == VIEW)
                 {
-                    if (trySelectTile (mouseX, mouseY, m_start))
+                    m_start = trySelectTile (mouseX, mouseY);
+                    if (!isNull (m_start))
                     {
                         setMode (SELECT);
+                        GraphicTile& t = m_gTiles[getIndex (m_start.x, m_start.y)];
+                        m_startPrevColor = t.getRectColor ();
+                        t.setRectColor (SELECT_COLOR);
+
+                        // Reset m_end
                         m_end.x = m_worldWidth;
                         m_end.y = m_worldHeight;
                     }
                 }
                 else if (m_mode == SELECT)
                 {
-                    if (m_end.x == m_worldWidth && m_end.y == m_worldHeight)
+                    if (isNull (m_end))
                     {
-                        trySelectTile (mouseX, mouseY, m_end);
+                        m_end = trySelectTile (mouseX, mouseY);
+                        if (!isNull (m_end))
+                        {
+                            GraphicTile& t = m_gTiles[getIndex (m_end.x, m_end.y)];
+                            m_endPrevColor = t.getRectColor();
+                            t.setRectColor(SELECT_COLOR);
+                        }
                     }
                     else
                     {
                         setMode (VIEW);
-                        m_gTiles[getIndex (m_start.x, m_start.y)].setRectColor(DEFAULT_COLOR);
-                        m_gTiles[getIndex (m_end.x, m_end.y)].setRectColor(DEFAULT_COLOR);
+                        m_gTiles[getIndex (m_start.x, m_start.y)].setRectColor(m_startPrevColor);
+                        m_gTiles[getIndex (m_end.x, m_end.y)].setRectColor(m_endPrevColor);
                         resetEndPoints ();
                         if (!m_results.empty())
                         {
@@ -283,6 +313,7 @@ void WorldViewport::loadWorld ()
 void WorldViewport::loadResults (const Point& start, const Point& end,
                                 const std::string& algName)
 {
+    setResultsEnabled (false);
     m_results.clear();
     readResults (m_results, start, end, m_worldName, algName);
     if (m_mode == VIEW)
@@ -404,8 +435,10 @@ void WorldViewport::setMode (Mode mode)
     }
 }
 
-bool WorldViewport::trySelectTile (int mouseX, int mouseY, Point& tile)
+Point WorldViewport::trySelectTile (int mouseX, int mouseY)
 {
+    Point tile (m_worldWidth, m_worldHeight);
+
     uint tileX = m_cameraX + (static_cast<uint> (mouseX) / m_tileScale);
     uint tileY = m_cameraY + (static_cast<uint> (mouseY) / m_tileScale);
     if (tileX < m_worldWidth && tileY < m_worldHeight)
@@ -415,16 +448,19 @@ bool WorldViewport::trySelectTile (int mouseX, int mouseY, Point& tile)
         {
             tile.x = tileX;
             tile.y = tileY;
-            t.setRectColor(SELECT_COLOR);
-            return true;
         }
     }
-    return false;
+    return tile;
 }
 
 uint WorldViewport::getIndex (uint x, uint y) const
 {
     return (m_worldWidth * y) + x;
+}
+
+bool WorldViewport::isNull(const Point& p) const
+{
+    return (p.x == m_worldWidth && p.y == m_worldHeight);
 }
 
 uint WorldViewport::getCameraOppX () const
@@ -439,6 +475,7 @@ uint WorldViewport::getCameraOppY () const
 
 void WorldViewport::resetEndPoints()
 {
+    // a start/end 1 past the last tile's x and y is considered a null value
     m_start.x = m_end.x = m_worldWidth;
     m_start.y = m_end.y = m_worldHeight;
 }
@@ -473,7 +510,6 @@ void WorldViewport::initializeTexture(SDL_Renderer* renderer, SDL_Texture*& text
     }
     texture = SDL_CreateTextureFromSurface (renderer, textSurface);
     SDL_FreeSurface (textSurface);
-
     if (texture == nullptr)
     {
         Log::logError (

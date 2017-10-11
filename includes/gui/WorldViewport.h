@@ -76,15 +76,19 @@ protected:
     Point m_start;
     Point m_end;
 
+    SDL_Color m_startPrevColor;
+    SDL_Color m_endPrevColor;
+
     SDL_Texture* m_textTextures[256];
     SDL_Texture* m_startTexture;
     SDL_Texture* m_endTexture;
 
     virtual void setMode (Mode mode);
 
-    virtual bool trySelectTile (int mouseX, int mouseY, Point& tile);
+    virtual Point trySelectTile (int mouseX, int mouseY);
 
     uint getIndex (uint x, uint y) const;
+    bool isNull (const Point& p) const;
 
     virtual uint getCameraOppX () const;
     virtual uint getCameraOppY () const;

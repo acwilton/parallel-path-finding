@@ -178,7 +178,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 }
                 break;
             case SDLK_d:
-                if (m_mode == SELECT && !isNull (m_start) && !isNull (m_end))
+                if (!isNull (m_start) && !isNull (m_end))
                 {
                     runAndLoadPathFinding ("dijkstra");
                 }
@@ -188,7 +188,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 }
                 break;
             case SDLK_a:
-                if (m_mode == SELECT && !isNull (m_start) && !isNull (m_end))
+                if (!isNull (m_start) && !isNull (m_end))
                 {
                     runAndLoadPathFinding ("aStar");
                 }

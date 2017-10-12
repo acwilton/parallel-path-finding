@@ -12,31 +12,25 @@ namespace pathFind
 {
 
 PathTile::PathTile ()
-    : m_bestCost (INF),
-      m_x (0),
-      m_y (0),
-      m_bestX (0),
-      m_bestY (0)
+    : m_xy (0, 0),
+      m_bestCost (INF),
+      m_bestTile (0, 0)
 {
 }
 
-PathTile::PathTile (World::tile_t tile, uint x, uint y)
+PathTile::PathTile (World::tile_t tile, const Point& xy)
     : m_tile (tile),
+      m_xy (xy.x, xy.y),
       m_bestCost (INF),
-      m_x (x),
-      m_y (y),
-      m_bestX (x),
-      m_bestY (y)
+      m_bestTile (xy.x, xy.y)
 {
 }
 
 PathTile::PathTile (const PathTile& other)
     : m_tile (other.m_tile),
+      m_xy (other.m_xy.x, other.m_xy.y),
       m_bestCost (other.m_bestCost),
-      m_x (other.m_x),
-      m_y (other.m_y),
-      m_bestX (other.m_bestX),
-      m_bestY (other.m_bestY)
+      m_bestTile (other.m_bestTile.x, other.m_bestTile.y)
 {
 }
 
@@ -50,10 +44,8 @@ PathTile& PathTile::operator= (const PathTile& rhs)
     {
         m_tile = rhs.m_tile;
         m_bestCost = rhs.m_bestCost;
-        m_x = rhs.m_x;
-        m_y = rhs.m_y;
-        m_bestX = rhs.m_bestX;
-        m_bestY = rhs.m_bestY;
+        m_xy = rhs.m_xy;
+        m_bestTile = rhs.m_bestTile;
     }
     return *this;
 }
@@ -68,6 +60,11 @@ World::tile_t PathTile::getTile () const
     return m_tile;
 }
 
+Point PathTile::xy () const
+{
+    return m_xy;
+}
+
 void PathTile::setBestCost (uint bestCost)
 {
     m_bestCost = bestCost;
@@ -78,30 +75,14 @@ uint PathTile::getBestCost () const
     return m_bestCost;
 }
 
-uint PathTile::x () const
+Point PathTile::bestTile () const
 {
-    return m_x;
+    return m_bestTile;
 }
 
-uint PathTile::y () const
+void PathTile::setBestTile (const Point& tile_xy)
 {
-    return m_y;
-}
-
-uint PathTile::bestX () const
-{
-    return m_bestX;
-}
-
-uint PathTile::bestY () const
-{
-    return m_bestY;
-}
-
-void PathTile::setBestTile (uint x, uint y)
-{
-    m_bestX = x;
-    m_bestY = y;
+    m_bestTile = tile_xy;
 }
 
 bool PathTile::operator< (const PathTile& rhs) const

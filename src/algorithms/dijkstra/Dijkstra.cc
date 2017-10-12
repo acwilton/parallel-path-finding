@@ -8,19 +8,20 @@
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
+#include <vector>
 
 #include <boost/lexical_cast.hpp>
 
 #include "algorithms/tools/PathTile.h"
 #include "algorithms/tools/PriorityQueue.h"
+#include "common/Results.h"
 
 using namespace pathFind;
 
 const std::string WORLD_DIR = "worlds";
 const std::string WORLD_EXT = ".world";
 
-void updateNeighbor (PriorityQueue& pq, const PathTile& tile,
-                     uint neighborX, uint neighborY);
+const std::string ALG_NAME = "dijkstra";
 
 int main (int args, char* argv[])
 {
@@ -40,6 +41,11 @@ int main (int args, char* argv[])
     std::ifstream worldFile (filename.str (),
             std::ifstream::in | std::ifstream::binary);
 
+    if (!worldFile)
+    {
+        std::cout << "World file doesn't exist." << std::endl;
+        return EXIT_FAILURE;
+    }
     pathFind::World world;
 
     worldFile >> world;
@@ -66,49 +72,41 @@ int main (int args, char* argv[])
         std::cout << "Start point either is a wall or isn't out of the world bounds" << std::endl;
         return EXIT_FAILURE;
     }
+    // Check each neighbor
     if (!openTiles.isValid (endX, endY))
     {
         std::cout << "End point either is a wall or isn't out of the world bounds" << std::endl;
         return EXIT_FAILURE;
     }
 
+    // Dijkstra's algorithm
     openTiles.changeBestCost(startX, startY, 0);
 
     std::unordered_map<uint, PathTile> expandedTiles;
     PathTile tile = openTiles.top();
-    while (tile.x () != endX || tile.y () != endY)
+    while (tile.xy ().x != endX || tile.xy ().y != endY)
     {
         openTiles.pop ();
         expandedTiles[tile.getTile ().id] = tile;
         // Check each neighbor
-        updateNeighbor (openTiles, tile, tile.x () + 1, tile.y ());
-        updateNeighbor (openTiles, tile, tile.x (), tile.y () + 1);
-        updateNeighbor (openTiles, tile, tile.x () - 1, tile.y ());
-        updateNeighbor (openTiles, tile, tile.x (), tile.y () - 1);
+        openTiles.tryUpdateBestCost (tile.xy ().x + 1, tile.xy ().y, tile); // east
+        openTiles.tryUpdateBestCost (tile.xy ().x, tile.xy ().y + 1, tile); // south
+        openTiles.tryUpdateBestCost (tile.xy ().x - 1, tile.xy ().y, tile); // west
+        openTiles.tryUpdateBestCost (tile.xy ().x, tile.xy ().y - 1, tile); // north
 
         tile = openTiles.top ();
     }
 
-    while (tile.x () != startX || tile.y () != startY)
+    // Parse results into a stack
+    std::vector<Point> finalPath;
+    while (tile.xy ().x != startX || tile.xy ().y != startY)
     {
-        std::cout << "x: " << tile.x () << " y: " << tile.y () << std::endl;
-        tile = expandedTiles[(tile.bestY () * world.getWidth()) + tile.bestX ()];
+        finalPath.emplace_back(tile.xy ());
+        tile = expandedTiles[(tile.bestTile ().y * world.getWidth()) + tile.bestTile ().x];
     }
+    finalPath.emplace_back(tile.xy ());
+
+    writeResults (finalPath, argv[1], ALG_NAME);
 
     return EXIT_SUCCESS;
-}
-
-void updateNeighbor (PriorityQueue& pq, const PathTile& tile,
-                     uint neighborX, uint neighborY)
-{
-    if (pq.isValid (neighborX, neighborY))
-    {
-        PathTile& neighborTile = pq.getPathTile (neighborX, neighborY);
-        uint totalCost = tile.getBestCost() + neighborTile.getTile().cost;
-        if (totalCost < neighborTile.getBestCost())
-        {
-            neighborTile.setBestTile(tile.x (), tile.y ());
-            pq.changeBestCost(neighborX, neighborY, totalCost);
-        }
-    }
 }

@@ -1,32 +1,26 @@
 # Built-in Variables
 CXX		              = g++
 CXXFLAGS              = -Wall -std=c++14
-CPPFLAGS              = -Iincludes
-LDLIBS                =
+CPPFLAGS              = -Iincludes -MMD -MP
+LDLIBS                = -lboost_system -lboost_filesystem
 LDFLAGS		          =
+
+# Helpful Variables
+SRCSUFFIX             = cc
+SRCFOLDER             = src
+OBJFOLDER             = build
+MKDIR_P               = mkdir -p
 
 # Files that all programs depend on
 COMMON_SRCS           = src/common/World.cc
-COMMON_HEADERS        = includes/common/World.h
 
 # Files that all path finding algorithms depend on
 COMMON_ALG_SRCS       = src/algorithms/tools/PathTile.cc \
                         src/algorithms/tools/PriorityQueue.cc
-COMMON_ALG_HEADERS    = includes/algorithms/tools/PriorityQueue.h \
-                        includes/algorithms/tools/PathTile.cc
-
 
 # Graphical program
 TARGETS              += gui
 gui_LIBS              = -lSDL2 -lSDL2_ttf
-gui_HEADERS           = $(COMMON_HEADERS) \
-                        includes/gui/Error.h \
-                        includes/gui/Window.h \
-                        includes/gui/Viewport.h \
-                        includes/gui/Button.h \
-                        includes/gui/TextInput.h \
-                        includes/gui/WorldViewport.h \
-                        includes/gui/GraphicTile.h
 gui_SRCS              = $(COMMON_SRCS) \
                         src/gui/Gui.cc \
                         src/gui/Error.cc \
@@ -36,24 +30,23 @@ gui_SRCS              = $(COMMON_SRCS) \
                         src/gui/TextInput.cc \
                         src/gui/WorldViewport.cc \
                         src/gui/GraphicTile.cc
-gui_OBJS              = $(patsubst %.cc,%.o,$(filter %.cc,$(gui_SRCS)))
+gui_OBJS              = $(gui_SRCS:$(SRCFOLDER)/%.$(SRCSUFFIX)=$(OBJFOLDER)/%.o)
 
 # World generation program
 TARGETS              += worldGen
-worldGen_HEADERS      = $(COMMON_HEADERS)
 worldGen_SRCS         = $(COMMON_SRCS) \
                         src/worldGen/WorldGen.cc
-worldGen_OBJS         = $(patsubst %.cc,%.o,$(filter %.cc,$(worldGen_SRCS)))
+worldGen_OBJS         = $(worldGen_SRCS:$(SRCFOLDER)/%.$(SRCSUFFIX)=$(OBJFOLDER)/%.o)
 
 # Djikstra's algorithm
 TARGETS              += dijkstra
-dijkstra_HEADERS      = $(COMMON_HEADERS) \
-                        $(COMMON_ALG_HEADERS)
 dijkstra_SRCS         = $(COMMON_SRCS) \
                         $(COMMON_ALG_SRCS) \
                         src/algorithms/dijkstra/Dijkstra.cc
-dijkstra_OBJS         = $(patsubst %.cc,%.o,$(filter %.cc,$(dijkstra_SRCS))) 
+dijkstra_OBJS         = $(dijkstra_SRCS:$(SRCFOLDER)/%.$(SRCSUFFIX)=$(OBJFOLDER)/%.o)
 
+OBJS                  = $(sort $(foreach target,$(TARGETS),$($(target)_OBJS)))
+DEPS                  = $(OBJS:.o=.d)
 
 .PHONY : all
 all: $(TARGETS)
@@ -62,12 +55,23 @@ all: $(TARGETS)
 $(TARGETS): $$($$@_OBJS)
 	$(CXX) $(LDFLAGS) $^ -o $@  $(LDLIBS) $($@_LIBS)
 
+$(OBJFOLDER)/%.o : $(SRCFOLDER)/%.$(SRCSUFFIX)
+	@$(MKDIR_P) $(dir $@)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
+-include $(DEPS)
+
+# Make cleanup targets
 .PHONY : clean
 clean:
-	rm -f $(foreach target,$(TARGETS),$(sort $($(target)_OBJS))) \
-	      $(TARGETS) gui.log
+	rm -f -r $(OBJFOLDER) $(TARGETS) gui.log
 
 .PHONY : clean_worlds
 clean_worlds:
 	rm -f worlds/*
+
+.PHONY : clean_results
+clean_results:
+	rm -f -r results/*
+
+# Some help taken from https://spin.atomicobject.com/2016/08/26/makefile-c-projects/

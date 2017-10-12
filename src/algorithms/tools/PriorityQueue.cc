@@ -20,7 +20,7 @@ PriorityQueue::PriorityQueue(const World& world)
             if (t.cost != 0)
             {
                 m_heap.emplace_back (std::make_shared<handle_t>(
-                        PathTile{t, x, y}, m_heap.size ()));
+                        PathTile{t, {x, y}}, m_heap.size ()));
                 m_hashTable[t.id] = m_heap.back ();
             }
         }
@@ -63,7 +63,7 @@ PathTile PriorityQueue::top () const
     return m_heap[0]->tile;
 }
 
-void PriorityQueue::changeBestCost (uint x, uint y, uint bestCost)
+void PriorityQueue::changeBestCost(uint x, uint y, uint bestCost)
 {
     auto handle = getHandle (x, y);
     if (handle != nullptr)
@@ -73,13 +73,27 @@ void PriorityQueue::changeBestCost (uint x, uint y, uint bestCost)
     }
 }
 
+void PriorityQueue::tryUpdateBestCost (uint target_x, uint target_y, const PathTile& bestTile)
+{
+    auto targetHandle = getHandle (target_x, target_y);
+    if (targetHandle != nullptr)
+    {
+        uint totalCost = bestTile.getBestCost() + targetHandle->tile.getTile().cost;
+        if (totalCost < targetHandle->tile.getBestCost())
+        {
+            targetHandle->tile.setBestTile (bestTile.xy ());
+            targetHandle->tile.setBestCost(totalCost);
+            upHeap (targetHandle->index);
+        }
+    }
+}
+
 bool PriorityQueue::isValid (uint x, uint y) const
 {
     return getHandle (x, y) != nullptr;
 }
 
-PathTile&
-PriorityQueue::getPathTile (uint x, uint y) const
+PathTile PriorityQueue::getPathTile (uint x, uint y) const
 {
     return getHandle(x, y)->tile;
 }

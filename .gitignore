@@ -4,13 +4,16 @@
 # World files
 worlds/
 
+# Result files
+results/
+
 # Eclipse files
 .settings/
 .project
 .cproject
 
-# Object files
-*.o
+# Object and dependency files
+build/
 
 # Resources
 resources/
@@ -22,3 +25,6 @@ gui.log
 /gui
 /worldGen
 /dijkstra
+
+# makefile dependency file
+makefile.deps

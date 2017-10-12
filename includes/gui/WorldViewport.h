@@ -10,6 +10,8 @@
 #include <string>
 
 #include "common/World.h"
+#include "common/Point.h"
+#include "common/Results.h"
 #include "gui/Error.h"
 #include "gui/Viewport.h"
 #include "gui/GraphicTile.h"
@@ -31,8 +33,12 @@ public:
 
     virtual void handleEvent (SDL_Event& e);
 
-    virtual void setFile (std::string worldFileName);
-    virtual void loadFile ();
+    virtual void setWorld (const std::string& worldFileName);
+    virtual void loadWorld ();
+
+    virtual void loadResults (const Point& start, const Point& end,
+                             const std::string& algName);
+    virtual void setResultsEnabled (bool resultsEnabled);
 
     virtual uint getCameraX () const;
     virtual uint getCameraY () const;
@@ -44,10 +50,14 @@ public:
 
     virtual void setTextEnabled (bool textEnabled);
 
-protected:
-    uint getIndex (uint x, uint y) const;
+    virtual void setShowEndPoints (bool showEndPoints);
 
-    std::string m_worldFileName;
+protected:
+    enum Mode {VIEW, SELECT};
+
+    Mode m_mode;
+
+    std::string m_worldName;
     std::vector<GraphicTile> m_gTiles;
     size_t m_worldWidth;
     size_t m_worldHeight;
@@ -59,13 +69,36 @@ protected:
     bool m_textEnabled;
     bool m_textInitialized;
 
+    std::vector<Point> m_results;
+    bool m_resultsEnabled;
+
+    bool m_showEndPoints;
+    Point m_start;
+    Point m_end;
+
+    SDL_Color m_startPrevColor;
+    SDL_Color m_endPrevColor;
+
     SDL_Texture* m_textTextures[256];
+    SDL_Texture* m_startTexture;
+    SDL_Texture* m_endTexture;
 
-    uint getCameraOppX () const;
-    uint getCameraOppY () const;
+    virtual void setMode (Mode mode);
 
-    void initializeTextures (SDL_Renderer* renderer);
-    void destroyResources ();
+    virtual Point trySelectTile (int mouseX, int mouseY);
+
+    uint getIndex (uint x, uint y) const;
+    bool isNull (const Point& p) const;
+
+    virtual uint getCameraOppX () const;
+    virtual uint getCameraOppY () const;
+
+    virtual void resetEndPoints ();
+
+    virtual void initializeTextures (SDL_Renderer* renderer);
+    virtual void initializeTexture (SDL_Renderer* renderer, SDL_Texture*& texture,
+                                    const std::string& text);
+    virtual void destroyResources ();
 };
 
 } /* namespace gui */

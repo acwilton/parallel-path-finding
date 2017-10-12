@@ -20,6 +20,8 @@ namespace pathFind
 namespace gui
 {
 
+const SDL_Color DEFAULT_COLOR = {0xFF, 0xFF, 0xFF, 0xFF};
+
 class GraphicTile
 {
 public:
@@ -37,6 +39,9 @@ public:
 
     SDL_Rect getRect () const;
     World::tile_t getTile () const;
+
+    SDL_Color getRectColor () const;
+    void setRectColor (SDL_Color color);
 
     void render (SDL_Renderer* renderer, SDL_Texture* texture);
 

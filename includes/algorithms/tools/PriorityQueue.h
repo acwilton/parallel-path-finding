@@ -34,10 +34,11 @@ public:
     PathTile top () const;
 
     void changeBestCost (uint x, uint y, uint bestCost);
+    void tryUpdateBestCost (uint target_x, uint target_y, const PathTile& bestTile);
 
     bool isValid (uint x, uint y) const;
     // Assumes that user already checked that (x, y) is valid
-    PathTile& getPathTile (uint x, uint y) const;
+    PathTile getPathTile (uint x, uint y) const;
 
 private:
 

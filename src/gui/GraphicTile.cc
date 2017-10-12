@@ -23,7 +23,7 @@ GraphicTile::GraphicTile (World::tile_t tileData, SDL_Rect rect)
     }
     else
     {
-        m_rectColor = {0xFF, 0xFF, 0xFF, 0xFF};
+        m_rectColor = DEFAULT_COLOR;
         m_textColor = {0x00, 0x00, 0x00, 0xFF};
     }
 }
@@ -84,6 +84,16 @@ SDL_Rect GraphicTile::getRect () const
 World::tile_t GraphicTile::getTile () const
 {
     return m_tileData;
+}
+
+SDL_Color GraphicTile::getRectColor () const
+{
+    return m_rectColor;
+}
+
+void GraphicTile::setRectColor(SDL_Color color)
+{
+    m_rectColor = color;
 }
 
 void GraphicTile::render (SDL_Renderer* renderer, SDL_Texture* texture)

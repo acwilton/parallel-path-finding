@@ -12,6 +12,7 @@
 #include <limits>
 
 #include "common/World.h"
+#include "common/Point.h"
 
 typedef unsigned int uint;
 
@@ -25,7 +26,7 @@ public:
     const uint INF = std::numeric_limits<uint>::max();
 
     PathTile ();
-    PathTile (World::tile_t tile, uint x, uint y);
+    PathTile (World::tile_t tile, const Point& xy);
     PathTile (const PathTile& other);
     virtual ~PathTile ();
 
@@ -34,27 +35,23 @@ public:
     void setTile (World::tile_t tile);
     World::tile_t getTile () const;
 
+    Point xy () const;
+
     void setBestCost (uint bestCost);
     uint getBestCost () const;
 
-    uint x () const;
-    uint y () const;
-
-    uint bestX () const;
-    uint bestY () const;
-    void setBestTile (uint x, uint y);
+    Point bestTile () const;
+    void setBestTile (const Point& tile_xy);
 
     bool operator< (const PathTile& rhs) const;
     bool operator>=(const PathTile& rhs) const;
 
 private:
     World::tile_t m_tile;
-    uint m_bestCost;
-    uint m_x;
-    uint m_y;
+    Point m_xy;
 
-    uint m_bestX;
-    uint m_bestY;
+    uint m_bestCost;
+    Point m_bestTile;
 };
 
 } /* namespace pathFind */

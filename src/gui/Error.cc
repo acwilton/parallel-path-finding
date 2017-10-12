@@ -28,7 +28,7 @@ void Log::logInfo (std::string message)
 Log::Log ()
         : m_errOut (LOG_FILE_NAME)
 {
-    m_errOut << "Logging initialized." << std::endl;
+    m_errOut << "Logging initialized." << std::endl << std::flush;
 }
 
 Log& Log::get ()
@@ -39,16 +39,16 @@ Log& Log::get ()
 
 void Log::_logError (std::string message)
 {
-    m_errOut << ERROR_PREFIX << LOG_SEPARATOR << message << std::endl;
+    m_errOut << ERROR_PREFIX << LOG_SEPARATOR << message << std::endl << std::flush;
 }
 
 void Log::_logWarning (std::string message)
 {
-    m_errOut << WARNING_PREFIX << LOG_SEPARATOR << message << std::endl;
+    m_errOut << WARNING_PREFIX << LOG_SEPARATOR << message << std::endl << std::flush;
 }
 
 void Log::_logInfo (std::string message)
 {
-    m_errOut << INFO_PREFIX << LOG_SEPARATOR << message << std::endl;
+    m_errOut << INFO_PREFIX << LOG_SEPARATOR << message << std::endl << std::flush;
 }
 

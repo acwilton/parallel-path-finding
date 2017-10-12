@@ -19,18 +19,6 @@ struct Point
         : x (x), y (y)
     {
     }
-
-    Point (const Point& other)
-        : x (other.x), y (other.y)
-    {
-    }
-
-    Point& operator= (const Point& rhs)
-    {
-        x = rhs.x;
-        y = rhs.y;
-        return *this;
-    }
 };
 
 } /* namespace pathFind */

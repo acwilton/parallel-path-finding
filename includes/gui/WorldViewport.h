@@ -36,6 +36,7 @@ public:
     virtual void setWorld (const std::string& worldFileName);
     virtual void loadWorld ();
 
+    virtual void runAndLoadPathFinding (const std::string& algorithm);
     virtual void loadResults (const Point& start, const Point& end,
                              const std::string& algName);
     virtual void setResultsEnabled (bool resultsEnabled);
@@ -69,6 +70,7 @@ protected:
     bool m_textEnabled;
     bool m_textInitialized;
 
+    std::string m_currentAlgorithm;
     std::vector<Point> m_results;
     bool m_resultsEnabled;
 
@@ -86,6 +88,8 @@ protected:
     virtual void setMode (Mode mode);
 
     virtual Point trySelectTile (int mouseX, int mouseY);
+
+    virtual SDL_Color getAlgorithmColor () const;
 
     uint getIndex (uint x, uint y) const;
     bool isNull (const Point& p) const;

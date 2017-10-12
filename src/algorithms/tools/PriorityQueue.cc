@@ -3,7 +3,7 @@
  */
 
 #include "algorithms/tools/PriorityQueue.h"
-#include <iostream>
+
 namespace pathFind
 {
 
@@ -22,8 +22,6 @@ PriorityQueue::PriorityQueue(const World& world,
             {
                 m_heap.emplace_back (std::make_shared<handle_t>(
                         PathTile{t, {x, y}, heuristicFunction (x ,y)}, m_heap.size ()));
-                std::cout << "x: " << x << " y: " << y
-                          << " heur: " << m_heap.back ()->tile.getHeuristic() << "\n";
                 m_hashTable[t.id] = m_heap.back ();
             }
         }

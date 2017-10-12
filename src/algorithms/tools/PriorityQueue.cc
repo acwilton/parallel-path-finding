@@ -7,7 +7,8 @@
 namespace pathFind
 {
 
-PriorityQueue::PriorityQueue(const World& world)
+PriorityQueue::PriorityQueue(const World& world,
+        std::function<uint (uint, uint)> heuristicFunction)
     : m_worldWidth (world.getWidth()),
       m_worldHeight (world.getHeight())
 {
@@ -20,7 +21,7 @@ PriorityQueue::PriorityQueue(const World& world)
             if (t.cost != 0)
             {
                 m_heap.emplace_back (std::make_shared<handle_t>(
-                        PathTile{t, {x, y}}, m_heap.size ()));
+                        PathTile{t, {x, y}, heuristicFunction (x ,y)}, m_heap.size ()));
                 m_hashTable[t.id] = m_heap.back ();
             }
         }

@@ -25,7 +25,9 @@ class PriorityQueue
 public:
 
     PriorityQueue () = delete;
-    PriorityQueue (const World& world);
+    PriorityQueue (const World& world,
+            std::function<uint (uint, uint)> heuristicFunction =
+                    [](uint, uint) { return 0; });
 
     ~PriorityQueue ();
 

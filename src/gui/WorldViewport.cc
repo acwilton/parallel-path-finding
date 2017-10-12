@@ -20,6 +20,7 @@ const uint DEFAULT_TILE_SCALE = 10;
 
 const SDL_Color SELECT_COLOR = {0xFF, 0x77, 0x00, 0xFF};
 const SDL_Color DIJKSTRA_COLOR = {0xFF, 0xF4, 0x7F, 0xFF};
+const SDL_Color ASTAR_COLOR = {0x82, 0xFF, 0x86, 0xFF};
 
 WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
         : Viewport (rect, backgroundColor),
@@ -107,7 +108,6 @@ void WorldViewport::handleEvent (SDL_Event& e)
             switch (e.key.keysym.sym)
             {
             case SDLK_UP:
-            case SDLK_w:
                 if (getCameraY () - moveSpeed >= 0)
                 {
                     setCameraY (getCameraY () - moveSpeed);
@@ -118,7 +118,6 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 }
                 break;
             case SDLK_DOWN:
-            case SDLK_s:
                 if (getCameraOppY () + moveSpeed <= m_worldHeight)
                 {
                     setCameraY (getCameraY () + moveSpeed);
@@ -129,7 +128,6 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 }
                 break;
             case SDLK_LEFT:
-            case SDLK_a:
                 if (getCameraX () - moveSpeed > 0)
                 {
                     setCameraX (getCameraX () - moveSpeed);
@@ -140,7 +138,6 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 }
                 break;
             case SDLK_RIGHT:
-            case SDLK_d:
                 if (getCameraOppX () + moveSpeed < m_worldWidth)
                 {
                     setCameraX (getCameraX () + moveSpeed);
@@ -180,19 +177,20 @@ void WorldViewport::handleEvent (SDL_Event& e)
                     m_showEndPoints = true;
                 }
                 break;
-            case SDLK_RETURN:
+            case SDLK_d:
                 if (m_mode == SELECT && !isNull (m_start) && !isNull (m_end))
                 {
-                    setMode (VIEW);
-                    std::string command;
-                    command = "./dijkstra " + m_worldName + " " +
-                            std::to_string (m_start.x) + " " +
-                            std::to_string (m_start.y) + " " +
-                            std::to_string (m_end.x) + " " +
-                            std::to_string (m_end.y);
-                    system (command.c_str ());
-                    loadResults (m_start, m_end, "dijkstra");
-                    setResultsEnabled (true);
+                    runAndLoadPathFinding ("dijkstra");
+                }
+                else
+                {
+                    setResultsEnabled (!m_resultsEnabled);
+                }
+                break;
+            case SDLK_a:
+                if (m_mode == SELECT && !isNull (m_start) && !isNull (m_end))
+                {
+                    runAndLoadPathFinding ("aStar");
                 }
                 else
                 {
@@ -310,9 +308,25 @@ void WorldViewport::loadWorld ()
     }
 }
 
+void WorldViewport::runAndLoadPathFinding (const std::string& algorithm)
+{
+    m_currentAlgorithm = algorithm;
+    setMode (VIEW);
+    std::string command;
+    command = "./" + m_currentAlgorithm + " " + m_worldName + " " +
+            std::to_string (m_start.x) + " " +
+            std::to_string (m_start.y) + " " +
+            std::to_string (m_end.x) + " " +
+            std::to_string (m_end.y);
+    system (command.c_str ());
+    loadResults (m_start, m_end, m_currentAlgorithm);
+    setResultsEnabled (true);
+}
+
 void WorldViewport::loadResults (const Point& start, const Point& end,
                                 const std::string& algName)
 {
+    m_currentAlgorithm = algName;
     setResultsEnabled (false);
     m_results.clear();
     readResults (m_results, start, end, m_worldName, algName);
@@ -329,7 +343,7 @@ void WorldViewport::loadResults (const Point& start, const Point& end,
 void WorldViewport::setResultsEnabled (bool resultsEnabled)
 {
     m_resultsEnabled = resultsEnabled;
-    SDL_Color color = m_resultsEnabled ? DIJKSTRA_COLOR : DEFAULT_COLOR;
+    SDL_Color color = m_resultsEnabled ? getAlgorithmColor () : DEFAULT_COLOR;
     for (auto& r : m_results)
     {
         m_gTiles[getIndex (r.x, r.y)].setRectColor(color);
@@ -451,6 +465,20 @@ Point WorldViewport::trySelectTile (int mouseX, int mouseY)
         }
     }
     return tile;
+}
+
+SDL_Color WorldViewport::getAlgorithmColor () const
+{
+    if (m_currentAlgorithm == "dijkstra")
+    {
+        return DIJKSTRA_COLOR;
+    }
+    else if (m_currentAlgorithm == "aStar")
+    {
+        return ASTAR_COLOR;
+    }
+
+    return DEFAULT_COLOR;
 }
 
 uint WorldViewport::getIndex (uint x, uint y) const

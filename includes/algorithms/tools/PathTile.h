@@ -23,14 +23,12 @@ class PathTile
 {
 public:
 
-    const uint INF = std::numeric_limits<uint>::max();
+    const static uint INF = std::numeric_limits<uint>::max();
 
     PathTile ();
-    PathTile (World::tile_t tile, const Point& xy);
+    PathTile (World::tile_t tile, const Point& xy, uint heuristic = 0);
     PathTile (const PathTile& other);
     virtual ~PathTile ();
-
-    PathTile& operator= (const PathTile& rhs);
 
     void setTile (World::tile_t tile);
     World::tile_t getTile () const;
@@ -39,6 +37,11 @@ public:
 
     void setBestCost (uint bestCost);
     uint getBestCost () const;
+
+    void setHeuristic (uint heuristic);
+    uint getHeuristic () const;
+
+    uint getCombinedHeuristic () const;
 
     Point bestTile () const;
     void setBestTile (const Point& tile_xy);
@@ -51,6 +54,7 @@ private:
     Point m_xy;
 
     uint m_bestCost;
+    uint m_heuristic;
     Point m_bestTile;
 };
 

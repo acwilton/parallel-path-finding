@@ -9,6 +9,7 @@
 #include <sstream>
 #include <unordered_map>
 #include <vector>
+#include <chrono>
 
 #include <boost/lexical_cast.hpp>
 
@@ -64,6 +65,8 @@ int main (int args, char* argv[])
         return EXIT_FAILURE;
     }
 
+    auto t1 = std::chrono::high_resolution_clock::now();
+
     PriorityQueue openTiles (world);
 
     // Ensure that start and end points are valid
@@ -97,6 +100,8 @@ int main (int args, char* argv[])
         tile = openTiles.top ();
     }
 
+    auto t2 = std::chrono::high_resolution_clock::now();
+
     // Parse results into a stack
     std::vector<Point> finalPath;
     while (tile.xy ().x != startX || tile.xy ().y != startY)
@@ -106,7 +111,8 @@ int main (int args, char* argv[])
     }
     finalPath.emplace_back(tile.xy ());
 
-    writeResults (finalPath, argv[1], ALG_NAME);
+    writeResults (finalPath, argv[1], ALG_NAME,
+                  std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count());
 
     return EXIT_SUCCESS;
 }

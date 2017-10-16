@@ -22,9 +22,10 @@ namespace pathFind
 
 const std::string RESULTS_DIR = "results";
 const std::string RESULTS_EXT = ".res";
+const std::string PERFORMANCE_EXT = ".perf";
 
 inline void writeResults (const std::vector<Point>& path, const std::string& worldName,
-                          const std::string& algName)
+                          const std::string& algName, uint ms)
 {
     std::stringstream dirName;
     dirName << RESULTS_DIR << "/" << worldName << "_"
@@ -38,6 +39,12 @@ inline void writeResults (const std::vector<Point>& path, const std::string& wor
     {
         resultFile << ri->x << " " << ri->y << std::endl;
     }
+
+    resultFile.close();
+
+    std::ofstream performanceFile (dirName.str () + "/" + algName + PERFORMANCE_EXT);
+    performanceFile << "time: " << ms;
+    performanceFile.close ();
 }
 
 inline void readResults (std::vector<Point>& path, const Point& start, const Point& end,
@@ -67,6 +74,8 @@ inline void readResults (std::vector<Point>& path, const Point& start, const Poi
         resultFile >> x >> y;
         path.emplace_back (x, y);
     }
+
+    resultFile.close();
 }
 } /* namespace pathFind */
 

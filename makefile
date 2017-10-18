@@ -51,6 +51,12 @@ aStar_SRCS            = $(COMMON_SRCS) \
                         src/algorithms/aStar/AStar.cc
 aStar_OBJS            = $(aStar_SRCS:$(SRCFOLDER)/%.$(SRCSUFFIX)=$(OBJFOLDER)/%.o)
 
+TARGETS              += bidir
+bidir_SRCS            = $(COMMON_SRCS) \
+                        $(COMMON_ALG_SRCS) \
+                        src/algorithms/bidirectional/Bidirectional.cc
+bidir_OBJS            = $(bidir_SRCS:$(SRCFOLDER)/%.$(SRCSUFFIX)=$(OBJFOLDER)/%.o)
+
 OBJS                  = $(sort $(foreach target,$(TARGETS),$($(target)_OBJS)))
 DEPS                  = $(OBJS:.o=.d)
 

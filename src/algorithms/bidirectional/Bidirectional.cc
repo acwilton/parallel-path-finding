@@ -75,7 +75,7 @@ int main (int args, char* argv[])
                     (y < endY ? endY - y : y - endY);
         });
 
-    PriorityQueue reverseOpenTiles (world, [endX, endY] (uint x, uint y)
+    PriorityQueue reverseOpenTiles (world, [startX, startY] (uint x, uint y)
         {
             return  (x < startX ? startX - x : x - startX) +
                     (y < startY ? startY - y : y - startY);
@@ -115,7 +115,7 @@ int main (int args, char* argv[])
 
         fTile = forwardOpenTiles.top ();
 
-        auto overlapTile = expandedTiles.find(fTile.getTile ().id)
+        auto overlapTile = expandedTiles.find(fTile.getTile ().id);
         if (overlapTile != expandedTiles.end ())
         {
             // Best path found
@@ -134,7 +134,7 @@ int main (int args, char* argv[])
 
         rTile = forwardOpenTiles.top ();
 
-        overlapTile = expandedTiles.find(rTile.getTile ().id)
+        overlapTile = expandedTiles.find(rTile.getTile ().id);
         if (overlapTile != expandedTiles.end ())
         {
             fTile = overlapTile->second;
@@ -152,6 +152,7 @@ int main (int args, char* argv[])
         reversePath.emplace_back (rTile.xy ());
         rTile = expandedTiles[(rTile.bestTile ().y * world.getWidth ()) + rTile.bestTile ().x];
     }
+    reversePath.emplace_back (rTile.xy ());
 
     std::vector<Point> finalPath (reversePath.rbegin (), reversePath.rend ());
     while (fTile.xy ().x != startX || fTile.xy ().y != startY)

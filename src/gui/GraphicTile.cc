@@ -10,22 +10,18 @@ namespace pathFind
 namespace gui
 {
 
+GraphicTile::GraphicTile ()
+    : m_textEnabled (false)
+{
+}
+
 GraphicTile::GraphicTile (World::tile_t tileData, SDL_Rect rect)
         : m_tileData (tileData),
           m_rect (rect),
           m_textRect (rect),
           m_textEnabled (false)
 {
-    if (static_cast<uint> (m_tileData.cost) == 0)
-    {
-        m_rectColor = {0x44, 0x44, 0x44, 0xFF};
-        m_textColor = {0xFF, 0xFF, 0xFF, 0xFF};
-    }
-    else
-    {
-        m_rectColor = DEFAULT_COLOR;
-        m_textColor = {0x00, 0x00, 0x00, 0xFF};
-    }
+    updateTextColor ();
 }
 
 GraphicTile::~GraphicTile ()
@@ -81,6 +77,12 @@ SDL_Rect GraphicTile::getRect () const
     return m_rect;
 }
 
+void GraphicTile::setTile (World::tile_t tile)
+{
+    m_tileData = tile;
+    updateTextColor ();
+}
+
 World::tile_t GraphicTile::getTile () const
 {
     return m_tileData;
@@ -104,7 +106,7 @@ void GraphicTile::render (SDL_Renderer* renderer, SDL_Texture* texture)
     SDL_SetRenderDrawColor (renderer, 0x00, 0x00, 0x00, 0xFF);
     SDL_RenderDrawRect (renderer, &m_rect);
 
-    if (m_textEnabled && static_cast<int>(m_tileData.cost) != 0)
+    if (m_textEnabled && m_tileData.cost != 0)
     {
         SDL_RenderCopy (renderer, texture, nullptr, &m_textRect);
     }
@@ -113,6 +115,20 @@ void GraphicTile::render (SDL_Renderer* renderer, SDL_Texture* texture)
 void GraphicTile::updateTextRect ()
 {
     m_textRect = {m_rect.x + 2, m_rect.y + 2, m_rect.w - 4, m_rect.h - 4};
+}
+
+void GraphicTile::updateTextColor ()
+{
+    if (static_cast<uint> (m_tileData.cost) == 0)
+    {
+        m_rectColor = {0x44, 0x44, 0x44, 0xFF};
+        m_textColor = {0xFF, 0xFF, 0xFF, 0xFF};
+    }
+    else
+    {
+        m_rectColor = DEFAULT_COLOR;
+        m_textColor = {0x00, 0x00, 0x00, 0xFF};
+    }
 }
 
 } /* namespace gui */

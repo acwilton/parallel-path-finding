@@ -59,9 +59,8 @@ protected:
     Mode m_mode;
 
     std::string m_worldName;
+    World m_world;
     std::vector<GraphicTile> m_gTiles;
-    size_t m_worldWidth;
-    size_t m_worldHeight;
 
     uint m_cameraX;
     uint m_cameraY;
@@ -94,10 +93,19 @@ protected:
     uint getIndex (uint x, uint y) const;
     bool isNull (const Point& p) const;
 
+    virtual uint getCameraWidth () const;
+    virtual uint getCameraHeight () const;
+
     virtual uint getCameraOppX () const;
     virtual uint getCameraOppY () const;
 
+    virtual bool isPointInCameraView (const Point& p) const;
+
     virtual void resetEndPoints ();
+
+    // Always update scale before position
+    virtual void updateGraphicTilesScaleAndPos ();
+    virtual void updateGraphicTilesPos ();
 
     virtual void initializeTextures (SDL_Renderer* renderer);
     virtual void initializeTexture (SDL_Renderer* renderer, SDL_Texture*& texture,

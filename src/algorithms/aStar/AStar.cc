@@ -69,27 +69,15 @@ int main (int args, char* argv[])
     auto t1 = std::chrono::high_resolution_clock::now();
 
     // Priority Queue with A* heuristic function added
-    PriorityQueue openTiles (world, [endX, endY] (uint x, uint y)
+    PriorityQueue openTiles (world.getWidth (), world.getHeight (),
+        [endX, endY] (uint x, uint y)
         {
             return  (x < endX ? endX - x : x - endX) +
                     (y < endY ? endY - y : y - endY);
         });
 
-    // Ensure that start and end points are valid
-    if (!openTiles.isValid (startX, startY))
-    {
-        std::cout << "Start point either is a wall or isn't out of the world bounds" << std::endl;
-        return EXIT_FAILURE;
-    }
-    // Check each neighbor
-    if (!openTiles.isValid (endX, endY))
-    {
-        std::cout << "End point either is a wall or isn't out of the world bounds" << std::endl;
-        return EXIT_FAILURE;
-    }
-
     // A* algorithm
-    openTiles.changeBestCost(startX, startY, 0);
+    openTiles.push (world (startX, startY), {startX, startY}, 0);
 
     std::unordered_map<uint, PathTile> expandedTiles;
     PathTile tile = openTiles.top();
@@ -98,10 +86,49 @@ int main (int args, char* argv[])
         openTiles.pop ();
         expandedTiles[tile.getTile ().id] = tile;
         // Check each neighbor
-        openTiles.tryUpdateBestCost (tile.xy ().x + 1, tile.xy ().y, tile); // east
-        openTiles.tryUpdateBestCost (tile.xy ().x, tile.xy ().y + 1, tile); // south
-        openTiles.tryUpdateBestCost (tile.xy ().x - 1, tile.xy ().y, tile); // west
-        openTiles.tryUpdateBestCost (tile.xy ().x, tile.xy ().y - 1, tile); // north
+        Point adjPoint {tile.xy ().x + 1, tile.xy ().y}; // east
+        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
+        {
+            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+            if (worldTile.cost != 0 &&
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+            {
+                openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+            }
+        }
+
+        adjPoint = {tile.xy ().x, tile.xy ().y + 1}; // south
+        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
+        {
+            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+            if (worldTile.cost != 0 &&
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+            {
+                openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+            }
+        }
+
+        adjPoint = {tile.xy ().x - 1, tile.xy ().y}; // west
+        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
+        {
+            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+            if (worldTile.cost != 0 &&
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+            {
+                openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+            }
+        }
+
+        adjPoint = {tile.xy ().x, tile.xy ().y - 1}; // north
+        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
+        {
+            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+            if (worldTile.cost != 0 &&
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+            {
+                openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+            }
+        }
 
         tile = openTiles.top ();
     }

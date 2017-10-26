@@ -25,6 +25,7 @@ const SDL_Color DEFAULT_COLOR = {0xFF, 0xFF, 0xFF, 0xFF};
 class GraphicTile
 {
 public:
+    GraphicTile ();
     GraphicTile (World::tile_t tileData, SDL_Rect rect);
     virtual ~GraphicTile ();
 
@@ -38,6 +39,8 @@ public:
     bool isTextEnabled () const;
 
     SDL_Rect getRect () const;
+
+    void setTile (World::tile_t tile);
     World::tile_t getTile () const;
 
     SDL_Color getRectColor () const;
@@ -56,6 +59,8 @@ protected:
     bool m_textEnabled;
 
     void updateTextRect ();
+
+    void updateTextColor ();
 };
 
 } /* namespace gui */

@@ -266,7 +266,6 @@ void WorldViewport::setWorld (const std::string& worldName)
 void WorldViewport::loadWorld ()
 {
     m_results.clear();
-    m_gTiles.clear();
     m_cameraX = 0;
     m_cameraY = 0;
 
@@ -417,9 +416,8 @@ Point WorldViewport::trySelectTile (int mouseX, int mouseY)
     uint tileX = m_cameraX + (static_cast<uint> (mouseX) / m_tileScale);
     uint tileY = m_cameraY + (static_cast<uint> (mouseY) / m_tileScale);
     if (tileX < m_world.getWidth () && tileY < m_world.getHeight ())
-    {
-        GraphicTile& t = m_gTiles[getIndex (tileX, tileY)];
-        if (t.getTile().cost != 0)
+    {;
+        if (m_world(tileX, tileY).cost != 0)
         {
             tile.x = tileX;
             tile.y = tileY;

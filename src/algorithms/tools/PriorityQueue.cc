@@ -1,16 +1,27 @@
 /*
  * PriorityQueue.cc
  */
+#include <iostream>
 
 #include "algorithms/tools/PriorityQueue.h"
 
 namespace pathFind
 {
 
+PriorityQueue::PriorityQueue (size_t worldWidth, size_t worldHeight,
+                              std::function<uint (uint, uint)> heuristicFunction)
+    :m_worldWidth (worldWidth),
+     m_worldHeight (worldHeight),
+     m_heurFunct (heuristicFunction)
+{
+
+}
+
 PriorityQueue::PriorityQueue(const World& world,
         std::function<uint (uint, uint)> heuristicFunction)
     : m_worldWidth (world.getWidth()),
-      m_worldHeight (world.getHeight())
+      m_worldHeight (world.getHeight()),
+      m_heurFunct (heuristicFunction)
 {
     m_heap.reserve(world.getNumOpenTiles ());
     for (uint y = 0; y < m_worldWidth; ++y)
@@ -21,7 +32,7 @@ PriorityQueue::PriorityQueue(const World& world,
             if (t.cost != 0)
             {
                 m_heap.emplace_back (std::make_shared<handle_t>(
-                        PathTile{t, {x, y}, heuristicFunction (x ,y)}, m_heap.size ()));
+                        PathTile{t, {x, y}, m_heurFunct (x ,y)}, m_heap.size ()));
                 m_hashTable[t.id] = m_heap.back ();
             }
         }
@@ -33,11 +44,27 @@ PriorityQueue::~PriorityQueue ()
 {
 }
 
-void PriorityQueue::push (const PathTile& element)
+void PriorityQueue::push (const World::tile_t& tile, const Point& xy, uint bestCost)
+{
+    PathTile p {tile, xy, m_heurFunct (xy.x, xy.y)};
+    p.setBestCost(bestCost);
+    push (p);
+}
+
+void PriorityQueue::push (const World::tile_t& tile, const Point& xy,
+                          uint bestCost, const Point& bestTile)
+{
+    PathTile p {tile, xy, m_heurFunct (xy.x, xy.y)};
+    p.setBestCost (bestCost);
+    p.setBestTile (bestTile);
+    push (p);
+}
+
+void PriorityQueue::push (const PathTile& tile)
 {
     std::shared_ptr<handle_t> newHandle = std::make_shared<handle_t> (
-            element, m_heap.size());
-    m_hashTable[element.getTile ().id] = newHandle;
+            tile, m_heap.size());
+    m_hashTable[tile.getTile ().id] = newHandle;
     m_heap.emplace_back(newHandle);
     upHeap (m_heap.size() - 1);
 }
@@ -74,9 +101,10 @@ void PriorityQueue::changeBestCost(uint x, uint y, uint bestCost)
     }
 }
 
-void PriorityQueue::tryUpdateBestCost (uint target_x, uint target_y, const PathTile& bestTile)
+void PriorityQueue::tryUpdateBestCost (const World::tile_t& tile, const Point& targetXY,
+                                       const PathTile& bestTile)
 {
-    auto targetHandle = getHandle (target_x, target_y);
+    auto targetHandle = getHandle (targetXY.x, targetXY.y);
     if (targetHandle != nullptr)
     {
         uint totalCost = bestTile.getBestCost() + targetHandle->tile.getTile().cost;
@@ -86,6 +114,10 @@ void PriorityQueue::tryUpdateBestCost (uint target_x, uint target_y, const PathT
             targetHandle->tile.setBestCost(totalCost);
             upHeap (targetHandle->index);
         }
+    }
+    else
+    {
+        push (tile, targetXY, tile.cost + bestTile.getBestCost(), bestTile.xy ());
     }
 }
 

@@ -25,18 +25,25 @@ class PriorityQueue
 public:
 
     PriorityQueue () = delete;
+    PriorityQueue (size_t worldWidth, size_t worldHeight,
+                   std::function<uint (uint, uint)> heuristicFunction =
+                   [](uint, uint) { return 0; });
     PriorityQueue (const World& world,
             std::function<uint (uint, uint)> heuristicFunction =
                     [](uint, uint) { return 0; });
 
     ~PriorityQueue ();
 
-    void push (const PathTile& element);
+    void push (const World::tile_t& tile, const Point& xy, uint bestCost = PathTile::INF);
+    void push (const World::tile_t& tile, const Point& xy, uint bestCost,
+               const Point& bestTile);
+    void push (const PathTile& tile);
     void pop ();
     PathTile top () const;
 
     void changeBestCost (uint x, uint y, uint bestCost);
-    void tryUpdateBestCost (uint target_x, uint target_y, const PathTile& bestTile);
+    void tryUpdateBestCost (const World::tile_t& tile, const Point& targetXY,
+                            const PathTile& bestTile);
 
     bool isValid (uint x, uint y) const;
     // Assumes that user already checked that (x, y) is valid
@@ -72,6 +79,8 @@ private:
 
     std::vector<std::shared_ptr<handle_t>> m_heap;
     std::unordered_map<uint, std::shared_ptr<handle_t>> m_hashTable;
+
+    std::function <uint (uint, uint)> m_heurFunct;
 };
 
 } /* namespace parPath */

@@ -45,7 +45,7 @@ dijkstra_SRCS         = $(COMMON_SRCS) \
                         src/algorithms/dijkstra/Dijkstra.cc
 dijkstra_OBJS         = $(dijkstra_SRCS:$(SRCFOLDER)/%.$(SRCSUFFIX)=$(OBJFOLDER)/%.o)
 
-#TARGETS              += aStar
+TARGETS              += aStar
 aStar_SRCS            = $(COMMON_SRCS) \
                         $(COMMON_ALG_SRCS) \
                         src/algorithms/aStar/AStar.cc

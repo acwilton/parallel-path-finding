@@ -69,33 +69,20 @@ int main (int args, char* argv[])
     auto t1 = std::chrono::high_resolution_clock::now();
 
     // Priority Queue with A* heuristic function added
-    PriorityQueue forwardOpenTiles (world, [endX, endY] (uint x, uint y)
+    PriorityQueue forwardOpenTiles (world.getWidth (), world.getHeight (), [endX, endY] (uint x, uint y)
         {
             return  (x < endX ? endX - x : x - endX) +
                     (y < endY ? endY - y : y - endY);
         });
 
-    PriorityQueue reverseOpenTiles (world, [startX, startY] (uint x, uint y)
+    PriorityQueue reverseOpenTiles (world.getWidth (), world.getHeight (), [startX, startY] (uint x, uint y)
         {
             return  (x < startX ? startX - x : x - startX) +
                     (y < startY ? startY - y : y - startY);
         });
 
-    // Ensure that start and end points are valid
-    if (!forwardOpenTiles.isValid (startX, startY))
-    {
-        std::cout << "Start point either is a wall or isn't out of the world bounds" << std::endl;
-        return EXIT_FAILURE;
-    }
-    // Check each neighbor
-    if (!reverseOpenTiles.isValid (endX, endY))
-    {
-        std::cout << "End point either is a wall or isn't out of the world bounds" << std::endl;
-        return EXIT_FAILURE;
-    }
-
     // A* algorithm
-    forwardOpenTiles.changeBestCost (startX, startY, 0);
+    forwardOpenTiles.push (world (startX, startY), {startX, startY}, 0);
     reverseOpenTiles.changeBestCost (endX, endY, 0);
 
     std::unordered_map<uint, PathTile> expandedTiles;
@@ -108,10 +95,49 @@ int main (int args, char* argv[])
         forwardOpenTiles.pop ();
         expandedTiles[fTile.getTile ().id] = fTile;
         // Check each neighbor
-        forwardOpenTiles.tryUpdateBestCost (fTile.xy ().x + 1, fTile.xy ().y, fTile);
-        forwardOpenTiles.tryUpdateBestCost (fTile.xy ().x, fTile.xy ().y + 1, fTile);
-        forwardOpenTiles.tryUpdateBestCost (fTile.xy ().x - 1, fTile.xy ().y, fTile);
-        forwardOpenTiles.tryUpdateBestCost (fTile.xy ().x, fTile.xy ().y - 1, fTile);
+        Point adjPoint {fTile.xy ().x + 1, fTile.xy ().y}; // east
+        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
+        {
+            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+            if (worldTile.cost != 0 &&
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+            {
+                forwardOpenTiles.tryUpdateBestCost (worldTile, adjPoint, fTile);
+            }
+        }
+
+        adjPoint = {fTile.xy ().x, fTile.xy ().y + 1}; // south
+        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
+        {
+            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+            if (worldTile.cost != 0 &&
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+            {
+                forwardOpenTiles.tryUpdateBestCost (worldTile, adjPoint, fTile);
+            }
+        }
+
+        adjPoint = {fTile.xy ().x - 1, fTile.xy ().y}; // west
+        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
+        {
+            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+            if (worldTile.cost != 0 &&
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+            {
+                forwardOpenTiles.tryUpdateBestCost (worldTile, adjPoint, fTile);
+            }
+        }
+
+        adjPoint = {fTile.xy ().x, fTile.xy ().y - 1}; // north
+        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
+        {
+            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+            if (worldTile.cost != 0 &&
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+            {
+                forwardOpenTiles.tryUpdateBestCost (worldTile, adjPoint, fTile);
+            }
+        }
 
         fTile = forwardOpenTiles.top ();
 
@@ -127,10 +153,49 @@ int main (int args, char* argv[])
         reverseOpenTiles.pop ();
         expandedTiles [rTile.getTile ().id] = rTile;
         // Check each neighbor
-        reverseOpenTiles.tryUpdateBestCost (rTile.xy ().x + 1, rTile.xy ().y, rTile);
-        reverseOpenTiles.tryUpdateBestCost (rTile.xy ().x, rTile.xy ().y + 1, rTile);
-        reverseOpenTiles.tryUpdateBestCost (rTile.xy ().x - 1, rTile.xy ().y, rTile);
-        reverseOpenTiles.tryUpdateBestCost (rTile.xy ().x, rTile.xy ().y - 1, rTile);
+        adjPoint = {rTile.xy ().x + 1, rTile.xy ().y}; // east
+        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
+        {
+            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+            if (worldTile.cost != 0 &&
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+            {
+                reverseOpenTiles.tryUpdateBestCost (worldTile, adjPoint, rTile);
+            }
+        }
+
+        adjPoint = {rTile.xy ().x, rTile.xy ().y + 1}; // south
+        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
+        {
+            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+            if (worldTile.cost != 0 &&
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+            {
+                reverseOpenTiles.tryUpdateBestCost (worldTile, adjPoint, rTile);
+            }
+        }
+
+        adjPoint = {rTile.xy ().x - 1, rTile.xy ().y}; // west
+        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
+        {
+            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+            if (worldTile.cost != 0 &&
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+            {
+                reverseOpenTiles.tryUpdateBestCost (worldTile, adjPoint, rTile);
+            }
+        }
+
+        adjPoint = {rTile.xy ().x, rTile.xy ().y - 1}; // north
+        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
+        {
+            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+            if (worldTile.cost != 0 &&
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+            {
+                reverseOpenTiles.tryUpdateBestCost (worldTile, adjPoint, rTile);
+            }
+        }
 
         rTile = forwardOpenTiles.top ();
 

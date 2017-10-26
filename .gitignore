@@ -26,6 +26,7 @@ gui.log
 /worldGen
 /dijkstra
 /aStar
+/bidir
 
 # makefile dependency file
 makefile.deps

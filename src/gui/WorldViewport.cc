@@ -4,6 +4,8 @@
 
 #include <iostream>
 #include <fstream>
+#include <algorithm>
+#include <cmath>
 
 #include "gui/WorldViewport.h"
 #include "common/Results.h"
@@ -26,8 +28,6 @@ WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
         : Viewport (rect, backgroundColor),
           m_mode (VIEW),
           m_worldName (" "),
-          m_worldWidth (0),
-          m_worldHeight (0),
           m_cameraX (0),
           m_cameraY (0),
           m_tileScale (DEFAULT_TILE_SCALE),
@@ -40,6 +40,8 @@ WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
           m_startTexture (nullptr),
           m_endTexture (nullptr)
 {
+    m_gTiles.resize ((getWidth () * getHeight ()) / (MIN_TILE_SCALE * MIN_TILE_SCALE));
+
     for (uint i = 0; i < 256; ++i)
     {
         m_textTextures[i] = nullptr;
@@ -62,17 +64,11 @@ void WorldViewport::render (SDL_Renderer* renderer)
         SDL_SetRenderDrawColor (renderer, m_backgroundColor.r, m_backgroundColor.g,
                         m_backgroundColor.b, m_backgroundColor.a);
         SDL_RenderFillRect (renderer, nullptr);
-        for (uint y = m_cameraY; y < m_worldHeight; ++y)
+        for (uint y = 0; y < getCameraHeight (); ++y)
         {
-            for (uint x = m_cameraX; x < m_worldWidth; ++x)
+            for (uint x = 0; x < getCameraWidth (); ++x)
             {
                 GraphicTile& t = m_gTiles[getIndex (x, y)];
-
-                if (t.getRect ().x > getWidth ()
-                    || t.getRect ().y > getHeight ())
-                {
-                    break;
-                }
 
                 SDL_Texture* renderTexture = m_textTextures[t.getTile().cost];
                 if (m_showEndPoints)
@@ -118,17 +114,17 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 }
                 break;
             case SDLK_DOWN:
-                if (getCameraOppY () + moveSpeed <= m_worldHeight)
+                if (getCameraOppY () + moveSpeed <= m_world.getHeight ())
                 {
                     setCameraY (getCameraY () + moveSpeed);
                 }
                 else
                 {
-                    setCameraY (m_worldHeight - (m_rect.h / m_tileScale));
+                    setCameraY (m_cameraY + (m_world.getHeight () - getCameraOppY()));
                 }
                 break;
             case SDLK_LEFT:
-                if (getCameraX () - moveSpeed > 0)
+                if (getCameraX () - moveSpeed >= 0)
                 {
                     setCameraX (getCameraX () - moveSpeed);
                 }
@@ -138,13 +134,13 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 }
                 break;
             case SDLK_RIGHT:
-                if (getCameraOppX () + moveSpeed < m_worldWidth)
+                if (getCameraOppX () + moveSpeed <= m_world.getWidth ())
                 {
                     setCameraX (getCameraX () + moveSpeed);
                 }
                 else
                 {
-                    setCameraX (m_worldWidth - (m_rect.w / m_tileScale));
+                    setCameraX (m_cameraX + (m_world.getWidth () - getCameraOppX()));
                 }
                 break;
             case SDLK_PLUS:
@@ -223,13 +219,13 @@ void WorldViewport::handleEvent (SDL_Event& e)
                     if (!isNull (m_start))
                     {
                         setMode (SELECT);
-                        GraphicTile& t = m_gTiles[getIndex (m_start.x, m_start.y)];
+                        GraphicTile& t = m_gTiles[getIndex (m_start.x - m_cameraX, m_start.y - m_cameraY)];
                         m_startPrevColor = t.getRectColor ();
                         t.setRectColor (SELECT_COLOR);
 
                         // Reset m_end
-                        m_end.x = m_worldWidth;
-                        m_end.y = m_worldHeight;
+                        m_end.x = m_world.getWidth ();
+                        m_end.y = m_world.getHeight ();
                     }
                 }
                 else if (m_mode == SELECT)
@@ -239,7 +235,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
                         m_end = trySelectTile (mouseX, mouseY);
                         if (!isNull (m_end))
                         {
-                            GraphicTile& t = m_gTiles[getIndex (m_end.x, m_end.y)];
+                            GraphicTile& t = m_gTiles[getIndex (m_end.x - m_cameraX, m_end.y - m_cameraY)];
                             m_endPrevColor = t.getRectColor();
                             t.setRectColor(SELECT_COLOR);
                         }
@@ -247,8 +243,8 @@ void WorldViewport::handleEvent (SDL_Event& e)
                     else
                     {
                         setMode (VIEW);
-                        m_gTiles[getIndex (m_start.x, m_start.y)].setRectColor(m_startPrevColor);
-                        m_gTiles[getIndex (m_end.x, m_end.y)].setRectColor(m_endPrevColor);
+                        m_gTiles[getIndex (m_start.x - m_cameraX, m_start.y - m_cameraY)].setRectColor(m_startPrevColor);
+                        m_gTiles[getIndex (m_end.x - m_cameraX, m_end.y - m_cameraY)].setRectColor(m_endPrevColor);
                         resetEndPoints ();
                         if (!m_results.empty())
                         {
@@ -270,7 +266,6 @@ void WorldViewport::setWorld (const std::string& worldName)
 void WorldViewport::loadWorld ()
 {
     m_results.clear();
-    m_gTiles.clear();
     m_cameraX = 0;
     m_cameraY = 0;
 
@@ -284,28 +279,11 @@ void WorldViewport::loadWorld ()
         return;
     }
 
-    World world;
-    worldFile >> world;
-
-    m_worldWidth = world.getWidth ();
-    m_worldHeight= world.getHeight ();
+    worldFile >> m_world;
 
     resetEndPoints ();
 
-    m_gTiles.reserve(m_worldWidth * m_worldHeight);
-
-    for (uint y = 0; y < m_worldHeight; ++y)
-    {
-        for (uint x = 0; x < m_worldWidth; ++x)
-        {
-            m_gTiles.emplace_back (world(x, y),
-                    SDL_Rect {static_cast<int> (x * m_tileScale),
-                              static_cast<int> (y * m_tileScale),
-                              static_cast<int> (m_tileScale),
-                              static_cast<int> (m_tileScale)});
-            m_gTiles.back().setTextEnabled(m_textEnabled);
-        }
-    }
+    updateGraphicTilesScaleAndPos ();
 }
 
 void WorldViewport::runAndLoadPathFinding (const std::string& algorithm)
@@ -346,7 +324,10 @@ void WorldViewport::setResultsEnabled (bool resultsEnabled)
     SDL_Color color = m_resultsEnabled ? getAlgorithmColor () : DEFAULT_COLOR;
     for (auto& r : m_results)
     {
-        m_gTiles[getIndex (r.x, r.y)].setRectColor(color);
+        if (isPointInCameraView (r))
+        {
+            m_gTiles[getIndex (r.x - m_cameraX, r.y - m_cameraY)].setRectColor(color);
+        }
     }
 }
 
@@ -357,13 +338,7 @@ void WorldViewport::setCameraX (int x)
         x = 0;
     }
     m_cameraX = x;
-    for (uint y = 0; y < m_worldHeight; ++y)
-    {
-        for (uint x = 0; x < m_worldWidth; ++x)
-        {
-            m_gTiles[getIndex (x, y)].setX((x - m_cameraX) * m_tileScale);
-        }
-    }
+    updateGraphicTilesPos ();
 }
 
 void WorldViewport::setCameraY (int y)
@@ -373,38 +348,23 @@ void WorldViewport::setCameraY (int y)
         y = 0;
     }
     m_cameraY = y;
-    for (uint y = 0; y < m_worldHeight; ++y)
-    {
-        for (uint x = 0; x < m_worldWidth; ++x)
-        {
-            m_gTiles[getIndex (x, y)].setY((y - m_cameraY) * m_tileScale);
-        }
-    }
+    updateGraphicTilesPos ();
 }
 
 void WorldViewport::setTileScale (int scale)
 {
     m_tileScale = scale;
 
-    if (getCameraOppY () > m_worldHeight)
+    if (getCameraOppY () > m_world.getHeight ())
     {
-        setCameraY (getCameraY () - (getCameraOppY () - m_worldHeight));
+        setCameraY (m_world.getHeight () - getCameraHeight ());
     }
-    if (getCameraOppX () > m_worldWidth)
+    if (getCameraOppX () > m_world.getWidth ())
     {
-        setCameraX (getCameraX () - (getCameraOppX () - m_worldWidth));
+        setCameraX (m_world.getWidth () - getCameraWidth ());
     }
 
-    for (uint y = 0; y < m_worldHeight; ++y)
-    {
-        for (uint x = 0; x < m_worldWidth; ++x)
-        {
-            m_gTiles[getIndex (x, y)].setW (m_tileScale);
-            m_gTiles[getIndex (x, y)].setH (m_tileScale);
-            m_gTiles[getIndex (x, y)].setX((x - m_cameraX) * m_tileScale);
-            m_gTiles[getIndex (x, y)].setY((y - m_cameraY) * m_tileScale);
-        }
-    }
+    updateGraphicTilesScaleAndPos ();
 }
 
 void WorldViewport::setTextEnabled (bool textEnabled)
@@ -451,14 +411,13 @@ void WorldViewport::setMode (Mode mode)
 
 Point WorldViewport::trySelectTile (int mouseX, int mouseY)
 {
-    Point tile (m_worldWidth, m_worldHeight);
+    Point tile (m_world.getWidth (), m_world.getHeight ());
 
     uint tileX = m_cameraX + (static_cast<uint> (mouseX) / m_tileScale);
     uint tileY = m_cameraY + (static_cast<uint> (mouseY) / m_tileScale);
-    if (tileX < m_worldWidth && tileY < m_worldHeight)
-    {
-        GraphicTile& t = m_gTiles[getIndex (tileX, tileY)];
-        if (t.getTile().cost != 0)
+    if (tileX < m_world.getWidth () && tileY < m_world.getHeight ())
+    {;
+        if (m_world(tileX, tileY).cost != 0)
         {
             tile.x = tileX;
             tile.y = tileY;
@@ -483,29 +442,134 @@ SDL_Color WorldViewport::getAlgorithmColor () const
 
 uint WorldViewport::getIndex (uint x, uint y) const
 {
-    return (m_worldWidth * y) + x;
+    return (ceil (m_rect.w / MIN_TILE_SCALE) * y) + x;
 }
 
 bool WorldViewport::isNull(const Point& p) const
 {
-    return (p.x == m_worldWidth && p.y == m_worldHeight);
+    return (p.x == m_world.getWidth () && p.y == m_world.getHeight ());
+}
+
+uint WorldViewport::getCameraWidth () const
+{
+    return std::min
+    (
+        static_cast<size_t> (ceil (static_cast<float> (m_rect.w) / m_tileScale)),
+        m_world.getWidth () - m_cameraX
+    );
+}
+
+uint WorldViewport::getCameraHeight () const
+{
+    return std::min
+    (
+        static_cast<size_t> (ceil (static_cast<float> (m_rect.h) / m_tileScale)),
+        m_world.getHeight () - m_cameraY
+    );
 }
 
 uint WorldViewport::getCameraOppX () const
 {
-    return (m_rect.w / m_tileScale) + m_cameraX;
+    return m_cameraX + std::min
+    (
+        static_cast<size_t> (m_rect.w) / m_tileScale,
+        m_world.getWidth () - m_cameraX
+    );
 }
 
 uint WorldViewport::getCameraOppY () const
 {
-    return (m_rect.h / m_tileScale) + m_cameraY;
+    return m_cameraY + std::min
+    (
+        static_cast<size_t> (m_rect.h) / m_tileScale,
+        m_world.getHeight () - m_cameraY
+    );
+}
+
+bool WorldViewport::isPointInCameraView (const Point& p) const
+{
+    return (p.x >= m_cameraX && p.y >= m_cameraY &&
+            p.x <= getCameraOppX () && p.y <= getCameraOppY ());
 }
 
 void WorldViewport::resetEndPoints()
 {
     // a start/end 1 past the last tile's x and y is considered a null value
-    m_start.x = m_end.x = m_worldWidth;
-    m_start.y = m_end.y = m_worldHeight;
+    m_start.x = m_end.x = m_world.getWidth ();
+    m_start.y = m_end.y = m_world.getHeight ();
+}
+
+void WorldViewport::updateGraphicTilesScaleAndPos ()
+{
+    for (uint y = 0; y < getCameraHeight (); ++y)
+    {
+        for (uint x = 0; x < getCameraWidth (); ++x)
+        {
+            GraphicTile& t = m_gTiles[getIndex (x, y)];
+            t.setTile(m_world (x + m_cameraX, y + m_cameraY));
+            t.setW (m_tileScale);
+            t.setH (m_tileScale);
+            t.setX(x * m_tileScale);
+            t.setY(y * m_tileScale);
+        }
+    }
+
+    if (m_showEndPoints && m_mode == SELECT)
+    {
+        if (isPointInCameraView (m_start))
+        {
+            m_gTiles[getIndex (m_start.x - m_cameraX, m_start.y - m_cameraY)].setRectColor(SELECT_COLOR);
+        }
+        if (isPointInCameraView (m_end))
+        {
+            m_gTiles[getIndex (m_end.x - m_cameraX, m_end.y - m_cameraY)].setRectColor(SELECT_COLOR);
+        }
+    }
+
+    if (m_resultsEnabled)
+    {
+        for (auto& r : m_results)
+        {
+            if (isPointInCameraView (r))
+            {
+                m_gTiles[getIndex (r.x - m_cameraX, r.y - m_cameraY)].setRectColor(getAlgorithmColor ());
+            }
+        }
+    }
+}
+
+void WorldViewport::updateGraphicTilesPos ()
+{
+    for (uint y = 0; y < getCameraHeight (); ++y)
+    {
+        for (uint x = 0; x < getCameraWidth (); ++x)
+        {
+            m_gTiles[getIndex (x, y)].setTile (m_world (x + m_cameraX, y + m_cameraY));
+        }
+    }
+
+    if (m_showEndPoints && m_mode == SELECT)
+    {
+        if (isPointInCameraView (m_start))
+        {
+            m_gTiles[getIndex (m_start.x - m_cameraX, m_start.y - m_cameraY)].setRectColor(SELECT_COLOR);
+        }
+        if (isPointInCameraView (m_end))
+        {
+            m_gTiles[getIndex (m_end.x - m_cameraX, m_end.y - m_cameraY)].setRectColor(SELECT_COLOR);
+        }
+    }
+
+    if (m_resultsEnabled)
+    {
+        for (auto& r : m_results)
+        {
+            if (isPointInCameraView (r))
+            {
+                m_gTiles[getIndex (r.x - m_cameraX, r.y - m_cameraY)].setRectColor(getAlgorithmColor ());
+            }
+        }
+    }
 }
 
 void WorldViewport::initializeTextures (SDL_Renderer* renderer)

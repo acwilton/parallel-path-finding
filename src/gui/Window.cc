@@ -212,7 +212,7 @@ void Window::destroyResources ()
     m_window = nullptr;
 
     SDL_DestroyRenderer (m_renderer);
-    m_renderer == nullptr;
+    m_renderer = nullptr;
 }
 
 } /* namespace gui */

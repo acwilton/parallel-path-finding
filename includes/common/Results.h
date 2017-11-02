@@ -25,7 +25,7 @@ const std::string RESULTS_EXT = ".res";
 const std::string PERFORMANCE_EXT = ".perf";
 
 inline void writeResults (const std::vector<Point>& path, const std::string& worldName,
-                          const std::string& algName, uint ms)
+                          const std::string& algName, uint ms, uint totalCost)
 {
     std::stringstream dirName;
     dirName << RESULTS_DIR << "/" << worldName << "_"
@@ -39,6 +39,7 @@ inline void writeResults (const std::vector<Point>& path, const std::string& wor
     {
         resultFile << ri->x << " " << ri->y << std::endl;
     }
+    resultFile << "Total Cost: " << totalCost << std::endl;
 
     resultFile.close();
 

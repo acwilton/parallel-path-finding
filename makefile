@@ -1,6 +1,6 @@
 # Built-in Variables
 CXX		              = g++
-CXXFLAGS              = -Wall -g -std=c++14
+CXXFLAGS              = -Wall -O3 -std=c++14
 CPPFLAGS              = -Iincludes -MMD -MP
 LDLIBS                = -lboost_system -lboost_filesystem
 LDFLAGS		          =

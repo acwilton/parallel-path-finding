@@ -130,6 +130,7 @@ int main (int args, char* argv[])
     auto t2 = std::chrono::high_resolution_clock::now();
 
     // Parse results into a stack
+    uint totalCost = tile.getBestCost() - tile.getTile().cost;
     std::vector<Point> finalPath;
     while (tile.xy ().x != startX || tile.xy ().y != startY)
     {
@@ -139,7 +140,7 @@ int main (int args, char* argv[])
     finalPath.emplace_back(tile.xy ());
 
     writeResults (finalPath, argv[1], ALG_NAME,
-                  std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count());
+                  std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
 
     return EXIT_SUCCESS;
 }

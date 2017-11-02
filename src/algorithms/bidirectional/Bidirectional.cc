@@ -23,7 +23,7 @@ using namespace pathFind;
 const std::string WORLD_DIR = "worlds";
 const std::string WORLD_EXT = ".world";
 
-const std::string ALG_NAME = "bidirectional";
+const std::string ALG_NAME = "bidir";
 
 int main (int args, char* argv[])
 {
@@ -83,17 +83,26 @@ int main (int args, char* argv[])
 
     // A* algorithm
     forwardOpenTiles.push (world (startX, startY), {startX, startY}, 0);
-    reverseOpenTiles.changeBestCost (endX, endY, 0);
+    reverseOpenTiles.push (world (endX, endY), {endX, endY}, 0);
 
     std::unordered_map<uint, PathTile> expandedTiles;
-    PathTile fTile = forwardOpenTiles.top();
-    PathTile rTile = reverseOpenTiles.top();
+    PathTile fTile = forwardOpenTiles.top ();
+    PathTile rTile = reverseOpenTiles.top ();
     while ((fTile.xy ().x != endX || fTile.xy ().y != endY) &&
             (rTile.xy ().x != startX || rTile.xy ().y != startY))
     {
         // forward search
+        fTile = forwardOpenTiles.top ();
+        auto overlapTile = expandedTiles.find(fTile.getTile ().id);
+        if (overlapTile != expandedTiles.end ())
+        {
+            // Best path found
+            rTile = overlapTile->second;
+            break;
+        }
         forwardOpenTiles.pop ();
         expandedTiles[fTile.getTile ().id] = fTile;
+
         // Check each neighbor
         Point adjPoint {fTile.xy ().x + 1, fTile.xy ().y}; // east
         if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
@@ -139,19 +148,18 @@ int main (int args, char* argv[])
             }
         }
 
-        fTile = forwardOpenTiles.top ();
-
-        auto overlapTile = expandedTiles.find(fTile.getTile ().id);
+        // reverse search
+        rTile = reverseOpenTiles.top ();
+        overlapTile = expandedTiles.find(rTile.getTile ().id);
         if (overlapTile != expandedTiles.end ())
         {
+            fTile = overlapTile->second;
             // Best path found
-            rTile = overlapTile->second;
             break;
         }
-
-        // reverse search
         reverseOpenTiles.pop ();
         expandedTiles [rTile.getTile ().id] = rTile;
+
         // Check each neighbor
         adjPoint = {rTile.xy ().x + 1, rTile.xy ().y}; // east
         if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
@@ -196,24 +204,15 @@ int main (int args, char* argv[])
                 reverseOpenTiles.tryUpdateBestCost (worldTile, adjPoint, rTile);
             }
         }
-
-        rTile = forwardOpenTiles.top ();
-
-        overlapTile = expandedTiles.find(rTile.getTile ().id);
-        if (overlapTile != expandedTiles.end ())
-        {
-            fTile = overlapTile->second;
-            // Best path found
-            break;
-        }
     }
-
     auto t2 = std::chrono::high_resolution_clock::now();
 
     // Parse reverse results
+    uint totalCost = 0;
     std::vector <Point> reversePath;
     while (rTile.xy ().x != endX || rTile.xy ().y != endY)
     {
+        totalCost += rTile.getTile().cost;
         reversePath.emplace_back (rTile.xy ());
         rTile = expandedTiles[(rTile.bestTile ().y * world.getWidth ()) + rTile.bestTile ().x];
     }
@@ -223,11 +222,13 @@ int main (int args, char* argv[])
     while (fTile.xy ().x != startX || fTile.xy ().y != startY)
     {
         fTile = expandedTiles[(fTile.bestTile ().y * world.getWidth()) + fTile.bestTile ().x];
+        totalCost += fTile.getTile().cost;
         finalPath.emplace_back(fTile.xy ());
     }
+    totalCost -= fTile.getTile().cost;
 
     writeResults (finalPath, argv[1], ALG_NAME,
-            std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count());
+            std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
 
     return EXIT_SUCCESS;
 }

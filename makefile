@@ -57,6 +57,13 @@ bidir_SRCS            = $(COMMON_SRCS) \
                         src/algorithms/bidirectional/Bidirectional.cc
 bidir_OBJS            = $(bidir_SRCS:$(SRCFOLDER)/%.$(SRCSUFFIX)=$(OBJFOLDER)/%.o)
 
+TARGETS              += parBidir
+parBidir_SRCS         = $(COMMON_SRCS) \
+                        $(COMMON_ALG_SRCS) \
+                        src/algorithms/parBidirectional/ParBidirectional.cc
+parBidir_OBJS         = $(parBidir_SRCS:$(SRCFOLDER)/%.$(SRCSUFFIX)=$(OBJFOLDER)/%.o)
+parBidir_LIBS         = -lpthread
+
 OBJS                  = $(sort $(foreach target,$(TARGETS),$($(target)_OBJS)))
 DEPS                  = $(OBJS:.o=.d)
 

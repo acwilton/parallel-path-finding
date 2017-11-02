@@ -27,6 +27,7 @@ gui.log
 /dijkstra
 /aStar
 /bidir
+/parBidir
 
 # makefile dependency file
 makefile.deps

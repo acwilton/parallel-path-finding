@@ -26,7 +26,7 @@ World::World (size_t width, size_t height)
 {
 }
 
-void World::generateMap (float percentCarved)
+void World::generateMap (float percentCarved, uint maxTileCost)
 {
     if (percentCarved > 1.0f)
     {
@@ -49,7 +49,7 @@ void World::generateMap (float percentCarved)
     uint yMiddle = ceil (static_cast<float>(m_height) / 2);
     uint x = gen () % xMiddle + (xMiddle / 2);
     uint y = gen () % yMiddle + (yMiddle / 2);
-    m_tiles[getID (x, y)].cost = (gen () % 255) + 1;
+    m_tiles[getID (x, y)].cost = (gen () % maxTileCost) + 1;
 
     size_t numCarvedTiles = 1;
     m_openTiles = (m_width * m_height) * percentCarved;
@@ -91,7 +91,7 @@ void World::generateMap (float percentCarved)
         if (m_tiles[getID (x, y)].cost == 0)
         {
             ++numCarvedTiles;
-            m_tiles[getID (x, y)].cost = (gen () % 255) + 1;
+            m_tiles[getID (x, y)].cost = (gen () % maxTileCost) + 1;
         }
     }
 

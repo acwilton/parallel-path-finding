@@ -19,9 +19,9 @@ int main (int args, char* argv[])
 {
     // Program should be started with 3 command line parameters for creating
     // a world file
-    if (args != 4)
+    if (args != 4 && args != 5)
     {
-        std::cout << "Incorrect inputs. Usage: <filename> <width> <height>"
+        std::cout << "Incorrect inputs. Usage: <filename> <width> <height> (max_cost)"
                 << std::endl;
         return EXIT_FAILURE;
     }
@@ -40,7 +40,8 @@ int main (int args, char* argv[])
     try
     {
         width = boost::lexical_cast<size_t> (argv[2]);
-    } catch (boost::bad_lexical_cast &e)
+    }
+    catch (boost::bad_lexical_cast &e)
     {
         std::cout << "Width failed to convert to a numeric type" << std::endl;
         return EXIT_FAILURE;
@@ -50,14 +51,33 @@ int main (int args, char* argv[])
     try
     {
         height = boost::lexical_cast<size_t> (argv[3]);
-    } catch (boost::bad_lexical_cast &e)
+    }
+    catch (boost::bad_lexical_cast &e)
     {
         std::cout << "Height failed to convert to a numeric type" << std::endl;
         return EXIT_FAILURE;
     }
 
+    uint maxCost = 255;
+    if (args == 5)
+    {
+        try
+        {
+            maxCost = boost::lexical_cast<uint> (argv[4]);
+            if (maxCost > 255 || maxCost < 1)
+            {
+                std::cout << "maxCost is out of bounds. Must be within [1, 255]." << std::endl;
+            }
+        }
+        catch (boost::bad_lexical_cast &e)
+        {
+            std::cout << "maxCost failed to convert to a numeric type" << std::endl;
+            return EXIT_FAILURE;
+        }
+    }
+
     pathFind::World world (width, height);
-    world.generateMap (0.5f);
+    world.generateMap (0.5f, maxCost);
 
     worldFile << world;
 

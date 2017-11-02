@@ -63,7 +63,7 @@ public:
     tile_t
     operator() (uint column, uint row) const;
 
-    void generateMap (float percentCarved);
+    void generateMap (float percentCarved, uint maxTileCost);
 
     size_t getWidth () const;
     size_t getHeight () const;

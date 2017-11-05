@@ -28,6 +28,7 @@ gui.log
 /aStar
 /bidir
 /parBidir
+/fringe
 
 # makefile dependency file
 makefile.deps

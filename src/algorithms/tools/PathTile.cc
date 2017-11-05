@@ -28,6 +28,16 @@ PathTile::PathTile (World::tile_t tile, const Point& xy, uint heuristic)
 {
 }
 
+PathTile::PathTile (World::tile_t tile, const Point& xy, const Point& bestXY,
+                    uint bestCost, uint heuristic)
+    : m_tile (tile),
+      m_xy (xy.x, xy.y),
+      m_bestCost (bestCost),
+      m_heuristic (heuristic),
+      m_bestTile (bestXY.x, bestXY.y)
+{
+}
+
 PathTile::PathTile (const PathTile& other)
     : m_tile (other.m_tile),
       m_xy (other.m_xy.x, other.m_xy.y),

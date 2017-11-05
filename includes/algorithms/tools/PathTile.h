@@ -27,6 +27,8 @@ public:
 
     PathTile ();
     PathTile (World::tile_t tile, const Point& xy, uint heuristic = 0);
+    PathTile (World::tile_t tile, const Point& xy, const Point& bestXY,
+              uint bestCost, uint heuristic = 0);
     PathTile (const PathTile& other);
     virtual ~PathTile ();
 

@@ -64,6 +64,13 @@ parBidir_SRCS         = $(COMMON_SRCS) \
 parBidir_OBJS         = $(parBidir_SRCS:$(SRCFOLDER)/%.$(SRCSUFFIX)=$(OBJFOLDER)/%.o)
 parBidir_LIBS         = -lpthread
 
+TARGETS              += fringe
+fringe_SRCS           = $(COMMON_SRCS) \
+                        $(COMMON_ALG_SRCS) \
+                        src/algorithms/fringe/Fringe.cc
+fringe_OBJS           = $(fringe_SRCS:$(SRCFOLDER)/%.$(SRCSUFFIX)=$(OBJFOLDER)/%.o)
+#fringe_LIBS           = -lpthread
+
 OBJS                  = $(sort $(foreach target,$(TARGETS),$($(target)_OBJS)))
 DEPS                  = $(OBJS:.o=.d)
 

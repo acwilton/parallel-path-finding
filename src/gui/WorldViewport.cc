@@ -24,6 +24,7 @@ const SDL_Color SELECT_COLOR = {0xFF, 0x77, 0x00, 0xFF};
 const SDL_Color DIJKSTRA_COLOR = {0xFF, 0xF4, 0x7F, 0xFF};
 const SDL_Color ASTAR_COLOR = {0x82, 0xFF, 0x86, 0xFF};
 const SDL_Color BIDIR_COLOR = {0xCB, 0x6B, 0xFF, 0xFF};
+const SDL_Color PAR_BIDIR_COLOR = {0xFF, 0x75, 0xF1, 0xFF};
 
 WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
         : Viewport (rect, backgroundColor),
@@ -99,8 +100,8 @@ void WorldViewport::handleEvent (SDL_Event& e)
             uint scaleSpeed = 1;
             if ((SDL_GetModState () & KMOD_CTRL))
             {
-                moveSpeed = 5;
-                scaleSpeed = 2;
+                moveSpeed = 10;
+                scaleSpeed = 3;
             }
             switch (e.key.keysym.sym)
             {
@@ -204,6 +205,15 @@ void WorldViewport::handleEvent (SDL_Event& e)
                     setResultsEnabled (!m_resultsEnabled);
                 }
                 break;
+            case SDLK_p:
+                if (!isNull (m_start) && !isNull (m_end))
+                {
+                    runAndLoadPathFinding ("parBidir");
+                }
+                else
+                {
+                    setResultsEnabled (!m_resultsEnabled);
+                }
             }
         }
         else if (e.type == SDL_KEYUP)
@@ -451,6 +461,10 @@ SDL_Color WorldViewport::getAlgorithmColor () const
     else if (m_currentAlgorithm == "bidir")
     {
         return BIDIR_COLOR;
+    }
+    else if (m_currentAlgorithm == "parBidir")
+    {
+        return PAR_BIDIR_COLOR;
     }
 
     return DEFAULT_COLOR;

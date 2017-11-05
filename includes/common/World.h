@@ -50,7 +50,7 @@ public:
      */
     struct tile_t
     {
-        uint cost;
+        uint cost = 0;
         uint id;
     };
 

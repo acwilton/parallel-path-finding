@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <cmath>
 #include <chrono>
@@ -27,7 +28,7 @@ const std::string WORLD_EXT = ".world";
 
 const std::string ALG_NAME = "parBidir";
 
-void search (uint startX, uint startY, uint endX, uint endY,
+void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<uint>& tileIdsFound,
              std::unordered_map<uint, PathTile>& expandedTiles,
              pathFind::PathTile& tile, const pathFind::World& world,
              std::mutex& m, bool& finished, bool& iFound);
@@ -77,17 +78,19 @@ int main (int args, char* argv[])
 
     pathFind::PathTile fTile, rTile;
 
-    std::unordered_map<uint, PathTile> expandedTiles;
+    std::unordered_map<uint, PathTile> forwardExpandedTiles;
+    std::unordered_map<uint, PathTile> reverseExpandedTiles;
+    std::unordered_set<uint> idsFound;
     std::mutex m;
     bool finished;
     bool fFound = false;
     bool rFound = false;
 
-    std::thread forward (search, startX, startY, endX, endY,
-            std::ref(expandedTiles), std::ref(fTile), std::cref(world),
+    std::thread forward (search, startX, startY, endX, endY, std::ref (idsFound),
+            std::ref(forwardExpandedTiles), std::ref(fTile), std::cref(world),
             std::ref(m), std::ref(finished), std::ref(fFound));
-    std::thread reverse (search, endX, endY, startX, startY,
-            std::ref(expandedTiles), std::ref(rTile), std::cref(world),
+    std::thread reverse (search, endX, endY, startX, startY, std::ref(idsFound),
+            std::ref(reverseExpandedTiles), std::ref(rTile), std::cref(world),
             std::ref(m), std::ref(finished), std::ref(rFound));
 
     forward.join ();
@@ -95,11 +98,11 @@ int main (int args, char* argv[])
 
     if (fFound)
     {
-        rTile = expandedTiles.at (fTile.getTile ().id);
+        rTile = reverseExpandedTiles.at (fTile.getTile ().id);
     }
     else
     {
-        fTile = expandedTiles.at (rTile.getTile ().id);
+        fTile = forwardExpandedTiles.at (rTile.getTile ().id);
     }
     auto t2 = std::chrono::high_resolution_clock::now();
 
@@ -110,14 +113,14 @@ int main (int args, char* argv[])
     {
         totalCost += rTile.getTile().cost;
         reversePath.emplace_back (rTile.xy ());
-        rTile = expandedTiles[(rTile.bestTile ().y * world.getWidth ()) + rTile.bestTile ().x];
+        rTile = reverseExpandedTiles[(rTile.bestTile ().y * world.getWidth ()) + rTile.bestTile ().x];
     }
     reversePath.emplace_back (rTile.xy ());
 
     std::vector<Point> finalPath (reversePath.rbegin (), reversePath.rend ());
     while (fTile.xy ().x != startX || fTile.xy ().y != startY)
     {
-        fTile = expandedTiles[(fTile.bestTile ().y * world.getWidth()) + fTile.bestTile ().x];
+        fTile = forwardExpandedTiles[(fTile.bestTile ().y * world.getWidth()) + fTile.bestTile ().x];
         totalCost += fTile.getTile().cost;
         finalPath.emplace_back(fTile.xy ());
     }
@@ -129,7 +132,7 @@ int main (int args, char* argv[])
     return EXIT_SUCCESS;
 }
 
-void search (uint startX, uint startY, uint endX, uint endY,
+void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<uint>& tileIdsFound,
              std::unordered_map<uint, PathTile>& expandedTiles,
              pathFind::PathTile& tile, const pathFind::World& world,
              std::mutex& m, bool& finished, bool& iFound)
@@ -153,8 +156,7 @@ void search (uint startX, uint startY, uint endX, uint endY,
             m.unlock ();
             break;
         }
-        auto overlapTile = expandedTiles.find(tile.getTile ().id);
-        if (overlapTile != expandedTiles.end ())
+        if (tileIdsFound.count(tile.getTile().id))
         {
             // Best path found
             iFound = true;
@@ -162,9 +164,10 @@ void search (uint startX, uint startY, uint endX, uint endY,
             m.unlock ();
             break;
         }
-        expandedTiles[tile.getTile ().id] = tile;
+        tileIdsFound.insert(tile.getTile().id);
         m.unlock ();
 
+        expandedTiles[tile.getTile ().id] = tile;
         openTiles.pop ();
 
         // Check each neighbor
@@ -172,11 +175,8 @@ void search (uint startX, uint startY, uint endX, uint endY,
         if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
         {
             World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-            m.lock ();
-            bool notFound = expandedTiles.find (worldTile.id) == expandedTiles.end ();
-            m.unlock ();
             if (worldTile.cost != 0 &&
-                notFound)
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
             }
@@ -186,11 +186,8 @@ void search (uint startX, uint startY, uint endX, uint endY,
         if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
         {
             World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-            m.lock ();
-            bool notFound = expandedTiles.find (worldTile.id) == expandedTiles.end ();
-            m.unlock ();
             if (worldTile.cost != 0 &&
-                notFound)
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
             }
@@ -200,11 +197,8 @@ void search (uint startX, uint startY, uint endX, uint endY,
         if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
         {
             World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-            m.lock ();
-            bool notFound = expandedTiles.find (worldTile.id) == expandedTiles.end ();
-            m.unlock ();
             if (worldTile.cost != 0 &&
-                notFound)
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
             }
@@ -214,11 +208,8 @@ void search (uint startX, uint startY, uint endX, uint endY,
         if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
         {
             World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-            m.lock ();
-            bool notFound = expandedTiles.find (worldTile.id) == expandedTiles.end ();
-            m.unlock ();
             if (worldTile.cost != 0 &&
-                notFound)
+                expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
             }

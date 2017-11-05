@@ -147,9 +147,10 @@ int main (int args, char* argv[])
             [&](std::string s)
             {
                 std::stringstream input (s);
+                std::string alg;
                 uint sx, sy, ex, ey;
-                input >> sx >> sy >> ex >> ey;
-                worldViewport->loadResults({sx, sy}, {ex, ey}, "dijkstra");
+                input >> alg >> sx >> sy >> ex >> ey;
+                worldViewport->runAndLoadPathFinding(alg, sx, sy, ex, ey);
                 worldViewport->setResultsEnabled(true);
                 viewResult_B->enable ();
             });

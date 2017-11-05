@@ -324,6 +324,16 @@ void WorldViewport::runAndLoadPathFinding (const std::string& algorithm)
     setResultsEnabled (true);
 }
 
+void WorldViewport::runAndLoadPathFinding (const std::string& algorithm,
+                                    uint startX, uint startY, uint endX, uint endY)
+{
+    m_start.x = startX;
+    m_start.y = startY;
+    m_end.x = endX;
+    m_end.y = endY;
+    runAndLoadPathFinding (algorithm);
+}
+
 void WorldViewport::loadResults (const Point& start, const Point& end,
                                 const std::string& algName)
 {
@@ -439,7 +449,7 @@ Point WorldViewport::trySelectTile (int mouseX, int mouseY)
     uint tileX = m_cameraX + (static_cast<uint> (mouseX) / m_tileScale);
     uint tileY = m_cameraY + (static_cast<uint> (mouseY) / m_tileScale);
     if (tileX < m_world.getWidth () && tileY < m_world.getHeight ())
-    {;
+    {
         if (m_world(tileX, tileY).cost != 0)
         {
             tile.x = tileX;

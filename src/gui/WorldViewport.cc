@@ -16,7 +16,7 @@ namespace pathFind
 namespace gui
 {
 
-const uint MIN_TILE_SCALE = 5;
+const uint MIN_TILE_SCALE = 2;
 const uint MAX_TILE_SCALE = 75;
 const uint DEFAULT_TILE_SCALE = 10;
 
@@ -157,7 +157,8 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 }
                 break;
             case SDLK_MINUS:
-                if (m_tileScale - scaleSpeed > MIN_TILE_SCALE)
+                // If below zero it wraps around to uint::max so just check that it doesn't do that either
+                if (m_tileScale - scaleSpeed > MIN_TILE_SCALE && m_tileScale - scaleSpeed < MAX_TILE_SCALE)
                 {
                     setTileScale (getTileScale () - scaleSpeed);
                 }

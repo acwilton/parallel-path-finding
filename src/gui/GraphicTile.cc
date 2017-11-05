@@ -103,8 +103,11 @@ void GraphicTile::render (SDL_Renderer* renderer, SDL_Texture* texture)
     SDL_SetRenderDrawColor (renderer, m_rectColor.r, m_rectColor.g,
             m_rectColor.b, m_rectColor.a);
     SDL_RenderFillRect (renderer, &m_rect);
-    SDL_SetRenderDrawColor (renderer, 0x00, 0x00, 0x00, 0xFF);
-    SDL_RenderDrawRect (renderer, &m_rect);
+    if(m_rect.w > 5 && m_rect.h > 5)
+    {
+        SDL_SetRenderDrawColor (renderer, 0x00, 0x00, 0x00, 0xFF);
+        SDL_RenderDrawRect (renderer, &m_rect);
+    }
 
     if (m_textEnabled && m_tileData.cost != 0 && m_rect.w >= 12 && m_rect.h >= 12)
     {

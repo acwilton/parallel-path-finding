@@ -101,7 +101,12 @@ void WorldViewport::handleEvent (SDL_Event& e)
             if ((SDL_GetModState () & KMOD_CTRL))
             {
                 moveSpeed = 10;
-                scaleSpeed = 3;
+                scaleSpeed = 2;
+            }
+            if ((SDL_GetModState () & KMOD_ALT))
+            {
+            	moveSpeed = 30;
+            	scaleSpeed = 5;
             }
             switch (e.key.keysym.sym)
             {

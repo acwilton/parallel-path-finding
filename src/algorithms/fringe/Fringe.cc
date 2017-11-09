@@ -9,7 +9,7 @@
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
-#include <forward_list>
+#include <list>
 #include <vector>
 #include <cmath>
 #include <chrono>
@@ -82,11 +82,12 @@ int main (int args, char* argv[])
         return  (x < endX ? endX - x : x - endX) +
                 (y < endY ? endY - y : y - endY);
     };
-    uint threshold = h (startX, startY);
 
-    std::forward_list<PathTile> now, later;
-    now.emplace_front (world (startX, startY), Point{startX, startY}, h (startX, startY));
+    std::list<PathTile> now, later;
+    now.emplace_front (world (startX, startY), Point{startX, startY},
+    		Point {startX, startY}, 0, h (startX, startY));
 
+    uint threshold = now.front().getCombinedHeuristic();
     std::unordered_map <uint, PathTile> closed;
 
     bool found = false;
@@ -105,6 +106,7 @@ int main (int args, char* argv[])
             if (current.getCombinedHeuristic () > threshold)
             {
                 min = std::min(current.getCombinedHeuristic (), min);
+                later.push_back(current);
                 continue;
             }
 
@@ -127,14 +129,14 @@ int main (int args, char* argv[])
                     auto seenTile = seen.find(worldTile.id);
                     if (seenTile == seen.end ())
                     {
-                        now.emplace_after (now.end (), worldTile, adjPoint, current.xy(),
-                                          current.getBestCost (), h (adjPoint.x, adjPoint.y));
+                        now.emplace_back (worldTile, adjPoint, current.xy(),
+                                          current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
                     }
                     else if (seenTile->second.getBestCost () > current.getBestCost () + seenTile->second.getTile ().cost)
                     {
                         seenTile->second.setBestCost (current.getBestCost() + seenTile->second.getTile().cost);
                         seenTile->second.setBestTile (current.xy());
-                        now.insert_after (now.end (), seenTile->second);
+                        now.push_back(seenTile->second);
                     }
                 }
             }
@@ -149,14 +151,14 @@ int main (int args, char* argv[])
                     auto seenTile = seen.find(worldTile.id);
                     if (seenTile == seen.end ())
                     {
-                        now.emplace_after (now.end (), worldTile, adjPoint, current.xy(),
-                                          current.getBestCost (), h (adjPoint.x, adjPoint.y));
+                        now.emplace_back (worldTile, adjPoint, current.xy(),
+                                          current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
                     }
                     else if (seenTile->second.getBestCost () > current.getBestCost () + seenTile->second.getTile ().cost)
                     {
                         seenTile->second.setBestCost (current.getBestCost() + seenTile->second.getTile().cost);
                         seenTile->second.setBestTile (current.xy());
-                        now.insert_after (now.end (), seenTile->second);
+                        now.push_back(seenTile->second);
                     }
                 }
             }
@@ -171,14 +173,14 @@ int main (int args, char* argv[])
                     auto seenTile = seen.find(worldTile.id);
                     if (seenTile == seen.end ())
                     {
-                        now.emplace_after (now.end (), worldTile, adjPoint, current.xy(),
-                                          current.getBestCost (), h (adjPoint.x, adjPoint.y));
+                        now.emplace_back (worldTile, adjPoint, current.xy(),
+                                          current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
                     }
                     else if (seenTile->second.getBestCost () > current.getBestCost () + seenTile->second.getTile ().cost)
                     {
                         seenTile->second.setBestCost (current.getBestCost() + seenTile->second.getTile().cost);
                         seenTile->second.setBestTile (current.xy());
-                        now.insert_after (now.end (), seenTile->second);
+                        now.push_back(seenTile->second);
                     }
                 }
             }
@@ -192,19 +194,20 @@ int main (int args, char* argv[])
                     auto seenTile = seen.find(worldTile.id);
                     if (seenTile == seen.end ())
                     {
-                        now.emplace_after (now.end (), worldTile, adjPoint, current.xy(),
-                                          current.getBestCost (), h (adjPoint.x, adjPoint.y));
+                        now.emplace_back (worldTile, adjPoint, current.xy(),
+                                          current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
                     }
                     else if (seenTile->second.getBestCost () > current.getBestCost () + seenTile->second.getTile ().cost)
                     {
                         seenTile->second.setBestCost (current.getBestCost() + seenTile->second.getTile().cost);
                         seenTile->second.setBestTile (current.xy());
-                        now.insert_after (now.end (), seenTile->second);
+                        now.push_back(seenTile->second);
                     }
                 }
             }
         }
-        now.splice_after(now.end(), later);
+        threshold = min;
+        now.splice(now.end(), std::move (later));
         closed.insert (seen.begin (), seen.end ());
     }
 

@@ -127,9 +127,9 @@ int main (int args, char* argv[])
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
-                        seen[current.getTile ().id] = current;
                         now.emplace_front (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
+                        seen[worldTile.id] = now.front();
                     }
                     else
                     {
@@ -141,8 +141,8 @@ int main (int args, char* argv[])
                             seenTile.setBestTile (current.xy());
                             if (seenTile.getCombinedHeuristic () > threshold)
                             {
-                                min = std::min(current.getCombinedHeuristic (), min);
-                                later.push_back(current);
+                                min = std::min(seenTile.getCombinedHeuristic (), min);
+                                later.push_back(seenTile);
                             }
                             else
                             {
@@ -162,9 +162,9 @@ int main (int args, char* argv[])
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
-                        seen[current.getTile ().id] = current;
                         now.emplace_front (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
+                        seen[worldTile.id] = now.front();
                     }
                     else
                     {
@@ -176,8 +176,8 @@ int main (int args, char* argv[])
                             seenTile.setBestTile (current.xy());
                             if (seenTile.getCombinedHeuristic () > threshold)
                             {
-                                min = std::min(current.getCombinedHeuristic (), min);
-                                later.push_back(current);
+                                min = std::min(seenTile.getCombinedHeuristic (), min);
+                                later.push_back(seenTile);
                             }
                             else
                             {
@@ -197,9 +197,9 @@ int main (int args, char* argv[])
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
-                        seen[current.getTile ().id] = current;
                         now.emplace_front (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
+                        seen[worldTile.id] = now.front();
                     }
                     else
                     {
@@ -211,8 +211,8 @@ int main (int args, char* argv[])
                             seenTile.setBestTile (current.xy());
                             if (seenTile.getCombinedHeuristic () > threshold)
                             {
-                                min = std::min(current.getCombinedHeuristic (), min);
-                                later.push_back(current);
+                                min = std::min(seenTile.getCombinedHeuristic (), min);
+                                later.push_back(seenTile);
                             }
                             else
                             {
@@ -231,9 +231,9 @@ int main (int args, char* argv[])
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
-                        seen[current.getTile ().id] = current;
                         now.emplace_front (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
+                        seen[worldTile.id] = now.front();
                     }
                     else
                     {
@@ -245,8 +245,8 @@ int main (int args, char* argv[])
                             seenTile.setBestTile (current.xy());
                             if (seenTile.getCombinedHeuristic () > threshold)
                             {
-                                min = std::min(current.getCombinedHeuristic (), min);
-                                later.push_back(current);
+                                min = std::min(seenTile.getCombinedHeuristic (), min);
+                                later.push_back(seenTile);
                             }
                             else
                             {

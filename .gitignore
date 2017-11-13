@@ -27,5 +27,8 @@ gui.log
 /parBidir
 /fringe
 
+# Saved results folder for important results we don't want to lose
+saved_results
+
 # makefile dependency file
 makefile.deps

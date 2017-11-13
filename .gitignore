@@ -26,6 +26,7 @@ gui.log
 /bidir
 /parBidir
 /fringe
+/parFringe
 
 # Saved results folder for important results we don't want to lose
 saved_results

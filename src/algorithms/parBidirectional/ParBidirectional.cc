@@ -1,7 +1,7 @@
 /**
- * File        : AStar.cc
- * Description : Implementation of A* algorithm using a specified "world"
- *               from the worlds folder.
+ * File        : ParBidirectional.cc
+ * Description : Implementation of the parallel bidirectional A* algorithm
+ *               using a specified "world" from the worlds folder.
  */
 
 #include <iostream>

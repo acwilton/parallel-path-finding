@@ -1,6 +1,6 @@
 /**
- * File        : AStar.cc
- * Description : Implementation of A* algorithm using a specified "world"
+ * File        : Fringe.cc
+ * Description : Implementation of the fringe algorithm using a specified "world"
  *               from the worlds folder.
  */
 
@@ -27,12 +27,6 @@ const std::string WORLD_DIR = "worlds";
 const std::string WORLD_EXT = ".world";
 
 const std::string ALG_NAME = "fringe";
-/*
-void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<uint>& tileIdsFound,
-             std::unordered_map<uint, PathTile>& expandedTiles,
-             pathFind::PathTile& tile, const pathFind::World& world,
-             std::mutex& m, bool& finished, bool& iFound);
-*/
 
 int main (int args, char* argv[])
 {

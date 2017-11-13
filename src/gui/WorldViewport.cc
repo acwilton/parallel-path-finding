@@ -553,7 +553,7 @@ uint WorldViewport::getCameraOppY () const
 bool WorldViewport::isPointInCameraView (const Point& p) const
 {
     return (p.x >= m_cameraX && p.y >= m_cameraY &&
-            p.x <= getCameraOppX () && p.y <= getCameraOppY ());
+            p.x < getCameraOppX () && p.y < getCameraOppY ());
 }
 
 void WorldViewport::resetEndPoints()

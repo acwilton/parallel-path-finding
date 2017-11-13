@@ -405,13 +405,15 @@ void WorldViewport::setTileScale (int scale)
 {
     m_tileScale = scale;
 
-    if (getCameraOppY () > m_world.getHeight ())
+    size_t absHeight = static_cast<size_t> (m_rect.h) / m_tileScale;
+    if (getCameraY () + absHeight > m_world.getHeight ())
     {
-        setCameraY (m_world.getHeight () - getCameraHeight ());
+		m_cameraY = absHeight > m_world.getHeight () ? 0 : m_world.getWidth () - absHeight;
     }
-    if (getCameraOppX () > m_world.getWidth ())
+    size_t absWidth = static_cast<size_t> (m_rect.w) / m_tileScale;
+    if (getCameraX() + absWidth > m_world.getWidth ())
     {
-        setCameraX (m_world.getWidth () - getCameraWidth ());
+        m_cameraX = absWidth > m_world.getWidth () ? 0 : m_world.getWidth () - absWidth;
     }
 
     updateGraphicTilesScaleAndPos ();

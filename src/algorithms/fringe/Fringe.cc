@@ -222,6 +222,7 @@ int main (int args, char* argv[])
                     }
                 }
             }
+
             adjPoint = {current.xy ().x, current.xy ().y - 1}; // north
             if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
             {

@@ -88,14 +88,14 @@ int main (int args, char* argv[])
     		Point {startX, startY}, 0, h (startX, startY));
 
     uint threshold = now.front().getCombinedHeuristic();
-    std::unordered_map <uint, PathTile> closed;
+    std::unordered_map <uint, PathTile> seen;
+    seen[now.front().getTile().id] = now.front ();
 
     bool found = false;
     PathTile endTile;
 
     while (!found)
     {
-        std::unordered_map<uint, PathTile> seen;
         uint min = PathTile::INF;
 
         while (!now.empty ())
@@ -117,26 +117,38 @@ int main (int args, char* argv[])
                 break;
             }
 
-            seen[current.getTile ().id] = current;
 
             Point adjPoint {current.xy ().x + 1, current.xy ().y}; // east
             if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
             {
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                if (worldTile.cost != 0 &&
-                    closed.find (worldTile.id) == closed.end ())
+                if (worldTile.cost != 0)
                 {
-                    auto seenTile = seen.find(worldTile.id);
-                    if (seenTile == seen.end ())
+                    auto seenTileIter = seen.find(worldTile.id);
+                    if (seenTileIter == seen.end ())
                     {
-                        now.emplace_back (worldTile, adjPoint, current.xy(),
+                        seen[current.getTile ().id] = current;
+                        now.emplace_front (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
                     }
-                    else if (seenTile->second.getBestCost () > current.getBestCost () + seenTile->second.getTile ().cost)
+                    else
                     {
-                        seenTile->second.setBestCost (current.getBestCost() + seenTile->second.getTile().cost);
-                        seenTile->second.setBestTile (current.xy());
-                        now.push_back(seenTile->second);
+                        PathTile& seenTile = seenTileIter->second;
+                        uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
+                        if (seenTile.getBestCost () > costToTile)
+                        {
+                            seenTile.setBestCost (costToTile);
+                            seenTile.setBestTile (current.xy());
+                            if (seenTile.getCombinedHeuristic () > threshold)
+                            {
+                                min = std::min(current.getCombinedHeuristic (), min);
+                                later.push_back(current);
+                            }
+                            else
+                            {
+                                now.push_front(seenTile);
+                            }
+                        }
                     }
                 }
             }
@@ -145,20 +157,33 @@ int main (int args, char* argv[])
             if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
             {
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                if (worldTile.cost != 0 &&
-                    closed.find (worldTile.id) == closed.end ())
+                if (worldTile.cost != 0)
                 {
-                    auto seenTile = seen.find(worldTile.id);
-                    if (seenTile == seen.end ())
+                    auto seenTileIter = seen.find(worldTile.id);
+                    if (seenTileIter == seen.end ())
                     {
-                        now.emplace_back (worldTile, adjPoint, current.xy(),
+                        seen[current.getTile ().id] = current;
+                        now.emplace_front (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
                     }
-                    else if (seenTile->second.getBestCost () > current.getBestCost () + seenTile->second.getTile ().cost)
+                    else
                     {
-                        seenTile->second.setBestCost (current.getBestCost() + seenTile->second.getTile().cost);
-                        seenTile->second.setBestTile (current.xy());
-                        now.push_back(seenTile->second);
+                        PathTile& seenTile = seenTileIter->second;
+                        uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
+                        if (seenTile.getBestCost () > costToTile)
+                        {
+                            seenTile.setBestCost (costToTile);
+                            seenTile.setBestTile (current.xy());
+                            if (seenTile.getCombinedHeuristic () > threshold)
+                            {
+                                min = std::min(current.getCombinedHeuristic (), min);
+                                later.push_back(current);
+                            }
+                            else
+                            {
+                                now.push_front(seenTile);
+                            }
+                        }
                     }
                 }
             }
@@ -167,20 +192,33 @@ int main (int args, char* argv[])
             if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
             {
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                if (worldTile.cost != 0 &&
-                    closed.find (worldTile.id) == closed.end ())
+                if (worldTile.cost != 0)
                 {
-                    auto seenTile = seen.find(worldTile.id);
-                    if (seenTile == seen.end ())
+                    auto seenTileIter = seen.find(worldTile.id);
+                    if (seenTileIter == seen.end ())
                     {
-                        now.emplace_back (worldTile, adjPoint, current.xy(),
+                        seen[current.getTile ().id] = current;
+                        now.emplace_front (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
                     }
-                    else if (seenTile->second.getBestCost () > current.getBestCost () + seenTile->second.getTile ().cost)
+                    else
                     {
-                        seenTile->second.setBestCost (current.getBestCost() + seenTile->second.getTile().cost);
-                        seenTile->second.setBestTile (current.xy());
-                        now.push_back(seenTile->second);
+                        PathTile& seenTile = seenTileIter->second;
+                        uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
+                        if (seenTile.getBestCost () > costToTile)
+                        {
+                            seenTile.setBestCost (costToTile);
+                            seenTile.setBestTile (current.xy());
+                            if (seenTile.getCombinedHeuristic () > threshold)
+                            {
+                                min = std::min(current.getCombinedHeuristic (), min);
+                                later.push_back(current);
+                            }
+                            else
+                            {
+                                now.push_front(seenTile);
+                            }
+                        }
                     }
                 }
             }
@@ -188,27 +226,39 @@ int main (int args, char* argv[])
             if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
             {
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                if (worldTile.cost != 0 &&
-                    closed.find (worldTile.id) == closed.end ())
+                if (worldTile.cost != 0)
                 {
-                    auto seenTile = seen.find(worldTile.id);
-                    if (seenTile == seen.end ())
+                    auto seenTileIter = seen.find(worldTile.id);
+                    if (seenTileIter == seen.end ())
                     {
-                        now.emplace_back (worldTile, adjPoint, current.xy(),
+                        seen[current.getTile ().id] = current;
+                        now.emplace_front (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
                     }
-                    else if (seenTile->second.getBestCost () > current.getBestCost () + seenTile->second.getTile ().cost)
+                    else
                     {
-                        seenTile->second.setBestCost (current.getBestCost() + seenTile->second.getTile().cost);
-                        seenTile->second.setBestTile (current.xy());
-                        now.push_back(seenTile->second);
+                        PathTile& seenTile = seenTileIter->second;
+                        uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
+                        if (seenTile.getBestCost () > costToTile)
+                        {
+                            seenTile.setBestCost (costToTile);
+                            seenTile.setBestTile (current.xy());
+                            if (seenTile.getCombinedHeuristic () > threshold)
+                            {
+                                min = std::min(current.getCombinedHeuristic (), min);
+                                later.push_back(current);
+                            }
+                            else
+                            {
+                                now.push_front(seenTile);
+                            }
+                        }
                     }
                 }
             }
         }
         threshold = min;
         now.splice(now.end(), std::move (later));
-        closed.insert (seen.begin (), seen.end ());
     }
 
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -219,7 +269,7 @@ int main (int args, char* argv[])
     while (endTile.xy ().x != startX || endTile.xy ().y != startY)
     {
         finalPath.emplace_back(endTile.xy ());
-        endTile = closed.at((endTile.bestTile ().y * world.getWidth()) + endTile.bestTile ().x);
+        endTile = seen.at((endTile.bestTile ().y * world.getWidth()) + endTile.bestTile ().x);
     }
     finalPath.emplace_back(endTile.xy ());
 

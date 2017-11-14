@@ -120,32 +120,30 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
     seen[now.back().getTile().id] = now.back ();
 
     bool found = false;
-    PathTile endTile;
 
     while (!found)
     {
         mins[id] = PathTile::INF;
 
-        std::vector<PathTile> myNow (now.begin(), now.end()); // Change obviously
+        std::vector<PathTile> localNow (now.begin(), now.end()); // Change obviously
 
-        while (!now.empty ())
+        while (!localNow.empty ())
         {
-            PathTile current = now.front();
-            now.pop_front();
+            PathTile current = localNow.back();
+            localNow.pop_back();
 
             if (current.getCombinedHeuristic () > threshold)
             {
                 mins[id] = std::min(current.getCombinedHeuristic (), mins[id]);
-                later.push_back(current);
+                later[id].push_back(current);
                 continue;
             }
 
             if (current.xy().x == endX && current.xy().y == endY)
             {
-                m.lock()
+                m.lock();
                 finished = true;
                 m.unlock();
-                endTile = current;
                 break;
             }
 
@@ -159,9 +157,9 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
-                        now.emplace_front (worldTile, adjPoint, current.xy(),
+                    	localNow.emplace_back (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        seen[worldTile.id] = now.front();
+                        seen[worldTile.id] = localNow.back();
                     }
                     else
                     {
@@ -174,11 +172,11 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                             if (seenTile.getCombinedHeuristic () > threshold)
                             {
                                 mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
-                                later.push_back(seenTile);
+                                later[id].push_back(seenTile);
                             }
                             else
                             {
-                                now.push_front(seenTile);
+                            	localNow.push_back(seenTile);
                             }
                         }
                     }
@@ -194,9 +192,9 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
-                        now.emplace_front (worldTile, adjPoint, current.xy(),
+                    	localNow.emplace_back (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        seen[worldTile.id] = now.front();
+                        seen[worldTile.id] = localNow.back();
                     }
                     else
                     {
@@ -209,11 +207,11 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                             if (seenTile.getCombinedHeuristic () > threshold)
                             {
                                 mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
-                                later.push_back(seenTile);
+                                later[id].push_back(seenTile);
                             }
                             else
                             {
-                                now.push_front(seenTile);
+                            	localNow.push_back(seenTile);
                             }
                         }
                     }
@@ -229,9 +227,9 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
-                        now.emplace_front (worldTile, adjPoint, current.xy(),
+                    	localNow.emplace_back (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        seen[worldTile.id] = now.front();
+                        seen[worldTile.id] = localNow.back();
                     }
                     else
                     {
@@ -244,11 +242,11 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                             if (seenTile.getCombinedHeuristic () > threshold)
                             {
                                 mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
-                                later.push_back(seenTile);
+                                later[id].push_back(seenTile);
                             }
                             else
                             {
-                                now.push_front(seenTile);
+                            	localNow.push_back(seenTile);
                             }
                         }
                     }
@@ -264,9 +262,9 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
-                        now.emplace_front (worldTile, adjPoint, current.xy(),
+                    	localNow.emplace_back (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        seen[worldTile.id] = now.front();
+                        seen[worldTile.id] = localNow.back();
                     }
                     else
                     {
@@ -279,11 +277,11 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                             if (seenTile.getCombinedHeuristic () > threshold)
                             {
                                 mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
-                                later.push_back(seenTile);
+                                later[id].push_back(seenTile);
                             }
                             else
                             {
-                                now.push_front(seenTile);
+                            	localNow.push_back(seenTile);
                             }
                         }
                     }
@@ -294,14 +292,20 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
         b.wait();
         if (id == 0)
         {
-            // Merge later lists into now lists
+        	// Merge the later lists into the now list
+            now.clear ();
+            for (uint i = 0; i < numThreads; ++i)
+            {
+            	std::move (later[i].begin (), later[i].end (), std::back_inserter (now));
+            }
         }
         if (id == 1)
         {
-            // Merge seen tiles into closed tiles
+            // Merge all seen tiles into closed tiles
         }
         if (id == 2)
         {
+        	// Find the minimum of the minimums
             threshold = mins[0];
             for (uint i = 1; i < numThreads; ++i)
             {

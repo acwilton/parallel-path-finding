@@ -106,7 +106,8 @@ int main (int args, char* argv[])
 
 void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint endY,
              std::vector<PathTile>& now, std::vector<std::vector<PathTile>>& later,
-             std::vector<std::unordered_map<uint, PathTile>>& closedTiles,
+             std::unordered_map<uint, PathTile>& closedTiles,
+             std::vector<std::unordered_map<uint, PathTile>>& seen,
              std::vector<uint>& mins, uint threshold, const pathFind::World& world, std::mutex& m,
              boost::barrier& b, bool& finished)
 {
@@ -116,8 +117,7 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                 (y < endY ? endY - y : y - endY);
     };
 
-    std::unordered_map <uint, PathTile> seen;
-    seen[now.back().getTile().id] = now.back ();
+    //seen[id][now.back().getTile().id] = now.back ();
 
     bool found = false;
 
@@ -157,8 +157,8 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
-                    	localNow.emplace_back (worldTile, adjPoint, current.xy(),
-                                          current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
+                        localNow.emplace_back (worldTile, adjPoint, current.xy(),
+                                  current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
                         seen[worldTile.id] = localNow.back();
                     }
                     else
@@ -192,8 +192,8 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
-                    	localNow.emplace_back (worldTile, adjPoint, current.xy(),
-                                          current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
+                        localNow.emplace_back (worldTile, adjPoint, current.xy(),
+                                current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
                         seen[worldTile.id] = localNow.back();
                     }
                     else
@@ -227,8 +227,8 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
-                    	localNow.emplace_back (worldTile, adjPoint, current.xy(),
-                                          current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
+                        localNow.emplace_back (worldTile, adjPoint, current.xy(),
+                                current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
                         seen[worldTile.id] = localNow.back();
                     }
                     else
@@ -262,8 +262,8 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
-                    	localNow.emplace_back (worldTile, adjPoint, current.xy(),
-                                          current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
+                        localNow.emplace_back (worldTile, adjPoint, current.xy(),
+                                current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
                         seen[worldTile.id] = localNow.back();
                     }
                     else
@@ -296,7 +296,7 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
             now.clear ();
             for (uint i = 0; i < numThreads; ++i)
             {
-            	std::move (later[i].begin (), later[i].end (), std::back_inserter (now));
+                std::move (later[i].begin (), later[i].end (), std::back_inserter (now));
             }
         }
         if (id == 1)

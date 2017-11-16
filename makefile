@@ -73,9 +73,9 @@ fringe_OBJS           = $(fringe_SRCS:$(SRCFOLDER)/%.$(SRCSUFFIX)=$(OBJFOLDER)/%
 TARGETS              += parFringe
 parFringe_SRCS        = $(COMMON_SRCS) \
                         $(COMMON_ALG_SRCS) \
-                        src/algorithms/parFringe/parFringe.cc
+                        src/algorithms/parFringe/ParFringe.cc
 parFringe_OBJS        = $(parFringe_SRCS:$(SRCFOLDER)/%.$(SRCSUFFIX)=$(OBJFOLDER)/%.o)
-parFringe_LIBS        = -lpthread -lboost -lboost_thread
+parFringe_LIBS        = -ltbb -lpthread -lboost_system -lboost_thread
 
 OBJS                  = $(sort $(foreach target,$(TARGETS),$($(target)_OBJS)))
 DEPS                  = $(OBJS:.o=.d)

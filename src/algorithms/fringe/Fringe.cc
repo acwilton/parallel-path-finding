@@ -121,6 +121,7 @@ int main (int args, char* argv[])
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
+                    	// TODO: Check if will exceed threshold here to emplace into later instead?
                         now.emplace_front (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
                         seen[worldTile.id] = now.front();

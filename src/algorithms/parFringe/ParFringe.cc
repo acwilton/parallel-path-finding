@@ -19,6 +19,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/thread/barrier.hpp>
 
+#include "tbb/concurrent_unordered_map.h"
+
 #include "algorithms/tools/PathTile.h"
 #include "common/Results.h"
 
@@ -29,10 +31,12 @@ const std::string WORLD_EXT = ".world";
 
 const std::string ALG_NAME = "parFringe";
 
-void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<uint>& tileIdsFound,
-             std::unordered_map<uint, PathTile>& expandedTiles,
-             pathFind::PathTile& tile, const pathFind::World& world,
-             std::mutex& m, bool& finished, bool& iFound);
+void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint endY,
+             std::vector<PathTile>& now, std::vector<std::vector<PathTile>>& later,
+             tbb::concurrent_unordered_map<uint, PathTile>& closedTiles,
+             std::vector<std::unordered_map<uint, PathTile>>& seen,
+             std::vector<uint>& mins, uint threshold, const pathFind::World& world, std::mutex& m,
+             boost::barrier& b, bool& finished);
 
 int main (int args, char* argv[])
 {
@@ -77,16 +81,39 @@ int main (int args, char* argv[])
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
+    const uint numThreads = 8;
+
     std::vector<PathTile> now;
-    std::function<uint (uint, uint)> h = [endX, endY] (uint x, uint y)
-    {
-        return  (x < endX ? endX - x : x - endX) +
-                (y < endY ? endY - y : y - endY);
-    };
+    uint startHeuristic = (startX < endX ? endX - startX : startX - endX) +
+            			  (startY < endY ? endY - startY : startY - endY);
     now.emplace_back (world (startX, startY), Point{startX, startY},
-                        Point {startX, startY}, 0, h (startX, startY));
+                        Point {startX, startY}, 0, startHeuristic);
+
+    std::vector<std::vector<PathTile>> later (numThreads);
+    std::vector<std::unordered_map<uint, PathTile>> seen (numThreads);
+    std::vector<uint> mins (numThreads);
+    tbb::concurrent_unordered_map<uint, PathTile> closedTiles;
+
+    boost::barrier syncPoint (numThreads);
+    std::mutex finishedLock;
+    bool finished = false;
+
+    std::vector<std::thread> threads(numThreads);
+    for (uint i = 0; i < numThreads; ++i)
+    {
+    	threads[i] = std::thread (search, i, numThreads, startX, startY, endX, endY, std::ref(now),
+    			std::ref(later), std::ref(closedTiles), std::ref (seen), std::ref (mins), startHeuristic,
+				std::cref(world), finished, std::ref (finishedLock), std::ref(syncPoint));
+    }
+
+    for (auto& t : threads)
+    {
+    	t.join ();
+    }
 
     auto t2 = std::chrono::high_resolution_clock::now();
+
+    PathTile endTile = closedTiles.at(world (endX, endY).id);
 
     // Parse reverse results
     uint totalCost = endTile.getBestCost() - endTile.getTile().cost;
@@ -94,7 +121,7 @@ int main (int args, char* argv[])
     while (endTile.xy ().x != startX || endTile.xy ().y != startY)
     {
         finalPath.emplace_back(endTile.xy ());
-        endTile = seen.at((endTile.bestTile ().y * world.getWidth()) + endTile.bestTile ().x);
+        endTile = closedTiles.at((endTile.bestTile ().y * world.getWidth()) + endTile.bestTile ().x);
     }
     finalPath.emplace_back(endTile.xy ());
 
@@ -106,18 +133,17 @@ int main (int args, char* argv[])
 
 void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint endY,
              std::vector<PathTile>& now, std::vector<std::vector<PathTile>>& later,
-             std::unordered_map<uint, PathTile>& closedTiles,
+             tbb::concurrent_unordered_map<uint, PathTile>& closedTiles,
              std::vector<std::unordered_map<uint, PathTile>>& seen,
-             std::vector<uint>& mins, uint threshold, const pathFind::World& world, std::mutex& m,
-             boost::barrier& b, bool& finished)
+             std::vector<uint>& mins, uint threshold, const pathFind::World& world,
+			 bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint)
 {
+	// Heuristic function
     std::function<uint (uint, uint)> h = [endX, endY] (uint x, uint y)
     {
         return  (x < endX ? endX - x : x - endX) +
                 (y < endY ? endY - y : y - endY);
     };
-
-    //seen[id][now.back().getTile().id] = now.back ();
 
     bool found = false;
 
@@ -125,12 +151,22 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
     {
         mins[id] = PathTile::INF;
 
-        std::vector<PathTile> localNow (now.begin(), now.end()); // Change obviously
+        uint localN = ceil (static_cast<float> (now.size()) /numThreads);
+        uint start = id * localN;
+        uint end = std::min ((id + 1) * localN, static_cast<uint>(now.size()));
+
+        std::vector<PathTile> localNow (now.begin() + start, now.begin() + end);
 
         while (!localNow.empty ())
         {
             PathTile current = localNow.back();
             localNow.pop_back();
+
+            // We have already seen and proccessed this tile. No need to continue.
+            if (seen[id].find(current.getTile().id) != seen[id].end())
+            {
+            	continue;
+            }
 
             if (current.getCombinedHeuristic () > threshold)
             {
@@ -139,11 +175,14 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                 continue;
             }
 
+            // We have now know the best cost to this tile
+            seen[current.getTile ().id] = current;
+
             if (current.xy().x == endX && current.xy().y == endY)
             {
-                m.lock();
+            	finishedLock.lock();
                 finished = true;
-                m.unlock();
+                finishedLock.unlock();
                 break;
             }
 
@@ -152,14 +191,13 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
             if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
             {
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                if (worldTile.cost != 0)
+                if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
                 {
-                    auto seenTileIter = seen.find(worldTile.id);
+                    auto seenTileIter = seen[id].find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
                         localNow.emplace_back (worldTile, adjPoint, current.xy(),
                                   current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        seen[worldTile.id] = localNow.back();
                     }
                     else
                     {
@@ -187,14 +225,13 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
             if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
             {
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                if (worldTile.cost != 0)
+                if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
                 {
-                    auto seenTileIter = seen.find(worldTile.id);
+                    auto seenTileIter = seen[id].find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
                         localNow.emplace_back (worldTile, adjPoint, current.xy(),
                                 current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        seen[worldTile.id] = localNow.back();
                     }
                     else
                     {
@@ -222,14 +259,13 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
             if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
             {
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                if (worldTile.cost != 0)
+                if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
                 {
-                    auto seenTileIter = seen.find(worldTile.id);
+                    auto seenTileIter = seen[id].find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
                         localNow.emplace_back (worldTile, adjPoint, current.xy(),
                                 current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        seen[worldTile.id] = localNow.back();
                     }
                     else
                     {
@@ -257,14 +293,13 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
             if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
             {
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                if (worldTile.cost != 0)
+                if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
                 {
-                    auto seenTileIter = seen.find(worldTile.id);
+                    auto seenTileIter = seen[id].find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
                         localNow.emplace_back (worldTile, adjPoint, current.xy(),
                                 current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        seen[worldTile.id] = localNow.back();
                     }
                     else
                     {
@@ -289,37 +324,46 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
             }
         }
 
-        b.wait();
-        if (id == 0)
+        // Start pushing all of the tiles you have seen into the shared container of closed tiles
+        closedTiles.insert(seen[id].begin(), seen[id].end());
+        /*for (auto i = seen[id].begin(); i != seen[id].end(); ++i)
         {
-        	// Merge the later lists into the now list
-            now.clear ();
-            for (uint i = 0; i < numThreads; ++i)
-            {
-                std::move (later[i].begin (), later[i].end (), std::back_inserter (now));
-            }
-        }
-        if (id == 1)
-        {
-            // Merge all seen tiles into closed tiles
-        }
-        if (id == 2)
-        {
-        	// Find the minimum of the minimums
-            threshold = mins[0];
-            for (uint i = 1; i < numThreads; ++i)
-            {
-                if (mins[i] < threshold)
-                {
-                    threshold = mins[i];
-                }
-            }
-        }
+        	closedTiles[i->first] = i->second;
+        }*/
+
+        syncPoint.wait();
         if (finished)
         {
             found = true;
         }
-        b.wait();
+        else
+        {
+            if (id == 0)
+            {
+            	// Merge the later lists into the now list
+                now.clear ();
+                for (auto& v : later)
+                {
+                	for (auto& i : v)
+                	{
+                		if (closedTiles.find(i.getTile().id) == closedTiles.end())
+                		{
+                			now.emplace_back(std::move(i));
+                		}
+                	}
+                }
+            }
+        	// Find the minimum of the minimums
+			threshold = mins[0];
+			for (uint i = 1; i < numThreads; ++i)
+			{
+				if (mins[i] < threshold)
+				{
+					threshold = mins[i];
+				}
+			}
+        }
+        syncPoint.wait();
     }
 }
 

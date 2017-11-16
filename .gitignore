@@ -29,7 +29,8 @@ gui.log
 /parFringe
 
 # Saved results folder for important results we don't want to lose
-saved_results
+*.perf
+*.res
 
 # makefile dependency file
 makefile.deps

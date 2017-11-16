@@ -353,15 +353,15 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                 	}
                 }
             }
-        	// Find the minimum of the minimums
-			threshold = mins[0];
-			for (uint i = 1; i < numThreads; ++i)
-			{
-				if (mins[i] < threshold)
-				{
-					threshold = mins[i];
-				}
-			}
+            // Find the minimum of the minimums
+            threshold = mins[0];
+            for (uint i = 1; i < numThreads; ++i)
+            {
+                    if (mins[i] < threshold)
+                    {
+                              threshold = mins[i];
+                    }
+            }
         }
         syncPoint.wait();
     }

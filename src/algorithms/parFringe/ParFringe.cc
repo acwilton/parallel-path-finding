@@ -31,12 +31,20 @@ const std::string WORLD_EXT = ".world";
 
 const std::string ALG_NAME = "parFringe";
 
+/*
 void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint endY,
              std::vector<PathTile>& now, std::vector<std::vector<PathTile>>& later,
              tbb::concurrent_unordered_map<uint, PathTile>& closedTiles,
              std::vector<std::unordered_map<uint, PathTile>>& seen,
              std::vector<uint>& mins, uint threshold, const pathFind::World& world,
-			 bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint);
+             bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint);
+*/
+void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint endY,
+             std::vector<PathTile>& now, std::vector<std::vector<PathTile>>& later,
+             tbb::concurrent_unordered_map<uint, PathTile>& closedTiles,
+             std::vector<std::unordered_map<uint, PathTile>>& seen,
+             uint threshold, const pathFind::World& world,
+             bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint);
 
 int main (int args, char* argv[])
 {
@@ -81,7 +89,7 @@ int main (int args, char* argv[])
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    const uint numThreads = 8;
+    const uint numThreads = 4;
 
     std::vector<PathTile> now;
     uint startHeuristic = (startX < endX ? endX - startX : startX - endX) +
@@ -102,8 +110,8 @@ int main (int args, char* argv[])
     for (uint i = 0; i < numThreads; ++i)
     {
     	threads[i] = std::thread (search, i, numThreads, startX, startY, endX, endY, std::ref(now),
-    			std::ref(later), std::ref(closedTiles), std::ref (seen), std::ref (mins), startHeuristic,
-				std::cref(world), std::ref(finished), std::ref (finishedLock), std::ref(syncPoint));
+    			std::ref(later), std::ref(closedTiles), std::ref (seen), startHeuristic,
+    			std::cref(world), std::ref(finished), std::ref (finishedLock), std::ref(syncPoint));
     }
 
     for (auto& t : threads)
@@ -135,8 +143,8 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
              std::vector<PathTile>& now, std::vector<std::vector<PathTile>>& later,
              tbb::concurrent_unordered_map<uint, PathTile>& closedTiles,
              std::vector<std::unordered_map<uint, PathTile>>& seen,
-             std::vector<uint>& mins, uint threshold, const pathFind::World& world,
-			 bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint)
+             uint threshold, const pathFind::World& world,
+             bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint)
 {
 	// Heuristic function
     std::function<uint (uint, uint)> h = [endX, endY] (uint x, uint y)
@@ -145,178 +153,181 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                 (y < endY ? endY - y : y - endY);
     };
 
+    uint maxTileCost = world.getMaxTileCost();
     bool found = false;
 
     while (!found)
     {
-        mins[id] = PathTile::INF;
+        //mins[id] = PathTile::INF;
 
-        uint localN = ceil (static_cast<float> (now.size()) /numThreads);
+        uint localN = ceil (static_cast<float> (now.size()) / numThreads);
         uint start = id * localN;
         uint end = std::min ((id + 1) * localN, static_cast<uint>(now.size()));
 
-        std::vector<PathTile> localNow (now.begin() + start, now.begin() + end);
-
-        while (!localNow.empty ())
+        if (start <= end)
         {
-            PathTile current = localNow.back();
-            localNow.pop_back();
+            std::vector<PathTile> localNow (now.begin() + start, now.begin() + end);
 
-            // We have already seen and proccessed this tile. No need to continue.
-            if (seen[id].find(current.getTile().id) != seen[id].end())
+            while (!localNow.empty ())
             {
-            	continue;
-            }
+                PathTile current = localNow.back();
+                localNow.pop_back();
 
-            if (current.getCombinedHeuristic () > threshold)
-            {
-                mins[id] = std::min(current.getCombinedHeuristic (), mins[id]);
-                later[id].push_back(current);
-                continue;
-            }
-
-            // We have now know the best cost to this tile
-            seen[id][current.getTile ().id] = current;
-
-            if (current.xy().x == endX && current.xy().y == endY)
-            {
-            	finishedLock.lock();
-                finished = true;
-                finishedLock.unlock();
-                break;
-            }
-
-
-            Point adjPoint {current.xy ().x + 1, current.xy ().y}; // east
-            if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
-            {
-                World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
+                // We have already seen and proccessed this tile. No need to continue.
+                if (seen[id].find(current.getTile().id) != seen[id].end() || closedTiles.find (current.getTile().id) != closedTiles.end())
                 {
-                    auto seenTileIter = seen[id].find(worldTile.id);
-                    if (seenTileIter == seen[id].end ())
+                    continue;
+                }
+
+                if (current.getCombinedHeuristic () > threshold)
+                {
+                    //mins[id] = std::min(current.getCombinedHeuristic (), mins[id]);
+                    later[id].push_back(current);
+                    continue;
+                }
+
+                // We have now know the best cost to this tile
+                seen[id][current.getTile ().id] = current;
+
+                if (current.xy().x == endX && current.xy().y == endY)
+                {
+                        finishedLock.lock();
+                    finished = true;
+                    finishedLock.unlock();
+                    break;
+                }
+
+                Point adjPoint {current.xy ().x + 1, current.xy ().y}; // east
+                if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
+                {
+                    World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+                    if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
                     {
-                        localNow.emplace_back (worldTile, adjPoint, current.xy(),
-                                  current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                    }
-                    else
-                    {
-                        PathTile& seenTile = seenTileIter->second;
-                        uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
-                        if (seenTile.getBestCost () > costToTile)
+                        auto seenTileIter = seen[id].find(worldTile.id);
+                        if (seenTileIter == seen[id].end ())
                         {
-                            seenTile.setBestCost (costToTile);
-                            seenTile.setBestTile (current.xy());
-                            if (seenTile.getCombinedHeuristic () > threshold)
+                            localNow.emplace_back (worldTile, adjPoint, current.xy(),
+                                      current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
+                        }
+                        else
+                        {
+                            PathTile& seenTile = seenTileIter->second;
+                            uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
+                            if (seenTile.getBestCost () > costToTile)
                             {
-                                mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
-                                later[id].push_back(seenTile);
-                            }
-                            else
-                            {
-                            	localNow.push_back(seenTile);
+                                seenTile.setBestCost (costToTile);
+                                seenTile.setBestTile (current.xy());
+                                if (seenTile.getCombinedHeuristic () > threshold)
+                                {
+                                   // mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
+                                    later[id].push_back(seenTile);
+                                }
+                                else
+                                {
+                                  localNow.push_back(seenTile);
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            adjPoint = {current.xy ().x, current.xy ().y + 1}; // south
-            if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
-            {
-                World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
+                adjPoint = {current.xy ().x, current.xy ().y + 1}; // south
+                if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
                 {
-                    auto seenTileIter = seen[id].find(worldTile.id);
-                    if (seenTileIter == seen[id].end ())
+                    World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+                    if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
                     {
-                        localNow.emplace_back (worldTile, adjPoint, current.xy(),
-                                current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                    }
-                    else
-                    {
-                        PathTile& seenTile = seenTileIter->second;
-                        uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
-                        if (seenTile.getBestCost () > costToTile)
+                        auto seenTileIter = seen[id].find(worldTile.id);
+                        if (seenTileIter == seen[id].end ())
                         {
-                            seenTile.setBestCost (costToTile);
-                            seenTile.setBestTile (current.xy());
-                            if (seenTile.getCombinedHeuristic () > threshold)
+                            localNow.emplace_back (worldTile, adjPoint, current.xy(),
+                                    current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
+                        }
+                        else
+                        {
+                            PathTile& seenTile = seenTileIter->second;
+                            uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
+                            if (seenTile.getBestCost () > costToTile)
                             {
-                                mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
-                                later[id].push_back(seenTile);
-                            }
-                            else
-                            {
-                            	localNow.push_back(seenTile);
+                                seenTile.setBestCost (costToTile);
+                                seenTile.setBestTile (current.xy());
+                                if (seenTile.getCombinedHeuristic () > threshold)
+                                {
+                                    //mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
+                                    later[id].push_back(seenTile);
+                                }
+                                else
+                                {
+                                  localNow.push_back(seenTile);
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            adjPoint = {current.xy ().x - 1, current.xy ().y}; // west
-            if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
-            {
-                World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
+                adjPoint = {current.xy ().x - 1, current.xy ().y}; // west
+                if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
                 {
-                    auto seenTileIter = seen[id].find(worldTile.id);
-                    if (seenTileIter == seen[id].end ())
+                    World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+                    if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
                     {
-                        localNow.emplace_back (worldTile, adjPoint, current.xy(),
-                                current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                    }
-                    else
-                    {
-                        PathTile& seenTile = seenTileIter->second;
-                        uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
-                        if (seenTile.getBestCost () > costToTile)
+                        auto seenTileIter = seen[id].find(worldTile.id);
+                        if (seenTileIter == seen[id].end ())
                         {
-                            seenTile.setBestCost (costToTile);
-                            seenTile.setBestTile (current.xy());
-                            if (seenTile.getCombinedHeuristic () > threshold)
+                            localNow.emplace_back (worldTile, adjPoint, current.xy(),
+                                    current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
+                        }
+                        else
+                        {
+                            PathTile& seenTile = seenTileIter->second;
+                            uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
+                            if (seenTile.getBestCost () > costToTile)
                             {
-                                mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
-                                later[id].push_back(seenTile);
-                            }
-                            else
-                            {
-                            	localNow.push_back(seenTile);
+                                seenTile.setBestCost (costToTile);
+                                seenTile.setBestTile (current.xy());
+                                if (seenTile.getCombinedHeuristic () > threshold)
+                                {
+                                   // mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
+                                    later[id].push_back(seenTile);
+                                }
+                                else
+                                {
+                                  localNow.push_back(seenTile);
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            adjPoint = {current.xy ().x, current.xy ().y - 1}; // north
-            if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
-            {
-                World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
+                adjPoint = {current.xy ().x, current.xy ().y - 1}; // north
+                if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
                 {
-                    auto seenTileIter = seen[id].find(worldTile.id);
-                    if (seenTileIter == seen[id].end ())
+                    World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+                    if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
                     {
-                        localNow.emplace_back (worldTile, adjPoint, current.xy(),
-                                current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                    }
-                    else
-                    {
-                        PathTile& seenTile = seenTileIter->second;
-                        uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
-                        if (seenTile.getBestCost () > costToTile)
+                        auto seenTileIter = seen[id].find(worldTile.id);
+                        if (seenTileIter == seen[id].end ())
                         {
-                            seenTile.setBestCost (costToTile);
-                            seenTile.setBestTile (current.xy());
-                            if (seenTile.getCombinedHeuristic () > threshold)
+                            localNow.emplace_back (worldTile, adjPoint, current.xy(),
+                                    current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
+                        }
+                        else
+                        {
+                            PathTile& seenTile = seenTileIter->second;
+                            uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
+                            if (seenTile.getBestCost () > costToTile)
                             {
-                                mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
-                                later[id].push_back(seenTile);
-                            }
-                            else
-                            {
-                            	localNow.push_back(seenTile);
+                                seenTile.setBestCost (costToTile);
+                                seenTile.setBestTile (current.xy());
+                                if (seenTile.getCombinedHeuristic () > threshold)
+                                {
+                                    //mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
+                                    later[id].push_back(seenTile);
+                                }
+                                else
+                                {
+                                  localNow.push_back(seenTile);
+                                }
                             }
                         }
                     }
@@ -324,14 +335,19 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
             }
         }
 
+        for (auto& i : seen[id])
+        {
+            closedTiles[i.first] = std::move (i.second);
+        }
+        seen[id].clear();
         // Start pushing all of the tiles you have seen into the shared container of closed tiles
-        closedTiles.insert(seen[id].begin(), seen[id].end());
+
         /*for (auto i = seen[id].begin(); i != seen[id].end(); ++i)
         {
         	closedTiles[i->first] = i->second;
         }*/
-
         syncPoint.wait();
+
         if (finished)
         {
             found = true;
@@ -346,22 +362,19 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                 {
                 	for (auto& i : v)
                 	{
-                		if (closedTiles.find(i.getTile().id) == closedTiles.end())
-                		{
-                			now.emplace_back(std::move(i));
-                		}
+                	    now.emplace_back(std::move(i));
                 	}
                 }
             }
             // Find the minimum of the minimums
-            threshold = mins[0];
-            for (uint i = 1; i < numThreads; ++i)
+            threshold += maxTileCost;//mins[0];
+            /*for (uint i = 1; i < numThreads; ++i)
             {
                     if (mins[i] < threshold)
                     {
                               threshold = mins[i];
                     }
-            }
+            }*/
         }
         syncPoint.wait();
     }

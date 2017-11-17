@@ -26,6 +26,7 @@ const SDL_Color ASTAR_COLOR = {0x82, 0xFF, 0x86, 0xFF};
 const SDL_Color BIDIR_COLOR = {0xCB, 0x6B, 0xFF, 0xFF};
 const SDL_Color PAR_BIDIR_COLOR = {0xFF, 0x75, 0xF1, 0xFF};
 const SDL_Color FRINGE_COLOR = {0x84, 0xB9, 0xFF, 0xFF};
+const SDL_Color PAR_FRINGE_COLOR = {0xFF, 0x4B, 0x3A, 0xFF};
 
 WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
         : Viewport (rect, backgroundColor),
@@ -226,6 +227,16 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 if (!isNull (m_start) && !isNull (m_end))
                 {
                     runAndLoadPathFinding ("fringe");
+                }
+                else
+                {
+                    setResultsEnabled (!m_resultsEnabled);
+                }
+                break;
+            case SDLK_g:
+                if (!isNull (m_start) && !isNull (m_end))
+                {
+                    runAndLoadPathFinding ("parFringe");
                 }
                 else
                 {
@@ -499,6 +510,10 @@ SDL_Color WorldViewport::getAlgorithmColor () const
     else if (m_currentAlgorithm == "fringe")
     {
         return FRINGE_COLOR;
+    }
+    else if (m_currentAlgorithm == "parFringe")
+    {
+        return PAR_FRINGE_COLOR;
     }
 
     return DEFAULT_COLOR;

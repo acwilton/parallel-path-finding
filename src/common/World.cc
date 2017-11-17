@@ -15,19 +15,22 @@ namespace pathFind
 World::World ()
         : m_width (0),
           m_height (0),
-          m_openTiles (0)
+          m_openTiles (0),
+          m_maxTileCost (0)
 {
 }
 
 World::World (size_t width, size_t height)
         : m_width (width),
           m_height (height),
-          m_openTiles (0)
+          m_openTiles (0),
+          m_maxTileCost (0)
 {
 }
 
 void World::generateMap (float percentCarved, uint maxTileCost)
 {
+    m_maxTileCost = maxTileCost;
     if (percentCarved > 1.0f)
     {
         percentCarved = 1.0f;
@@ -110,6 +113,11 @@ size_t World::getHeight () const
 size_t World::getNumOpenTiles() const
 {
     return m_openTiles;
+}
+
+uint World::getMaxTileCost () const
+{
+    return m_maxTileCost;
 }
 
 World::tile_t World::operator() (uint column, uint row) const

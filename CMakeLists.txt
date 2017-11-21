@@ -3,6 +3,16 @@ project(PathFinding LANGUAGES CXX)
 set(CXX_STANDARD 14)
 set(CXX_STANDARD_REQUIRED On)
 
+if(NOT CMAKE_BUILD_TYPE)
+  message(STATUS "Enabled release build")
+  set(CMAKE_BUILD_TYPE Release)
+endif(NOT CMAKE_BUILD_TYPE)
+
+if (CMAKE_COMPILER_IS_GNUCXX)
+  message(STATUS "Enabled aggressive warnings")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wpedantic -pedantic -pedantic-errors -march=native")
+endif(CMAKE_COMPILER_IS_GNUCXX)
+
 # Boost (system + filesystem)
 #########################################
 
@@ -80,7 +90,7 @@ macro(add_custom_executable)
   cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
   add_executable(${arg_NAME} ${arg_SOURCES})
   target_include_directories(${arg_NAME} PUBLIC ${DEFAULT_INCLUDE_DIR} ${arg_INCLUDES})
-  target_link_libraries(${arg_NAME} PUBLIC common ${arg_LIBRARIES})
+  target_link_libraries(${arg_NAME} PRIVATE common PUBLIC ${arg_LIBRARIES})
 endmacro(add_custom_executable)
 
 macro(add_algorithm)
@@ -90,7 +100,7 @@ macro(add_algorithm)
   cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
   add_executable(${arg_NAME} ${arg_SOURCE})
   target_include_directories(${arg_NAME} PUBLIC ${DEFAULT_INCLUDE_DIR} ${arg_INCLUDES})
-  target_link_libraries(${arg_NAME} PUBLIC algorithm ${arg_LIBRARIES})
+  target_link_libraries(${arg_NAME} PRIVATE algorithm PUBLIC ${arg_LIBRARIES})
 endmacro(add_algorithm)
 
 # Executables
@@ -134,3 +144,6 @@ add_algorithm(
   NAME fringe
   SOURCE src/algorithms/fringe/Fringe.cc
   LIBRARIES Threads::Threads)
+
+add_custom_target(CopyResources ALL
+  COMMAND ln -s ${CMAKE_SOURCE_DIR}/resources ${CMAKE_BINARY_DIR}/resources)

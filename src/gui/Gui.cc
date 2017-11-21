@@ -25,7 +25,7 @@ bool sdl_init ();
 const size_t SCREEN_WIDTH = 1280;
 const size_t SCREEN_HEIGHT = 960;
 
-int main (int args, char* argv[])
+int main (int, char**)
 {
     bool quit = !sdl_init ();
     Log::logInfo("SDL started.");
@@ -34,13 +34,13 @@ int main (int args, char* argv[])
 
     std::shared_ptr<gui::Viewport> mainViewport = std::make_shared<gui::Viewport> (
             SDL_Rect { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT },
-            SDL_Color {0xAA, 0x37, 0x4A});
+            SDL_Color {0xAA, 0x37, 0x4A, 0xFF});
     std::shared_ptr<gui::WorldViewport> worldViewport = std::make_shared<gui::WorldViewport> (
             SDL_Rect {0, 0, SCREEN_WIDTH, (SCREEN_HEIGHT * 7) / 8 },
-            SDL_Color {0xBB, 0xCC, 0xCC});
+            SDL_Color {0xBB, 0xCC, 0xCC, 0xFF});
     std::shared_ptr<gui::Viewport> toolbarViewport = std::make_shared<gui::Viewport> (
             SDL_Rect {0, (SCREEN_HEIGHT * 7) / 8, SCREEN_WIDTH, SCREEN_HEIGHT / 8},
-            SDL_Color {0x88, 0xAA, 0x88});
+            SDL_Color {0x88, 0xAA, 0x88, 0xFF});
 
     std::random_device rd;
     std::minstd_rand0 gen (rd ());

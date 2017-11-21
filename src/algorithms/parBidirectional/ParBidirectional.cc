@@ -82,7 +82,7 @@ int main (int args, char* argv[])
     std::unordered_map<uint, PathTile> reverseExpandedTiles;
     std::unordered_set<uint> idsFound;
     std::mutex m;
-    bool finished;
+    bool finished = false;
     bool fFound = false;
     bool rFound = false;
 

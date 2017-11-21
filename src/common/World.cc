@@ -152,7 +152,7 @@ std::vector<World::tile_t>::const_iterator World::end () const
 
 std::ostream& operator<< (std::ostream& stream, const World& world)
 {
-    stream << world.m_width << "\n" << world.m_height << "\n";
+    stream << world.m_width << "\n" << world.m_height << "\n" << world.m_maxTileCost << "\n";
     for (auto& tile : world.m_tiles)
     {
         stream << static_cast<uchar> (tile.cost);
@@ -163,7 +163,7 @@ std::ostream& operator<< (std::ostream& stream, const World& world)
 
 std::istream& operator>> (std::istream& stream, World& world)
 {
-    stream >> world.m_width >> world.m_height;
+    stream >> world.m_width >> world.m_height >> world.m_maxTileCost;
     stream.ignore (1);
     world.m_tiles.resize(world.m_width * world.m_height);
 

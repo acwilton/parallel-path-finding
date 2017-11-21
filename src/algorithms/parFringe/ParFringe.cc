@@ -350,8 +350,8 @@ void search (uint id, uint numThreads, uint endX, uint endY,
 
         for (auto& i : seen[id])
         {
-            closedTiles[i.first] = std::move (i.second);
-            std::cout << "closedTiles: " << closedTiles.at (i.first).xy().x << " " << closedTiles.at (i.first).xy().x << "\n";
+            closedTiles[i.first] = i.second;
+            std::cout << "closedTiles: " << closedTiles.at (i.first).xy().x << " " << closedTiles.at (i.first).xy().y << "\n";
         }
         seen[id].clear();
         // Start pushing all of the tiles you have seen into the shared container of closed tiles
@@ -377,9 +377,11 @@ void search (uint id, uint numThreads, uint endX, uint endY,
                 {
                 	for (auto& i : v)
                 	{
-                	    now.emplace_back(std::move(i));
+                	    now.emplace_back(i);
                 	}
+                	later[id].clear ();
                 }
+                std::cout << "later.size (): " << later[id].size() << "\n";
             }
             // Find the minimum of the minimums
             threshold += maxTileCost;//mins[0];

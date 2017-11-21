@@ -26,7 +26,7 @@
 
 using namespace pathFind;
 
-const std::string WORLD_DIR = "worlds";
+const std::string WORLD_DIR = "../worlds";
 const std::string WORLD_EXT = ".world";
 
 const std::string ALG_NAME = "parFringe";
@@ -39,7 +39,7 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
              std::vector<uint>& mins, uint threshold, const pathFind::World& world,
              bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint);
 */
-void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint endY,
+void search (uint id, uint numThreads, uint endX, uint endY,
              std::vector<PathTile>& now, std::vector<std::vector<PathTile>>& later,
              tbb::concurrent_unordered_map<uint, PathTile>& closedTiles,
              std::vector<std::unordered_map<uint, PathTile>>& seen,
@@ -89,7 +89,7 @@ int main (int args, char* argv[])
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    const uint numThreads = 4;
+    const uint numThreads = 1;
 
     std::vector<PathTile> now;
     uint startHeuristic = (startX < endX ? endX - startX : startX - endX) +
@@ -109,7 +109,7 @@ int main (int args, char* argv[])
     std::vector<std::thread> threads(numThreads);
     for (uint i = 0; i < numThreads; ++i)
     {
-    	threads[i] = std::thread (search, i, numThreads, startX, startY, endX, endY, std::ref(now),
+    	threads[i] = std::thread (search, i, numThreads, endX, endY, std::ref(now),
     			std::ref(later), std::ref(closedTiles), std::ref (seen), startHeuristic,
     			std::cref(world), std::ref(finished), std::ref (finishedLock), std::ref(syncPoint));
     }
@@ -139,7 +139,7 @@ int main (int args, char* argv[])
     return EXIT_SUCCESS;
 }
 
-void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint endY,
+void search (uint id, uint numThreads, uint endX, uint endY,
              std::vector<PathTile>& now, std::vector<std::vector<PathTile>>& later,
              tbb::concurrent_unordered_map<uint, PathTile>& closedTiles,
              std::vector<std::unordered_map<uint, PathTile>>& seen,
@@ -159,6 +159,7 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
     while (!found)
     {
         //mins[id] = PathTile::INF;
+        std::cout << "1\n";
 
         uint localN = ceil (static_cast<float> (now.size()) / numThreads);
         uint start = id * localN;
@@ -166,12 +167,18 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
 
         if (start <= end)
         {
+            std::cout << "2\n";
             std::vector<PathTile> localNow (now.begin() + start, now.begin() + end);
 
+            std::cout << "start: " << start << " end: " << end << " localN: " << localN << "\n";
+            std::cout << "now.size(): " << now.size() << "\n";
             while (!localNow.empty ())
             {
+                std::cout << "localNow.size(): " << localNow.size() << "\n";
+                std::cout << "3\n";
                 PathTile current = localNow.back();
                 localNow.pop_back();
+                std::cout << "current x: " << current.xy().x << " y: " << current.xy().y << "\n";
 
                 // We have already seen and proccessed this tile. No need to continue.
                 if (seen[id].find(current.getTile().id) != seen[id].end() || closedTiles.find (current.getTile().id) != closedTiles.end())
@@ -179,12 +186,16 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                     continue;
                 }
 
+                std::cout << "4\n";
+                std::cout << "ch: " << current.getCombinedHeuristic () << " thresh: " << threshold << "\n";
                 if (current.getCombinedHeuristic () > threshold)
                 {
                     //mins[id] = std::min(current.getCombinedHeuristic (), mins[id]);
                     later[id].push_back(current);
                     continue;
                 }
+
+                std::cout << "5\n";
 
                 // We have now know the best cost to this tile
                 seen[id][current.getTile ().id] = current;
@@ -196,6 +207,7 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                     finishedLock.unlock();
                     break;
                 }
+                std::cout << "6\n";
 
                 Point adjPoint {current.xy ().x + 1, current.xy ().y}; // east
                 if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
@@ -231,6 +243,7 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                     }
                 }
 
+                std::cout << "7\n";
                 adjPoint = {current.xy ().x, current.xy ().y + 1}; // south
                 if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
                 {
@@ -264,7 +277,7 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                         }
                     }
                 }
-
+                std::cout << "8\n";
                 adjPoint = {current.xy ().x - 1, current.xy ().y}; // west
                 if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
                 {
@@ -298,7 +311,7 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                         }
                     }
                 }
-
+                std::cout << "9\n";
                 adjPoint = {current.xy ().x, current.xy ().y - 1}; // north
                 if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
                 {
@@ -338,6 +351,7 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
         for (auto& i : seen[id])
         {
             closedTiles[i.first] = std::move (i.second);
+            std::cout << "closedTiles: " << closedTiles.at (i.first).xy().x << " " << closedTiles.at (i.first).xy().x << "\n";
         }
         seen[id].clear();
         // Start pushing all of the tiles you have seen into the shared container of closed tiles
@@ -347,13 +361,14 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
         	closedTiles[i->first] = i->second;
         }*/
         syncPoint.wait();
-
+        std::cout << "10\n";
         if (finished)
         {
             found = true;
         }
         else
         {
+            std::cout << "11\n";
             if (id == 0)
             {
             	// Merge the later lists into the now list
@@ -376,6 +391,7 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
                     }
             }*/
         }
+        std::cout << "12\n";
         syncPoint.wait();
     }
 }

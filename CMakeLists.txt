@@ -17,7 +17,7 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 #########################################
 
 find_package(Boost REQUIRED
-  COMPONENTS "system" "filesystem")
+  COMPONENTS "system" "filesystem" "thread")
 
 add_library(boost-system SHARED IMPORTED)
 set_property(
@@ -34,6 +34,14 @@ set_property(
 set_property(
   TARGET boost-filesystem
   PROPERTY IMPORTED_LOCATION ${Boost_FILESYSTEM_LIBRARY})
+  
+add_library(boost-thread SHARED IMPORTED)
+set_property(
+  TARGET boost-thread
+  PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS})
+set_property(
+  TARGET boost-thread
+  PROPERTY IMPORTED_LOCATION ${Boost_THREAD_LIBRARY})
 
 # SDL2 + SDL2_ttf
 #########################################
@@ -63,6 +71,11 @@ set_property(TARGET sdl2-ttf PROPERTY IMPORTED_LOCATION "${SDL2_TTF_LIBRARIES}")
 
 set(THREADS_PREFER_PTHREAD_FLAG On)
 find_package(Threads REQUIRED)
+
+# TBB
+########################################
+
+find_package(TBB REQUIRED)
 
 # Common Sources and Includes
 #########################################
@@ -144,3 +157,14 @@ add_algorithm(
   NAME fringe
   SOURCE src/algorithms/fringe/Fringe.cc
   LIBRARIES Threads::Threads)
+
+add_algorithm(
+  NAME parFringe
+  SOURCE src/algorithms/parFringe/ParFringe.cc
+  LIBRARIES Threads::Threads tbb boost-thread)
+  
+add_custom_target(clean_results
+  COMMAND rm -R -f ${CMAKE_SOURCE_DIR}/results/*)
+  
+add_custom_target(clean_worlds
+  COMMAND rm -R -f ${CMAKE_SOURCE_DIR}/worlds/*)

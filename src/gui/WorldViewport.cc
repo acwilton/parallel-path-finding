@@ -107,13 +107,13 @@ void WorldViewport::handleEvent (SDL_Event& e)
             }
             if ((SDL_GetModState () & KMOD_ALT))
             {
-            	moveSpeed = 30;
-            	scaleSpeed = 5;
+                moveSpeed = 30;
+                scaleSpeed = 5;
             }
             switch (e.key.keysym.sym)
             {
             case SDLK_UP:
-                if (getCameraY () - moveSpeed >= 0)
+                if (getCameraY () >= moveSpeed)
                 {
                     setCameraY (getCameraY () - moveSpeed);
                 }
@@ -133,7 +133,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 }
                 break;
             case SDLK_LEFT:
-                if (getCameraX () - moveSpeed >= 0)
+                if (getCameraX () >= moveSpeed)
                 {
                     setCameraX (getCameraX () - moveSpeed);
                 }
@@ -320,7 +320,7 @@ void WorldViewport::loadWorld ()
     m_cameraX = 0;
     m_cameraY = 0;
 
-    std::string worldFileName = "worlds/" + m_worldName + ".world";
+    std::string worldFileName = "../worlds/" + m_worldName + ".world";
     Log::logInfo("Created world: " + worldFileName);
     std::ifstream worldFile(worldFileName, std::ifstream::in | std::ifstream::binary);
     if (!worldFile)
@@ -419,7 +419,7 @@ void WorldViewport::setTileScale (int scale)
     size_t absHeight = static_cast<size_t> (m_rect.h) / m_tileScale;
     if (getCameraY () + absHeight > m_world.getHeight ())
     {
-		m_cameraY = absHeight > m_world.getHeight () ? 0 : m_world.getWidth () - absHeight;
+                m_cameraY = absHeight > m_world.getHeight () ? 0 : m_world.getWidth () - absHeight;
     }
     size_t absWidth = static_cast<size_t> (m_rect.w) / m_tileScale;
     if (getCameraX() + absWidth > m_world.getWidth ())
@@ -669,9 +669,9 @@ void WorldViewport::initializeTextures (SDL_Renderer* renderer)
 void WorldViewport::initializeTexture(SDL_Renderer* renderer, SDL_Texture*& texture,
                                       const std::string& text)
 {
-    TTF_Font* font = TTF_OpenFont ("resources/FreeSans.ttf", 128);
+    TTF_Font* font = TTF_OpenFont ("../resources/FreeSans.ttf", 128);
     SDL_Surface* textSurface = TTF_RenderText_Solid (font, text.c_str(),
-                                                     {0x00,0x00,0x00});
+                                                     {0x00,0x00,0x00,0xFF});
     if (textSurface == nullptr)
     {
         Log::logError (

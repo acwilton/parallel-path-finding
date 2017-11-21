@@ -20,7 +20,7 @@
 namespace pathFind
 {
 
-const std::string RESULTS_DIR = "results";
+const std::string RESULTS_DIR = "../results";
 const std::string RESULTS_EXT = ".res";
 const std::string PERFORMANCE_EXT = ".perf";
 

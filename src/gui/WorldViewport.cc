@@ -309,7 +309,7 @@ void WorldViewport::loadWorld ()
     m_cameraX = 0;
     m_cameraY = 0;
 
-    std::string worldFileName = "worlds/" + m_worldName + ".world";
+    std::string worldFileName = "../worlds/" + m_worldName + ".world";
     Log::logInfo("Created world: " + worldFileName);
     std::ifstream worldFile(worldFileName, std::ifstream::in | std::ifstream::binary);
     if (!worldFile)
@@ -654,7 +654,7 @@ void WorldViewport::initializeTextures (SDL_Renderer* renderer)
 void WorldViewport::initializeTexture(SDL_Renderer* renderer, SDL_Texture*& texture,
                                       const std::string& text)
 {
-    TTF_Font* font = TTF_OpenFont ("resources/FreeSans.ttf", 128);
+    TTF_Font* font = TTF_OpenFont ("../resources/FreeSans.ttf", 128);
     SDL_Surface* textSurface = TTF_RenderText_Solid (font, text.c_str(),
                                                      {0x00,0x00,0x00,0xFF});
     if (textSurface == nullptr)

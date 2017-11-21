@@ -144,6 +144,3 @@ add_algorithm(
   NAME fringe
   SOURCE src/algorithms/fringe/Fringe.cc
   LIBRARIES Threads::Threads)
-
-add_custom_target(CopyResources ALL
-  COMMAND ln -s ${CMAKE_SOURCE_DIR}/resources ${CMAKE_BINARY_DIR}/resources)

@@ -168,7 +168,7 @@ void Button::initializeTextTexture (SDL_Renderer* renderer)
         m_text = " ";
     }
 
-    TTF_Font* font = TTF_OpenFont ("resources/FreeSans.ttf", 128);
+    TTF_Font* font = TTF_OpenFont ("../resources/FreeSans.ttf", 128);
     SDL_Surface* textSurface = TTF_RenderText_Solid (font, m_text.c_str (),
             m_textColor);
     if (textSurface == nullptr)

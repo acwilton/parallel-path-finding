@@ -7,9 +7,7 @@ set(CXX_STANDARD_REQUIRED On)
 #########################################
 
 find_package(Boost REQUIRED
-  COMPONENTS
-  "system"
-  "filesystem")
+  COMPONENTS "system" "filesystem")
 
 add_library(boost-system SHARED IMPORTED)
 set_property(
@@ -35,6 +33,10 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PathFinding_SOURCE_DIR}/cmake")
 
 find_package(SDL2 REQUIRED)
 add_library(sdl2 SHARED IMPORTED)
+# WKK: Disgusting Hack which should be somehow avoided in the future
+#      1). Splice the 1st element out of the array and mark as "primary"
+#      2). Mark remaining array elements as dependent libraries
+#      3). Cry in a corner
 list(GET SDL2_LIBRARY 1 "SDL2_CORE_LIB")
 list(REMOVE_AT SDL2_LIBRARY 1)
 set_property(TARGET sdl2 PROPERTY IMPORTED_LOCATION "${SDL2_CORE_LIB}")
@@ -52,24 +54,52 @@ set_property(TARGET sdl2-ttf PROPERTY IMPORTED_LOCATION "${SDL2_TTF_LIBRARIES}")
 set(THREADS_PREFER_PTHREAD_FLAG On)
 find_package(Threads REQUIRED)
 
-# Common Sources
+# Common Sources and Includes
 #########################################
 
-set(COMMON_SRCS
-  src/common/World.cc)
+set(DEFAULT_INCLUDE_DIR includes)
 
-set(COMMON_ALG_SRCS
+add_library(common
+  src/common/World.cc)
+target_include_directories(common PUBLIC ${DEFAULT_INCLUDE_DIR})
+target_link_libraries(common PUBLIC boost-system boost-filesystem)
+
+add_library(algorithm
   src/algorithms/tools/PathTile.cc
   src/algorithms/tools/PriorityQueue.cc)
+target_include_directories(algorithm PUBLIC ${DEFAULT_INCLUDE_DIR})
+target_link_libraries(algorithm PUBLIC common)
+
+# Assistive Macros
+#########################################
+
+macro(add_custom_executable)
+  set(options )
+  set(singleValueArgs NAME)
+  set(multiValueArgs INCLUDES LIBRARIES SOURCES)
+  cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
+  add_executable(${arg_NAME} ${arg_SOURCES})
+  target_include_directories(${arg_NAME} PUBLIC ${DEFAULT_INCLUDE_DIR} ${arg_INCLUDES})
+  target_link_libraries(${arg_NAME} PUBLIC common ${arg_LIBRARIES})
+endmacro(add_custom_executable)
+
+macro(add_algorithm)
+  set(options )
+  set(singleValueArgs NAME SOURCE)
+  set(multiValueArgs INCLUDES LIBRARIES)
+  cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
+  add_executable(${arg_NAME} ${arg_SOURCE})
+  target_include_directories(${arg_NAME} PUBLIC ${DEFAULT_INCLUDE_DIR} ${arg_INCLUDES})
+  target_link_libraries(${arg_NAME} PUBLIC algorithm ${arg_LIBRARIES})
+endmacro(add_algorithm)
 
 # Executables
 #########################################
 
-add_executable(gui ${COMMON_SRCS})
-target_include_directories(gui PUBLIC includes)
-target_link_libraries(gui PUBLIC sdl2 sdl2-ttf boost-system boost-filesystem)
-target_sources(gui
-  PUBLIC
+add_custom_executable(
+  NAME gui
+  LIBRARIES sdl2 sdl2-ttf
+  SOURCES
   src/gui/Gui.cc
   src/gui/Error.cc
   src/gui/Window.cc
@@ -79,32 +109,28 @@ target_sources(gui
   src/gui/WorldViewport.cc
   src/gui/GraphicTile.cc)
 
-add_executable(worldGen ${COMMON_SRCS})
-target_include_directories(worldGen PUBLIC includes)
-target_link_libraries(worldGen PUBLIC boost-system boost-filesystem)
-target_sources(worldGen PUBLIC src/worldGen/WorldGen.cc)
+add_custom_executable(
+  NAME worldGen
+  SOURCES src/worldGen/WorldGen.cc)
 
-add_executable(dijkstra ${COMMON_SRCS} ${COMMON_ALG_SRCS})
-target_include_directories(dijkstra PUBLIC includes)
-target_link_libraries(dijkstra PUBLIC boost-system boost-filesystem)
-target_sources(dijkstra PUBLIC src/algorithms/dijkstra/Dijkstra.cc)
+add_algorithm(
+  NAME dijkstra
+  SOURCE src/algorithms/dijkstra/Dijkstra.cc)
 
-add_executable(aStar ${COMMON_SRCS} ${COMMON_ALG_SRCS})
-target_include_directories(aStar PUBLIC includes)
-target_link_libraries(aStar PUBLIC boost-system boost-filesystem)
-target_sources(aStar PUBLIC src/algorithms/aStar/AStar.cc)
+add_algorithm(
+  NAME aStar
+  SOURCE src/algorithms/aStar/AStar.cc)
 
-add_executable(bidir ${COMMON_SRCS} ${COMMON_ALG_SRCS})
-target_include_directories(bidir PUBLIC includes)
-target_link_libraries(bidir PUBLIC boost-system boost-filesystem)
-target_sources(bidir PUBLIC src/algorithms/bidirectional/Bidirectional.cc)
+add_algorithm(
+  NAME bidir
+  SOURCE src/algorithms/bidirectional/Bidirectional.cc)
 
-add_executable(parBidir ${COMMON_SRCS} ${COMMON_ALG_SRCS})
-target_include_directories(parBidir PUBLIC includes)
-target_link_libraries(parBidir Threads::Threads boost-system boost-filesystem)
-target_sources(parBidir PUBLIC src/algorithms/parBidirectional/ParBidirectional.cc)
+add_algorithm(
+  NAME parBidir
+  SOURCE src/algorithms/parBidirectional/ParBidirectional.cc
+  LIBRARIES Threads::Threads)
 
-add_executable(fringe ${COMMON_SRCS} ${COMMON_ALG_SRCS})
-target_include_directories(fringe PUBLIC includes)
-target_link_libraries(fringe PUBLIC Threads::Threads boost-system boost-filesystem)
-target_sources(fringe PUBLIC src/algorithms/fringe/Fringe.cc)
+add_algorithm(
+  NAME fringe
+  SOURCE src/algorithms/fringe/Fringe.cc
+  LIBRARIES Threads::Threads)

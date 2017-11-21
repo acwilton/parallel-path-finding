@@ -23,7 +23,7 @@
 
 using namespace pathFind;
 
-const std::string WORLD_DIR = "worlds";
+const std::string WORLD_DIR = "../worlds";
 const std::string WORLD_EXT = ".world";
 
 const std::string ALG_NAME = "parBidir";

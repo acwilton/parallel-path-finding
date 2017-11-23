@@ -45,6 +45,8 @@ void search (uint id, uint numThreads, uint endX, uint endY,
              std::vector<std::unordered_map<uint, PathTile>>& seen,
              uint threshold, const pathFind::World& world,
              bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint);
+int top (PathTile& current, std::vector<PathTile>& localNow,std::vector<std::unordered_map<uint, PathTile>>& seen, uint& id,tbb::concurrent_unordered_map<uint, PathTile>& closedTiles, uint& threshold,
+		bool& finished, std::mutex& finishedLock, std::vector<std::vector<PathTile>>& later, uint& endX, uint& endY);
 void bottom(boost::barrier& syncPoint, bool& finished, bool& found, uint& id, std::vector<PathTile>& now, std::vector<std::vector<PathTile>>& later, uint& threshold, uint& maxTileCost);
 void neighbor (Point& adjPoint, const World& world, tbb::concurrent_unordered_map<uint, PathTile>& closedTiles,std::vector<std::unordered_map<uint, PathTile>>& seen, uint& id,
         std::vector<PathTile>& localNow,PathTile& current, std::function<uint (uint, uint)>& h, uint& threshold, std::vector<std::vector<PathTile>>& later);
@@ -167,38 +169,22 @@ void search (uint id, uint numThreads, uint endX, uint endY,
         uint start = id * localN;
         uint end = std::min ((id + 1) * localN, static_cast<uint>(now.size()));
 
+        PathTile current;
         if (start <= end)
         {
             std::vector<PathTile> localNow (now.begin() + start, now.begin() + end);
 
             while (!localNow.empty ())
             {
-                PathTile current = localNow.back();
-                localNow.pop_back();
-
-                // We have already seen and proccessed this tile. No need to continue.
-                if (seen[id].find(current.getTile().id) != seen[id].end() || closedTiles.find (current.getTile().id) != closedTiles.end())
-                {
-                    continue;
-                }
-
-                if (current.getCombinedHeuristic () > threshold)
-                {
-                    //mins[id] = std::min(current.getCombinedHeuristic (), mins[id]);
-                    later[id].push_back(current);
-                    continue;
-                }
-
-                // We have now know the best cost to this tile
-                seen[id][current.getTile ().id] = current;
-
-                if (current.xy().x == endX && current.xy().y == endY)
-                {
-                        finishedLock.lock();
-                    finished = true;
-                    finishedLock.unlock();
-                    break;
-                }
+            	int x = top (current, localNow, seen, id, closedTiles, threshold, finished, finishedLock, later, endX, endY);
+            	if (x == 1)
+            	{
+            		continue;
+            	}
+            	else if (x == 2)
+            	{
+            		break;
+            	}
 
                 Point adjPoint {current.xy ().x + 1, current.xy ().y}; // east
                 neighbor (adjPoint, world, closedTiles, seen, id, localNow, current, h, threshold, later);
@@ -224,6 +210,38 @@ void search (uint id, uint numThreads, uint endX, uint endY,
         }*/
         bottom (syncPoint, finished, found, id, now, later, threshold, maxTileCost);
     }
+}
+
+int top (PathTile& current, std::vector<PathTile>& localNow,std::vector<std::unordered_map<uint, PathTile>>& seen, uint& id,tbb::concurrent_unordered_map<uint, PathTile>& closedTiles, uint& threshold,
+		bool& finished, std::mutex& finishedLock, std::vector<std::vector<PathTile>>& later, uint& endX, uint& endY)
+{
+    current = localNow.back();
+    localNow.pop_back();
+
+    // We have already seen and proccessed this tile. No need to continue.
+    if (seen[id].find(current.getTile().id) != seen[id].end() || closedTiles.find (current.getTile().id) != closedTiles.end())
+    {
+        return 1;
+    }
+
+    if (current.getCombinedHeuristic () > threshold)
+    {
+        //mins[id] = std::min(current.getCombinedHeuristic (), mins[id]);
+        later[id].push_back(current);
+        return 1;
+    }
+
+    // We have now know the best cost to this tile
+    seen[id][current.getTile ().id] = current;
+
+    if (current.xy().x == endX && current.xy().y == endY)
+    {
+		finishedLock.lock();
+        finished = true;
+        finishedLock.unlock();
+        return 2;
+    }
+    return 0;
 }
 
 void bottom(boost::barrier& syncPoint, bool& finished, bool& found, uint& id, std::vector<PathTile>& now, std::vector<std::vector<PathTile>>& later, uint& threshold, uint& maxTileCost)

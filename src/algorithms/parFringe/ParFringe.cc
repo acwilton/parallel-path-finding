@@ -44,7 +44,7 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
 */
 void search (uint id, uint numThreads, uint endX, uint endY,
              std::vector<PathTile>& now, std::vector<std::vector<PathTile>>& later,
-             tbb::concurrent_unordered_map<uint, PathTile>& closedTiles,
+             tbb::concurrent_unordered_map<uint, bool>& closedTiles,
              std::vector<std::unordered_map<uint, PathTile>>& seen,
              uint threshold, const pathFind::World& world,
              bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint);
@@ -108,7 +108,7 @@ int main (int args, char* argv[])
     std::vector<std::vector<PathTile>> later (numThreads);
     std::vector<std::unordered_map<uint, PathTile>> seen (numThreads);
     std::vector<uint> mins (numThreads);
-    tbb::concurrent_unordered_map<uint, PathTile> closedTiles;
+    tbb::concurrent_unordered_map<uint, bool> closedTiles;
 
     boost::barrier syncPoint (numThreads);
     std::mutex finishedLock;

@@ -129,7 +129,23 @@ int main (int args, char* argv[])
 
     auto t2 = std::chrono::high_resolution_clock::now();
 
-    PathTile endTile = closedTiles.at(world (endX, endY).id);
+    PathTile endTile;
+
+    bool found = false;
+    for (uint i = 0; i < numThreads && !found; ++i)
+    {
+    	auto seenTile = seen[i].find((endY * world.getWidth()) + endX);
+    	if (seenTile != seen[i].end ())
+    	{
+    		found = true;
+    		endTile = seenTile->second;
+    	}
+    }
+    if (!found)
+    {
+    	std::cout << "ERROR\n";
+    	return EXIT_FAILURE;
+    }
 
     // Parse reverse results
     uint totalCost = endTile.getBestCost() - endTile.getTile().cost;
@@ -137,7 +153,20 @@ int main (int args, char* argv[])
     while (endTile.xy ().x != startX || endTile.xy ().y != startY)
     {
         finalPath.emplace_back(endTile.xy ());
-        endTile = closedTiles.at((endTile.bestTile ().y * world.getWidth()) + endTile.bestTile ().x);
+        found = false;
+        for (uint i = 0; i < numThreads && !found; ++i)
+        {
+        	auto seenTile = seen[i].find((endTile.bestTile ().y * world.getWidth()) + endTile.bestTile ().x);
+        	if (seenTile != seen[i].end ())
+        	{
+        		found = true;
+        		endTile = seenTile->second;
+        	}
+        }
+        if (!found)
+        {
+        	std::cout << "ERROR\n";
+        }
     }
     finalPath.emplace_back(endTile.xy ());
 
@@ -196,6 +225,7 @@ void search (uint id, uint numThreads, uint endX, uint endY,
 
                 // We have now know the best cost to this tile
                 seen[id][current.getTile ().id] = current;
+                closedTiles[current.getTile ().id] = true;
 
                 if (current.xy().x == endX && current.xy().y == endY)
                 {
@@ -219,12 +249,6 @@ void search (uint id, uint numThreads, uint endX, uint endY,
             }
         }
 
-        // Start pushing all of the tiles you have seen into the shared container of closed tiles
-
-        /*for (auto i = seen[id].begin(); i != seen[id].end(); ++i)
-        {
-        	closedTiles[i->first] = i->second;
-        }*/
         syncPoint.wait();
         if (finished)
         {
@@ -277,7 +301,6 @@ searchNeighbor(const Point& adjPoint, uint id, uint threshold, const PathTile& c
 				{
 					// If no one has then we say that we have.
 					// WARNING: This is indeed a data race. Hopefully one that is ok and breaks nothing but be careful.
-					closedTiles[worldTile.id] = true;
 					localNow.emplace_back (worldTile, adjPoint, current.xy(),
 						  current.getBestCost () + worldTile.cost, heuristic (adjPoint.x, adjPoint.y, endX, endY));
 				}

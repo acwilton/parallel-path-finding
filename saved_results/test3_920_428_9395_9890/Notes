@@ -1,0 +1,3 @@
+parFringe is VERY slow on this one despite it being a uniform cost map and it being large (which should mean faster speeds since the parallelization should get better as the "radius of search" gets bigger.
+Threads: 8
+threshold += maxCost

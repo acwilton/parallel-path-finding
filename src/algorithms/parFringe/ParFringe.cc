@@ -31,6 +31,9 @@ const std::string WORLD_EXT = ".world";
 
 const std::string ALG_NAME = "parFringe";
 
+uint
+heuristic (uint x, uint y, uint endX, uint endY);
+
 /*
 void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint endY,
              std::vector<PathTile>& now, std::vector<std::vector<PathTile>>& later,
@@ -45,6 +48,11 @@ void search (uint id, uint numThreads, uint endX, uint endY,
              std::vector<std::unordered_map<uint, PathTile>>& seen,
              uint threshold, const pathFind::World& world,
              bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint);
+
+void
+searchNeighbor(const Point& adjPoint, uint id, uint threshold, const PathTile& current, const World& world, uint endX, uint endY,
+		 tbb::concurrent_unordered_map<uint, bool>& closedTiles, std::vector<std::unordered_map<uint, PathTile>>& seen,
+		 std::vector<std::vector<PathTile>>& later, std::vector<PathTile>& localNow);
 
 int main (int args, char* argv[])
 {
@@ -139,21 +147,21 @@ int main (int args, char* argv[])
     return EXIT_SUCCESS;
 }
 
+uint
+heuristic (uint x, uint y, uint endX, uint endY)
+{
+	return  (x < endX ? endX - x : x - endX) +
+			(y < endY ? endY - y : y - endY);
+}
+
 void search (uint id, uint numThreads, uint endX, uint endY,
              std::vector<PathTile>& now, std::vector<std::vector<PathTile>>& later,
-             tbb::concurrent_unordered_map<uint, PathTile>& closedTiles,
+             tbb::concurrent_unordered_map<uint, bool>& closedTiles,
              std::vector<std::unordered_map<uint, PathTile>>& seen,
              uint threshold, const pathFind::World& world,
              bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint)
 {
-	// Heuristic function
-    std::function<uint (uint, uint)> h = [endX, endY] (uint x, uint y)
-    {
-        return  (x < endX ? endX - x : x - endX) +
-                (y < endY ? endY - y : y - endY);
-    };
-
-    uint maxTileCost = world.getMaxTileCost();
+    uint maxTileCost = std::ceil(static_cast<float>(world.getMaxTileCost()) * 2);
     bool found = false;
 
     while (!found)
@@ -191,152 +199,26 @@ void search (uint id, uint numThreads, uint endX, uint endY,
 
                 if (current.xy().x == endX && current.xy().y == endY)
                 {
-                        finishedLock.lock();
+                    finishedLock.lock();
                     finished = true;
                     finishedLock.unlock();
                     break;
                 }
 
                 Point adjPoint {current.xy ().x + 1, current.xy ().y}; // east
-                if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
-                {
-                    World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                    if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
-                    {
-                        auto seenTileIter = seen[id].find(worldTile.id);
-                        if (seenTileIter == seen[id].end ())
-                        {
-                            localNow.emplace_back (worldTile, adjPoint, current.xy(),
-                                      current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        }
-                        else
-                        {
-                            PathTile& seenTile = seenTileIter->second;
-                            uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
-                            if (seenTile.getBestCost () > costToTile)
-                            {
-                                seenTile.setBestCost (costToTile);
-                                seenTile.setBestTile (current.xy());
-                                if (seenTile.getCombinedHeuristic () > threshold)
-                                {
-                                   // mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
-                                    later[id].push_back(seenTile);
-                                }
-                                else
-                                {
-                                  localNow.push_back(seenTile);
-                                }
-                            }
-                        }
-                    }
-                }
+                searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
 
                 adjPoint = {current.xy ().x, current.xy ().y + 1}; // south
-                if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
-                {
-                    World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                    if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
-                    {
-                        auto seenTileIter = seen[id].find(worldTile.id);
-                        if (seenTileIter == seen[id].end ())
-                        {
-                            localNow.emplace_back (worldTile, adjPoint, current.xy(),
-                                    current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        }
-                        else
-                        {
-                            PathTile& seenTile = seenTileIter->second;
-                            uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
-                            if (seenTile.getBestCost () > costToTile)
-                            {
-                                seenTile.setBestCost (costToTile);
-                                seenTile.setBestTile (current.xy());
-                                if (seenTile.getCombinedHeuristic () > threshold)
-                                {
-                                    //mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
-                                    later[id].push_back(seenTile);
-                                }
-                                else
-                                {
-                                  localNow.push_back(seenTile);
-                                }
-                            }
-                        }
-                    }
-                }
+                searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
 
                 adjPoint = {current.xy ().x - 1, current.xy ().y}; // west
-                if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
-                {
-                    World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                    if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
-                    {
-                        auto seenTileIter = seen[id].find(worldTile.id);
-                        if (seenTileIter == seen[id].end ())
-                        {
-                            localNow.emplace_back (worldTile, adjPoint, current.xy(),
-                                    current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        }
-                        else
-                        {
-                            PathTile& seenTile = seenTileIter->second;
-                            uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
-                            if (seenTile.getBestCost () > costToTile)
-                            {
-                                seenTile.setBestCost (costToTile);
-                                seenTile.setBestTile (current.xy());
-                                if (seenTile.getCombinedHeuristic () > threshold)
-                                {
-                                   // mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
-                                    later[id].push_back(seenTile);
-                                }
-                                else
-                                {
-                                  localNow.push_back(seenTile);
-                                }
-                            }
-                        }
-                    }
-                }
+                searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
 
                 adjPoint = {current.xy ().x, current.xy ().y - 1}; // north
-                if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
-                {
-                    World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-                    if (worldTile.cost != 0 && closedTiles.find(worldTile.id) == closedTiles.end())
-                    {
-                        auto seenTileIter = seen[id].find(worldTile.id);
-                        if (seenTileIter == seen[id].end ())
-                        {
-                            localNow.emplace_back (worldTile, adjPoint, current.xy(),
-                                    current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        }
-                        else
-                        {
-                            PathTile& seenTile = seenTileIter->second;
-                            uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
-                            if (seenTile.getBestCost () > costToTile)
-                            {
-                                seenTile.setBestCost (costToTile);
-                                seenTile.setBestTile (current.xy());
-                                if (seenTile.getCombinedHeuristic () > threshold)
-                                {
-                                    //mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
-                                    later[id].push_back(seenTile);
-                                }
-                                else
-                                {
-                                  localNow.push_back(seenTile);
-                                }
-                            }
-                        }
-                    }
-                }
+                searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
             }
         }
 
-        closedTiles.insert (seen[id].begin(), seen[id].end ());
-        seen[id].clear();
         // Start pushing all of the tiles you have seen into the shared container of closed tiles
 
         /*for (auto i = seen[id].begin(); i != seen[id].end(); ++i)
@@ -377,3 +259,48 @@ void search (uint id, uint numThreads, uint endX, uint endY,
     }
 }
 
+void
+searchNeighbor(const Point& adjPoint, uint id, uint threshold, const PathTile& current, const World& world, uint endX, uint endY,
+		 tbb::concurrent_unordered_map<uint, bool>& closedTiles, std::vector<std::unordered_map<uint, PathTile>>& seen,
+		 std::vector<std::vector<PathTile>>& later, std::vector<PathTile>& localNow)
+{
+	if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
+	{
+		World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+		if (worldTile.cost != 0)
+		{
+			auto seenTileIter = seen[id].find(worldTile.id);
+			if (seenTileIter == seen[id].end ())
+			{
+				// If we haven't seen the tile then we need to make sure that no one else had either
+				if (closedTiles.find(worldTile.id) == closedTiles.end())
+				{
+					// If no one has then we say that we have.
+					// WARNING: This is indeed a data race. Hopefully one that is ok and breaks nothing but be careful.
+					closedTiles[worldTile.id] = true;
+					localNow.emplace_back (worldTile, adjPoint, current.xy(),
+						  current.getBestCost () + worldTile.cost, heuristic (adjPoint.x, adjPoint.y, endX, endY));
+				}
+			}
+			else
+			{
+				PathTile& seenTile = seenTileIter->second;
+				uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
+				if (seenTile.getBestCost () > costToTile)
+				{
+					seenTile.setBestCost (costToTile);
+					seenTile.setBestTile (current.xy());
+					if (seenTile.getCombinedHeuristic () > threshold)
+					{
+						// mins[id] = std::min(seenTile.getCombinedHeuristic (), mins[id]);
+						later[id].push_back(seenTile);
+					}
+					else
+					{
+						localNow.push_back(seenTile);
+					}
+				}
+			}
+		}
+	}
+}

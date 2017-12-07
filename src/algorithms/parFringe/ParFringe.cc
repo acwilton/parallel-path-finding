@@ -11,6 +11,7 @@
 #include <unordered_set>
 #include <list>
 #include <vector>
+#include <deque>
 #include <cmath>
 #include <chrono>
 #include <thread>
@@ -43,16 +44,17 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
              bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint);
 */
 void search (uint id, uint numThreads, uint endX, uint endY,
-             std::vector<PathTile>& now, std::vector<std::vector<PathTile>>& later,
+             /*std::deque<PathTile>& now,*/ std::vector<std::deque<PathTile>>& localNow,
+             std::vector<std::deque<PathTile>>& later,
              tbb::concurrent_unordered_map<uint, bool>& closedTiles,
              std::vector<std::unordered_map<uint, PathTile>>& seen,
              uint threshold, const pathFind::World& world,
              bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint);
 
-void
-searchNeighbor(const Point& adjPoint, uint id, uint threshold, const PathTile& current, const World& world, uint endX, uint endY,
-		 tbb::concurrent_unordered_map<uint, bool>& closedTiles, std::vector<std::unordered_map<uint, PathTile>>& seen,
-		 std::vector<std::vector<PathTile>>& later, std::vector<PathTile>& localNow);
+ void
+ searchNeighbor(const Point& adjPoint, uint id, uint threshold, const PathTile& current, const World& world, uint endX, uint endY,
+ 		 tbb::concurrent_unordered_map<uint, bool>& closedTiles, std::vector<std::unordered_map<uint, PathTile>>& seen,
+ 		 std::vector<std::deque<PathTile>>& later, std::vector<std::deque<PathTile>>& localNow);
 
 int main (int args, char* argv[])
 {
@@ -97,15 +99,17 @@ int main (int args, char* argv[])
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    const uint numThreads = 4;
+    const uint numThreads = 1;
 
-    std::vector<PathTile> now;
+    // Setup
+    //std::vector<PathTile> now;
     uint startHeuristic = (startX < endX ? endX - startX : startX - endX) +
             			  (startY < endY ? endY - startY : startY - endY);
-    now.emplace_back (world (startX, startY), Point{startX, startY},
-                        Point {startX, startY}, 0, startHeuristic);
 
-    std::vector<std::vector<PathTile>> later (numThreads);
+    std::vector<std::deque<PathTile>> localNow (numThreads);
+    localNow[0].emplace_back (world (startX, startY), Point{startX, startY},
+                        Point {startX, startY}, 0, startHeuristic);
+    std::vector<std::deque<PathTile>> later (numThreads);
     std::vector<std::unordered_map<uint, PathTile>> seen (numThreads);
     std::vector<uint> mins (numThreads);
     tbb::concurrent_unordered_map<uint, bool> closedTiles;
@@ -117,7 +121,7 @@ int main (int args, char* argv[])
     std::vector<std::thread> threads(numThreads);
     for (uint i = 0; i < numThreads; ++i)
     {
-    	threads[i] = std::thread (search, i, numThreads, endX, endY, std::ref(now),
+    	threads[i] = std::thread (search, i, numThreads, endX, endY, std::ref (localNow), //std::ref(now),
     			std::ref(later), std::ref(closedTiles), std::ref (seen), startHeuristic,
     			std::cref(world), std::ref(finished), std::ref (finishedLock), std::ref(syncPoint));
     }
@@ -184,69 +188,56 @@ heuristic (uint x, uint y, uint endX, uint endY)
 }
 
 void search (uint id, uint numThreads, uint endX, uint endY,
-             std::vector<PathTile>& now, std::vector<std::vector<PathTile>>& later,
+             /*std::deque<PathTile>& now,*/ std::vector<std::deque<PathTile>>& localNow,
+             std::vector<std::deque<PathTile>>& later,
              tbb::concurrent_unordered_map<uint, bool>& closedTiles,
              std::vector<std::unordered_map<uint, PathTile>>& seen,
              uint threshold, const pathFind::World& world,
              bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint)
 {
-    uint maxTileCost = std::ceil(static_cast<float>(world.getMaxTileCost()) * 2);
+    uint maxTileCost = std::ceil(static_cast<float>(world.getMaxTileCost()));
     bool found = false;
 
     while (!found)
     {
         //mins[id] = PathTile::INF;
-
-        uint localN = ceil (static_cast<float> (now.size()) / numThreads);
-        uint start = id * localN;
-        uint end = std::min ((id + 1) * localN, static_cast<uint>(now.size()));
-
-        if (start <= end)
+        while (!localNow[id].empty ())
         {
-            std::vector<PathTile> localNow (now.begin() + start, now.begin() + end);
+            PathTile current = localNow[id].front();
+            localNow[id].pop_front ();
 
-            while (!localNow.empty ())
+            // We have already seen and proccessed this tile. No need to continue.
+            if (seen[id].find(current.getTile().id) != seen[id].end() || closedTiles.find (current.getTile().id) != closedTiles.end())
             {
-                PathTile current = localNow.back();
-                localNow.pop_back();
-
-                // We have already seen and proccessed this tile. No need to continue.
-                if (seen[id].find(current.getTile().id) != seen[id].end() || closedTiles.find (current.getTile().id) != closedTiles.end())
-                {
-                    continue;
-                }
-
-                if (current.getCombinedHeuristic () > threshold)
-                {
-                    //mins[id] = std::min(current.getCombinedHeuristic (), mins[id]);
-                    later[id].push_back(current);
-                    continue;
-                }
-
-                // We have now know the best cost to this tile
-                seen[id][current.getTile ().id] = current;
-                closedTiles[current.getTile ().id] = true;
-
-                if (current.xy().x == endX && current.xy().y == endY)
-                {
-                    finishedLock.lock();
-                    finished = true;
-                    finishedLock.unlock();
-                    break;
-                }
-
-                Point adjPoint {current.xy ().x + 1, current.xy ().y}; // east
-                searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
-
-                adjPoint = {current.xy ().x, current.xy ().y + 1}; // south
-                searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
-
-                adjPoint = {current.xy ().x - 1, current.xy ().y}; // west
-                searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
-
-                adjPoint = {current.xy ().x, current.xy ().y - 1}; // north
-                searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
+                continue;
             }
+
+            if (current.getCombinedHeuristic () > threshold)
+            {
+                //mins[id] = std::min(current.getCombinedHeuristic (), mins[id]);
+                later[id].push_back(current);
+                continue;
+            }
+
+            if (current.xy().x == endX && current.xy().y == endY)
+            {
+                finishedLock.lock();
+                finished = true;
+                finishedLock.unlock();
+                break;
+            }
+
+            Point adjPoint {current.xy ().x + 1, current.xy ().y}; // east
+            searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
+
+            adjPoint = {current.xy ().x, current.xy ().y + 1}; // south
+            searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
+
+            adjPoint = {current.xy ().x - 1, current.xy ().y}; // west
+            searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
+
+            adjPoint = {current.xy ().x, current.xy ().y - 1}; // north
+            searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
         }
 
         syncPoint.wait();
@@ -258,13 +249,19 @@ void search (uint id, uint numThreads, uint endX, uint endY,
         {
             if (id == 0)
             {
-            	// Merge the later lists into the now list
-                now.clear ();
+          	// Merge the later lists into the now list
+                //now.clear ();
+                uint idx = 0;
                 for (auto& v : later)
                 {
-                	for (auto& i : v)
+                    for (auto& i : v)
                 	{
-                	    now.emplace_back(i);
+                        localNow[idx].emplace_back (i);
+                        ++idx;
+                        if (idx >= numThreads)
+                        {
+                            idx = 0;
+                        }
                 	}
                 	later[id].clear ();
                 }
@@ -286,7 +283,7 @@ void search (uint id, uint numThreads, uint endX, uint endY,
 void
 searchNeighbor(const Point& adjPoint, uint id, uint threshold, const PathTile& current, const World& world, uint endX, uint endY,
 		 tbb::concurrent_unordered_map<uint, bool>& closedTiles, std::vector<std::unordered_map<uint, PathTile>>& seen,
-		 std::vector<std::vector<PathTile>>& later, std::vector<PathTile>& localNow)
+		 std::vector<std::deque<PathTile>>& later, std::vector<std::deque<PathTile>>& localNow)
 {
 	if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
 	{
@@ -299,13 +296,25 @@ searchNeighbor(const Point& adjPoint, uint id, uint threshold, const PathTile& c
 				// If we haven't seen the tile then we need to make sure that no one else had either
 				if (closedTiles.find(worldTile.id) == closedTiles.end())
 				{
-					// If no one has then we say that we have.
-					// WARNING: This is indeed a data race. Hopefully one that is ok and breaks nothing but be careful.
-					localNow.emplace_back (worldTile, adjPoint, current.xy(),
-						  current.getBestCost () + worldTile.cost, heuristic (adjPoint.x, adjPoint.y, endX, endY));
+                    closedTiles[worldTile.id] = true;
+                    uint costToTile = current.getBestCost () + worldTile.cost;
+                    if (costToTile > threshold)
+                    {
+                        later[id].emplace_back (worldTile, adjPoint, current.xy(),
+						    costToTile, heuristic (adjPoint.x, adjPoint.y, endX, endY));
+                        seen[id][worldTile.id] = later[id].back ();
+                    }
+                    else
+                    {
+        				// If no one has then we say that we have.
+        				// WARNING: This is indeed a data race. Hopefully one that is ok and breaks nothing but be careful.
+    					localNow[id].emplace_back (worldTile, adjPoint, current.xy(),
+		                    costToTile, heuristic (adjPoint.x, adjPoint.y, endX, endY));
+                        seen[id][worldTile.id] = localNow[id].back ();
+                    }
 				}
 			}
-			else
+			/*else
 			{
 				PathTile& seenTile = seenTileIter->second;
 				uint costToTile = current.getBestCost () + seenTile.getTile ().cost;
@@ -323,7 +332,7 @@ searchNeighbor(const Point& adjPoint, uint id, uint threshold, const PathTile& c
 						localNow.push_back(seenTile);
 					}
 				}
-			}
+			}*/
 		}
 	}
 }

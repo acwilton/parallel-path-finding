@@ -1,6 +1,6 @@
 /**
  * File        : WorldViewport.h
- * Description : 
+ * Description :
  */
 
 #ifndef WORLDVIEWPORT_H_
@@ -57,8 +57,10 @@ public:
 
 protected:
     enum Mode {VIEW, SELECT};
+    enum ViewMode {COST, STAT};
 
     Mode m_mode;
+    ViewMode m_viewMode;
 
     std::string m_worldName;
     World m_world;
@@ -72,6 +74,10 @@ protected:
     bool m_textInitialized;
 
     std::string m_currentAlgorithm;
+
+    std::unordered_map<uint, StatPoint> m_stats;
+    uint m_maxProcessCount;
+
     std::vector<Point> m_results;
     bool m_resultsEnabled;
 
@@ -83,6 +89,7 @@ protected:
     SDL_Color m_endPrevColor;
 
     SDL_Texture* m_textTextures[256];
+    std::vector<SDL_Texture*> m_statTextures;
     SDL_Texture* m_startTexture;
     SDL_Texture* m_endTexture;
 
@@ -91,6 +98,7 @@ protected:
     virtual Point trySelectTile (int mouseX, int mouseY);
 
     virtual SDL_Color getAlgorithmColor () const;
+    virtual SDL_Color getTileColor (uint vpX, uint vpY) const;
 
     uint getIndex (uint x, uint y) const;
     bool isNull (const Point& p) const;
@@ -108,10 +116,11 @@ protected:
     // Always update scale before position
     virtual void updateGraphicTilesScaleAndPos ();
     virtual void updateGraphicTilesPos ();
+    virtual void updateTileColors ();
 
     virtual void initializeTextures (SDL_Renderer* renderer);
     virtual void initializeTexture (SDL_Renderer* renderer, SDL_Texture*& texture,
-                                    const std::string& text);
+                                    const std::string& text, const SDL_Color& color);
     virtual void destroyResources ();
 };
 

@@ -27,16 +27,20 @@ const SDL_Color BIDIR_COLOR = {0xCB, 0x6B, 0xFF, 0xFF};
 const SDL_Color PAR_BIDIR_COLOR = {0xFF, 0x75, 0xF1, 0xFF};
 const SDL_Color FRINGE_COLOR = {0x84, 0xB9, 0xFF, 0xFF};
 const SDL_Color PAR_FRINGE_COLOR = {0xFF, 0x4B, 0x3A, 0xFF};
+const SDL_Color STAT_TEXT_COLOR = {0x00, 0x00, 0x00, 0xFF};
+const SDL_Color STAT_TILE_COLOR = {0x2A, 0x2E, 0xFC, 0xFF};
 
 WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
         : Viewport (rect, backgroundColor),
           m_mode (VIEW),
+          m_viewMode (COST),
           m_worldName (" "),
           m_cameraX (0),
           m_cameraY (0),
           m_tileScale (DEFAULT_TILE_SCALE),
           m_textEnabled (false),
           m_textInitialized (false),
+          m_maxProcessCount (0),
           m_resultsEnabled (false),
           m_showEndPoints (false),
           m_start (0, 0),
@@ -75,13 +79,30 @@ void WorldViewport::render (SDL_Renderer* renderer)
                 GraphicTile& t = m_gTiles[getIndex (x, y)];
 
                 SDL_Texture* renderTexture = m_textTextures[t.getTile().cost];
+                if (m_viewMode == ViewMode::STAT)
+                {
+                    auto statIter = m_stats.find (m_world (x + m_cameraX, y + m_cameraY).id);
+                    if (statIter == m_stats.end ())
+                    {
+                        renderTexture = nullptr;
+                    }
+                    else
+                    {
+                        if (m_statTextures[statIter->second.processCount] == nullptr)
+                        {
+                            initializeTexture(renderer, m_statTextures[statIter->second.processCount],
+                                std::to_string (statIter->second.processCount), STAT_TEXT_COLOR);
+                        }
+                        renderTexture = m_statTextures[statIter->second.processCount];
+                    }
+                }
                 if (m_showEndPoints)
                 {
-                    if (m_start.x == x && m_start.y == y)
+                    if (m_start.x == x + m_cameraX && m_start.y == y + m_cameraY)
                     {
                         renderTexture = m_startTexture;
                     }
-                    else if (m_end.x == x && m_end.y == y)
+                    else if (m_end.x == x + m_cameraX && m_end.y == y + m_cameraY)
                     {
                         renderTexture = m_endTexture;
                     }
@@ -182,6 +203,17 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 {
                     m_showEndPoints = true;
                 }
+                break;
+            case SDLK_s:
+                if (m_viewMode == COST)
+                {
+                    m_viewMode = STAT;
+                }
+                else
+                {
+                    m_viewMode = COST;
+                }
+                updateGraphicTilesPos();
                 break;
             case SDLK_d:
                 if (!isNull (m_start) && !isNull (m_end))
@@ -368,7 +400,15 @@ void WorldViewport::loadResults (const Point& start, const Point& end,
     m_currentAlgorithm = algName;
     setResultsEnabled (false);
     m_results.clear();
-    readResults (m_results, start, end, m_worldName, algName);
+    m_stats.clear();
+    readResults (m_results, m_stats, m_maxProcessCount, start, end, m_worldName, algName);
+    if (m_maxProcessCount > m_statTextures.size ())
+    {
+        for (uint i = m_statTextures.size (); i <= m_maxProcessCount; ++i)
+        {
+            m_statTextures.push_back(nullptr);
+        }
+    }
     if (m_mode == VIEW)
     {
         if (!m_results.empty())
@@ -382,12 +422,16 @@ void WorldViewport::loadResults (const Point& start, const Point& end,
 void WorldViewport::setResultsEnabled (bool resultsEnabled)
 {
     m_resultsEnabled = resultsEnabled;
-    SDL_Color color = m_resultsEnabled ? getAlgorithmColor () : DEFAULT_COLOR;
+    updateTileColors ();
+    SDL_Color algColor = getAlgorithmColor ();
     for (auto& r : m_results)
     {
         if (isPointInCameraView (r))
         {
-            m_gTiles[getIndex (r.x - m_cameraX, r.y - m_cameraY)].setRectColor(color);
+            uint vpX = r.x - m_cameraX;
+            uint vpY = r.y - m_cameraY;
+            SDL_Color color = m_resultsEnabled ? algColor : getTileColor(vpX, vpY);
+            m_gTiles[getIndex (vpX, vpY)].setRectColor(color);
         }
     }
 }
@@ -419,7 +463,7 @@ void WorldViewport::setTileScale (int scale)
     size_t absHeight = static_cast<size_t> (m_rect.h) / m_tileScale;
     if (getCameraY () + absHeight > m_world.getHeight ())
     {
-                m_cameraY = absHeight > m_world.getHeight () ? 0 : m_world.getWidth () - absHeight;
+        m_cameraY = absHeight > m_world.getHeight () ? 0 : m_world.getWidth () - absHeight;
     }
     size_t absWidth = static_cast<size_t> (m_rect.w) / m_tileScale;
     if (getCameraX() + absWidth > m_world.getWidth ())
@@ -491,6 +535,10 @@ Point WorldViewport::trySelectTile (int mouseX, int mouseY)
 
 SDL_Color WorldViewport::getAlgorithmColor () const
 {
+    if (m_viewMode == STAT)
+    {
+        return STAT_TILE_COLOR;
+    }
     if (m_currentAlgorithm == "dijkstra")
     {
         return DIJKSTRA_COLOR;
@@ -517,6 +565,33 @@ SDL_Color WorldViewport::getAlgorithmColor () const
     }
 
     return DEFAULT_COLOR;
+}
+
+SDL_Color WorldViewport::getTileColor (uint vpX, uint vpY) const
+{
+    if (m_viewMode == COST)
+    {
+        return DEFAULT_COLOR;
+    }
+    else
+    {
+        auto statIter = m_stats.find (m_world (vpX + m_cameraX, vpY + m_cameraY).id);
+        if (statIter == m_stats.end ())
+        {
+            return DEFAULT_COLOR;
+        }
+        else
+        {
+            float processFactor = 0.0f;
+            if (m_maxProcessCount > 1)
+            {
+                processFactor = static_cast<float> (statIter->second.processCount - 1) / (m_maxProcessCount - 1);
+            }
+            return processFactor > 0.5f ?
+                  SDL_Color {255, static_cast<unsigned char> ((255 - 42) * (2.0f - processFactor * 2) + 42), 42, 255}
+                : SDL_Color {static_cast<unsigned char> ((255 - 42) * processFactor * 2 + 42), 255, 42, 255};
+        }
+    }
 }
 
 uint WorldViewport::getIndex (uint x, uint y) const
@@ -593,6 +668,8 @@ void WorldViewport::updateGraphicTilesScaleAndPos ()
         }
     }
 
+    updateTileColors ();
+
     if (m_showEndPoints && m_mode == SELECT)
     {
         if (isPointInCameraView (m_start))
@@ -627,6 +704,8 @@ void WorldViewport::updateGraphicTilesPos ()
         }
     }
 
+    updateTileColors ();
+
     if (m_showEndPoints && m_mode == SELECT)
     {
         if (isPointInCameraView (m_start))
@@ -651,15 +730,43 @@ void WorldViewport::updateGraphicTilesPos ()
     }
 }
 
+void WorldViewport::updateTileColors ()
+{
+    if (m_viewMode == COST)
+    {
+        for (auto& gt : m_gTiles)
+        {
+            if (gt.getTile ().cost != 0)
+            {
+                gt.setRectColor(DEFAULT_COLOR);
+            }
+        }
+    }
+    else
+    {
+        for (uint y = 0; y < getCameraHeight (); ++y)
+        {
+            for (uint x = 0; x < getCameraWidth (); ++x)
+            {
+                GraphicTile& t = m_gTiles[getIndex (x, y)];
+                if (t.getTile().cost != 0)
+                {
+                    t.setRectColor(getTileColor (x, y));
+                }
+            }
+        }
+    }
+}
+
 void WorldViewport::initializeTextures (SDL_Renderer* renderer)
 {
     destroyResources ();
     for (uint i = 0; i < 256; ++i)
     {
-        initializeTexture (renderer, m_textTextures[i], std::to_string (i));
+        initializeTexture (renderer, m_textTextures[i], std::to_string (i), SDL_Color {0x00, 0x00, 0x00, 0xFF});
     }
-    initializeTexture (renderer, m_startTexture, "S");
-    initializeTexture (renderer, m_endTexture, "E");
+    initializeTexture (renderer, m_startTexture, "S", SDL_Color {0x00, 0x00, 0x00, 0xFF});
+    initializeTexture (renderer, m_endTexture, "E", SDL_Color {0x00, 0x00, 0x00, 0xFF});
 
     m_textInitialized = true;
 
@@ -667,11 +774,11 @@ void WorldViewport::initializeTextures (SDL_Renderer* renderer)
 }
 
 void WorldViewport::initializeTexture(SDL_Renderer* renderer, SDL_Texture*& texture,
-                                      const std::string& text)
+                                      const std::string& text, const SDL_Color& color)
 {
     TTF_Font* font = TTF_OpenFont ("../resources/FreeSans.ttf", 128);
     SDL_Surface* textSurface = TTF_RenderText_Solid (font, text.c_str(),
-                                                     {0x00,0x00,0x00,0xFF});
+                                                     color);
     if (textSurface == nullptr)
     {
         Log::logError (

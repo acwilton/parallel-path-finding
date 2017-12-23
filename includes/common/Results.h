@@ -28,13 +28,9 @@ const std::string STAT_EXT = ".stat";
 
 struct StatPoint
 {
-    StatPoint ()
-    {
-    }
-    
-    StatPoint (uint x, uint y)
+    StatPoint (uint x = 0, uint y = 0, uint processCount = 1)
         :   tile (x, y),
-            processCount (1)
+            processCount (processCount)
     {
     }
     Point tile;
@@ -67,7 +63,7 @@ inline void writeResults (const std::vector<Point>& path, const std::unordered_m
     std::ofstream statFile (dirName.str () + "/" + algName + STAT_EXT);
     for (const auto& s : stats)
     {
-        statFile << s.second.tile.x << " " << s.second.tile.y << ": " << s.second.processCount << "\n";
+        statFile << s.first << " " << s.second.tile.x << " " << s.second.tile.y << " " << s.second.processCount << "\n";
     }
     statFile.close ();
 }
@@ -96,19 +92,20 @@ inline void writeResults (const std::vector<Point>& path,
     performanceFile.close ();
 }
 
-inline void readResults (std::vector<Point>& path, const Point& start, const Point& end,
+inline void readResults (std::vector<Point>& path, std::unordered_map<uint, StatPoint>& stats,
+                         uint& maxProcessCount, const Point& start, const Point& end,
                          const std::string& worldName, const std::string& algName)
 {
     std::stringstream fileName;
     fileName << RESULTS_DIR << "/" << worldName << "_"
              << start.x << "_" << start.y << "_"
              << end.x << "_" << end.y
-             << "/" << algName << RESULTS_EXT;
+             << "/" << algName;
 
-    std::ifstream resultFile (fileName.str ());
+    std::ifstream resultFile (fileName.str () + RESULTS_EXT);
     if (!resultFile)
     {
-        std::cout << "Failed to open file: " << fileName.str () << std::endl;
+        std::cout << "Failed to open file: " << fileName.str () + RESULTS_EXT << std::endl;
         return;
     }
 
@@ -125,6 +122,25 @@ inline void readResults (std::vector<Point>& path, const Point& start, const Poi
     }
 
     resultFile.close();
+
+    std::ifstream statFile (fileName.str () + STAT_EXT);
+    if (!statFile)
+    {
+        std::cout << "No stat file.\n";
+        return;
+    }
+    maxProcessCount = 0;
+    while (statFile)
+    {
+        uint id, x, y, processCount;
+        statFile >> id >> x >> y >> processCount;
+        if (processCount > maxProcessCount)
+        {
+            maxProcessCount = processCount;
+        }
+        stats[id] = StatPoint {x, y, processCount};
+    }
+    statFile.close ();
 }
 } /* namespace pathFind */
 

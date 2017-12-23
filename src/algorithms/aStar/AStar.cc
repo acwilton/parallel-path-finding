@@ -80,6 +80,7 @@ int main (int args, char* argv[])
 
     // A* algorithm
     openTiles.push (world (startX, startY), {startX, startY}, 0);
+    stats[world (startX, startY).id] = StatPoint {startX, startY};
 
     std::unordered_map<uint, PathTile> expandedTiles;
     PathTile tile = openTiles.top();

@@ -66,6 +66,8 @@ int main (int args, char* argv[])
         return EXIT_FAILURE;
     }
 
+    std::unordered_map<uint, StatPoint> stats;
+
     auto t1 = std::chrono::high_resolution_clock::now();
 
     // Priority Queue with A* heuristic function added
@@ -94,6 +96,15 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+                auto statIter = stats.find (worldTile.id);
+                if (statIter == stats.end ())
+                {
+                    stats[worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                }
+                else
+                {
+                    statIter->second.processCount++;
+                }
             }
         }
 
@@ -105,6 +116,15 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+                auto statIter = stats.find (worldTile.id);
+                if (statIter == stats.end ())
+                {
+                    stats[worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                }
+                else
+                {
+                    statIter->second.processCount++;
+                }
             }
         }
 
@@ -116,6 +136,15 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+                auto statIter = stats.find (worldTile.id);
+                if (statIter == stats.end ())
+                {
+                    stats[worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                }
+                else
+                {
+                    statIter->second.processCount++;
+                }
             }
         }
 
@@ -127,6 +156,15 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+                auto statIter = stats.find (worldTile.id);
+                if (statIter == stats.end ())
+                {
+                    stats[worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                }
+                else
+                {
+                    statIter->second.processCount++;
+                }
             }
         }
 
@@ -145,7 +183,7 @@ int main (int args, char* argv[])
     }
     finalPath.emplace_back(tile.xy ());
 
-    writeResults (finalPath, argv[1], ALG_NAME,
+    writeResults (finalPath, stats, argv[1], ALG_NAME,
             std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
 
     return EXIT_SUCCESS;

@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -23,9 +24,56 @@ namespace pathFind
 const std::string RESULTS_DIR = "../results";
 const std::string RESULTS_EXT = ".res";
 const std::string PERFORMANCE_EXT = ".perf";
+const std::string STAT_EXT = ".stat";
 
-inline void writeResults (const std::vector<Point>& path, const std::string& worldName,
-                          const std::string& algName, uint ms, uint totalCost)
+struct StatPoint
+{
+    StatPoint ()
+    {
+    }
+    
+    StatPoint (uint x, uint y)
+        :   tile (x, y),
+            processCount (1)
+    {
+    }
+    Point tile;
+    uint processCount;
+};
+
+inline void writeResults (const std::vector<Point>& path, const std::unordered_map<uint, StatPoint>& stats,
+                          const std::string& worldName, const std::string& algName, uint ms, uint totalCost)
+{
+    std::stringstream dirName;
+    dirName << RESULTS_DIR << "/" << worldName << "_"
+            << path.back ().x << "_" << path.back ().y << "_"
+            << path.front ().x << "_" << path.front ().y;
+    boost::filesystem::create_directory(dirName.str ());
+
+    std::ofstream resultFile (dirName.str () + "/" + algName + RESULTS_EXT);
+    resultFile << path.size() << std::endl;
+    for (auto ri = path.rbegin(); ri != path.rend(); ++ri)
+    {
+        resultFile << ri->x << " " << ri->y << std::endl;
+    }
+    resultFile << "Total Cost: " << totalCost << std::endl;
+
+    resultFile.close();
+
+    std::ofstream performanceFile (dirName.str () + "/" + algName + PERFORMANCE_EXT);
+    performanceFile << "time: " << ms;
+    performanceFile.close ();
+
+    std::ofstream statFile (dirName.str () + "/" + algName + STAT_EXT);
+    for (const auto& s : stats)
+    {
+        statFile << s.second.tile.x << " " << s.second.tile.y << ": " << s.second.processCount << "\n";
+    }
+    statFile.close ();
+}
+
+inline void writeResults (const std::vector<Point>& path,
+                          const std::string& worldName, const std::string& algName, uint ms, uint totalCost)
 {
     std::stringstream dirName;
     dirName << RESULTS_DIR << "/" << worldName << "_"

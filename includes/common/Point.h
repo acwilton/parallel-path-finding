@@ -15,6 +15,11 @@ namespace pathFind
 struct Point
 {
     uint x, y;
+    Point ()
+        : x (0), y (0)
+    {
+
+    }
     Point (uint x, uint y)
         : x (x), y (y)
     {

@@ -30,3 +30,6 @@ gui.log
 
 # makefile dependency file
 makefile.deps
+
+# Atom stuff
+.clang_complete

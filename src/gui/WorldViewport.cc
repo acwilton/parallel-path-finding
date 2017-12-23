@@ -215,10 +215,16 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 }
                 updateGraphicTilesPos();
                 break;
+            case SDLK_r:
+                if (!isNull (m_start) && !isNull (m_end))
+                {
+                    runAndLoadPathFinding (m_currentAlgorithm);
+                }
+                break;
             case SDLK_d:
                 if (!isNull (m_start) && !isNull (m_end))
                 {
-                    runAndLoadPathFinding ("dijkstra");
+                    loadResults ("dijkstra", m_start, m_end);
                 }
                 else
                 {
@@ -228,7 +234,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
             case SDLK_a:
                 if (!isNull (m_start) && !isNull (m_end))
                 {
-                    runAndLoadPathFinding ("aStar");
+                    loadResults ("aStar", m_start, m_end);
                 }
                 else
                 {
@@ -238,7 +244,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
             case SDLK_b:
                 if (!isNull (m_start) && !isNull (m_end))
                 {
-                    runAndLoadPathFinding ("bidir");
+                    loadResults ("bidir", m_start, m_end);
                 }
                 else
                 {
@@ -248,7 +254,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
             case SDLK_p:
                 if (!isNull (m_start) && !isNull (m_end))
                 {
-                    runAndLoadPathFinding ("parBidir");
+                    loadResults ("parBidir", m_start, m_end);
                 }
                 else
                 {
@@ -258,7 +264,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
             case SDLK_f:
                 if (!isNull (m_start) && !isNull (m_end))
                 {
-                    runAndLoadPathFinding ("fringe");
+                    loadResults ("fringe", m_start, m_end);
                 }
                 else
                 {
@@ -268,7 +274,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
             case SDLK_g:
                 if (!isNull (m_start) && !isNull (m_end))
                 {
-                    runAndLoadPathFinding ("parFringe");
+                    loadResults ("parFringe", m_start, m_end);
                 }
                 else
                 {
@@ -380,8 +386,7 @@ void WorldViewport::runAndLoadPathFinding (const std::string& algorithm)
             std::to_string (m_end.x) + " " +
             std::to_string (m_end.y);
     system (command.c_str ());
-    loadResults (m_start, m_end, m_currentAlgorithm);
-    setResultsEnabled (true);
+    loadResults (m_currentAlgorithm, m_start, m_end);
 }
 
 void WorldViewport::runAndLoadPathFinding (const std::string& algorithm,
@@ -394,14 +399,17 @@ void WorldViewport::runAndLoadPathFinding (const std::string& algorithm,
     runAndLoadPathFinding (algorithm);
 }
 
-void WorldViewport::loadResults (const Point& start, const Point& end,
-                                const std::string& algName)
+void WorldViewport::loadResults (const std::string& algName, const Point& start, const Point& end)
 {
     m_currentAlgorithm = algName;
     setResultsEnabled (false);
     m_results.clear();
     m_stats.clear();
-    readResults (m_results, m_stats, m_maxProcessCount, start, end, m_worldName, algName);
+    if (!readResults (m_results, m_stats, m_maxProcessCount, start, end, m_worldName, algName))
+    {
+        runAndLoadPathFinding (algName, start.x, start.y, end.x, end.y);
+        return;
+    }
     if (m_maxProcessCount > m_statTextures.size ())
     {
         for (uint i = m_statTextures.size (); i <= m_maxProcessCount; ++i)
@@ -417,6 +425,7 @@ void WorldViewport::loadResults (const Point& start, const Point& end,
             m_end = m_results.back();
         }
     }
+    setResultsEnabled (true);
 }
 
 void WorldViewport::setResultsEnabled (bool resultsEnabled)

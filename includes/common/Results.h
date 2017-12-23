@@ -92,7 +92,7 @@ inline void writeResults (const std::vector<Point>& path,
     performanceFile.close ();
 }
 
-inline void readResults (std::vector<Point>& path, std::unordered_map<uint, StatPoint>& stats,
+inline bool readResults (std::vector<Point>& path, std::unordered_map<uint, StatPoint>& stats,
                          uint& maxProcessCount, const Point& start, const Point& end,
                          const std::string& worldName, const std::string& algName)
 {
@@ -105,8 +105,7 @@ inline void readResults (std::vector<Point>& path, std::unordered_map<uint, Stat
     std::ifstream resultFile (fileName.str () + RESULTS_EXT);
     if (!resultFile)
     {
-        std::cout << "Failed to open file: " << fileName.str () + RESULTS_EXT << std::endl;
-        return;
+        return false;
     }
 
     uint size;
@@ -127,7 +126,7 @@ inline void readResults (std::vector<Point>& path, std::unordered_map<uint, Stat
     if (!statFile)
     {
         std::cout << "No stat file.\n";
-        return;
+        return true;
     }
     maxProcessCount = 0;
     while (statFile)
@@ -141,6 +140,8 @@ inline void readResults (std::vector<Point>& path, std::unordered_map<uint, Stat
         stats[id] = StatPoint {x, y, processCount};
     }
     statFile.close ();
+
+    return true;
 }
 } /* namespace pathFind */
 

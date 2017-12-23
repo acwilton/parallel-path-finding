@@ -39,8 +39,7 @@ public:
     virtual void runAndLoadPathFinding (const std::string& algorithm);
     virtual void runAndLoadPathFinding (const std::string& algorithm,
                                         uint startX, uint startY, uint endX, uint endY);
-    virtual void loadResults (const Point& start, const Point& end,
-                             const std::string& algName);
+    virtual void loadResults (const std::string& algName, const Point& start, const Point& end);
     virtual void setResultsEnabled (bool resultsEnabled);
 
     virtual uint getCameraX () const;

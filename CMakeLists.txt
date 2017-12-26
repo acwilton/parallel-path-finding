@@ -10,6 +10,9 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 if (CMAKE_COMPILER_IS_GNUCXX)
   message(STATUS "Enabled aggressive warnings")
+  if (GEN_STATS)
+    add_definitions (-DGEN_STATS)
+  endif(GEN_STATS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wpedantic -pedantic -pedantic-errors -march=native")
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
@@ -34,7 +37,7 @@ set_property(
 set_property(
   TARGET boost-filesystem
   PROPERTY IMPORTED_LOCATION ${Boost_FILESYSTEM_LIBRARY})
-  
+
 add_library(boost-thread SHARED IMPORTED)
 set_property(
   TARGET boost-thread
@@ -162,9 +165,9 @@ add_algorithm(
   NAME parFringe
   SOURCE src/algorithms/parFringe/ParFringe.cc
   LIBRARIES Threads::Threads tbb boost-thread)
-  
+
 add_custom_target(clean_results
   COMMAND rm -R -f ${CMAKE_SOURCE_DIR}/results/*)
-  
+
 add_custom_target(clean_worlds
   COMMAND rm -R -f ${CMAKE_SOURCE_DIR}/worlds/*)

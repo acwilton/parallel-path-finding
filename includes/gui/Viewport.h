@@ -14,6 +14,7 @@
 
 #include "gui/Error.h"
 #include "gui/Button.h"
+#include "gui/Text.h"
 
 namespace pathFind
 {
@@ -35,6 +36,7 @@ public:
     virtual bool isEnabled () const;
     virtual SDL_Color getBackgroundColor () const;
     virtual std::shared_ptr<Button> getButton (uint pos);
+    virtual std::shared_ptr<Text> getText (uint pos);
 
     virtual void setBackgroundColor (SDL_Color color);
 
@@ -44,12 +46,16 @@ public:
     virtual void addButton (std::shared_ptr<Button> b);
     virtual void removeButton (uint pos);
 
+    virtual void addText (std::shared_ptr<Text> t);
+    virtual void removeText (uint pos);
+
     virtual void render (SDL_Renderer* renderer);
 
     virtual void handleEvent (SDL_Event& e);
 
 protected:
     std::vector<std::shared_ptr<Button>> m_buttons;
+    std::vector<std::shared_ptr<Text>> m_texts;
     SDL_Rect m_rect;
 
     SDL_Color m_backgroundColor;

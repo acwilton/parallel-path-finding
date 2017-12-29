@@ -37,7 +37,7 @@ struct StatPoint
     uint processCount;
 };
 
-inline void writeResults (const std::vector<Point>& path, const std::unordered_map<uint, StatPoint>& stats,
+inline void writeResults (const std::vector<Point>& path, const std::vector<std::unordered_map<uint, StatPoint>>& stats,
                           const std::string& worldName, const std::string& algName, uint ms, uint totalCost)
 {
     std::stringstream dirName;
@@ -61,9 +61,15 @@ inline void writeResults (const std::vector<Point>& path, const std::unordered_m
     performanceFile.close ();
 
     std::ofstream statFile (dirName.str () + "/" + algName + STAT_EXT);
-    for (const auto& s : stats)
+    uint threadCount = 0;
+    for (const auto& thread : stats)
     {
-        statFile << s.first << " " << s.second.tile.x << " " << s.second.tile.y << " " << s.second.processCount << "\n";
+        statFile << "thread " << threadCount << "\n";
+        ++threadCount;
+        for (const auto& s : thread)
+        {
+            statFile << s.first << " " << s.second.tile.x << " " << s.second.tile.y << " " << s.second.processCount << "\n";
+        }
     }
     statFile.close ();
 }
@@ -92,7 +98,7 @@ inline void writeResults (const std::vector<Point>& path,
     performanceFile.close ();
 }
 
-inline bool readResults (std::vector<Point>& path, std::unordered_map<uint, StatPoint>& stats,
+inline bool readResults (std::vector<Point>& path, std::vector<std::unordered_map<uint, StatPoint>>& stats,
                          uint& maxProcessCount, const Point& start, const Point& end,
                          const std::string& worldName, const std::string& algName)
 {
@@ -129,15 +135,26 @@ inline bool readResults (std::vector<Point>& path, std::unordered_map<uint, Stat
         return true;
     }
     maxProcessCount = 0;
-    while (statFile)
+    uint currentThread = 0;
+    std::string token;
+    while (statFile >> token)
     {
-        uint id, x, y, processCount;
-        statFile >> id >> x >> y >> processCount;
-        if (processCount > maxProcessCount)
+        if (token == "thread")
         {
-            maxProcessCount = processCount;
+            statFile >> currentThread;
+            stats.resize (stats.size () + 1);
         }
-        stats[id] = StatPoint {x, y, processCount};
+        else
+        {
+            uint id, x, y, processCount;
+            id = std::stoi (token);
+            statFile >> x >> y >> processCount;
+            if (processCount > maxProcessCount)
+            {
+                maxProcessCount = processCount;
+            }
+            stats[currentThread][id] = StatPoint {x, y, processCount};
+        }
     }
     statFile.close ();
 

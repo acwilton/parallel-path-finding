@@ -67,7 +67,7 @@ int main (int args, char* argv[])
     }
 
     #ifdef GEN_STATS
-        std::unordered_map<uint, StatPoint> stats;
+        std::vector<std::unordered_map<uint, StatPoint>> stats (1);
     #endif
 
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -83,7 +83,7 @@ int main (int args, char* argv[])
     // A* algorithm
     openTiles.push (world (startX, startY), {startX, startY}, 0);
     #ifdef GEN_STATS
-        stats[world (startX, startY).id] = StatPoint {startX, startY};
+        stats[0][world (startX, startY).id] = StatPoint {startX, startY};
     #endif
 
     std::unordered_map<uint, PathTile> expandedTiles;
@@ -102,10 +102,10 @@ int main (int args, char* argv[])
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
                 #ifdef GEN_STATS
-                    auto statIter = stats.find (worldTile.id);
-                    if (statIter == stats.end ())
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
                     {
-                        stats[worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
                     }
                     else
                     {
@@ -124,10 +124,10 @@ int main (int args, char* argv[])
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
                 #ifdef GEN_STATS
-                    auto statIter = stats.find (worldTile.id);
-                    if (statIter == stats.end ())
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
                     {
-                        stats[worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
                     }
                     else
                     {
@@ -146,10 +146,10 @@ int main (int args, char* argv[])
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
                 #ifdef GEN_STATS
-                    auto statIter = stats.find (worldTile.id);
-                    if (statIter == stats.end ())
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
                     {
-                        stats[worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
                     }
                     else
                     {
@@ -168,10 +168,10 @@ int main (int args, char* argv[])
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
                 #ifdef GEN_STATS
-                    auto statIter = stats.find (worldTile.id);
-                    if (statIter == stats.end ())
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
                     {
-                        stats[worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
                     }
                     else
                     {

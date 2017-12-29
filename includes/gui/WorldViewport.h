@@ -42,6 +42,8 @@ public:
     virtual void loadResults (const std::string& algName, const Point& start, const Point& end);
     virtual void setResultsEnabled (bool resultsEnabled);
 
+    virtual std::string getCurrentAlgorithm () const;
+
     virtual uint getCameraX () const;
     virtual uint getCameraY () const;
     virtual uint getTileScale () const;
@@ -74,7 +76,8 @@ protected:
 
     std::string m_currentAlgorithm;
 
-    std::unordered_map<uint, StatPoint> m_stats;
+    std::vector<std::unordered_map<uint, StatPoint>> m_stats;
+    uint m_currentThread;
     uint m_maxProcessCount;
 
     std::vector<Point> m_results;

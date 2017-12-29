@@ -133,7 +133,9 @@ add_custom_executable(
   src/gui/Button.cc
   src/gui/TextInput.cc
   src/gui/WorldViewport.cc
-  src/gui/GraphicTile.cc)
+  src/gui/GraphicTile.cc
+  src/gui/Text.cc
+  src/gui/ToolbarViewport.cc)
 
 add_custom_executable(
   NAME worldGen

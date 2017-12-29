@@ -40,6 +40,8 @@ WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
           m_tileScale (DEFAULT_TILE_SCALE),
           m_textEnabled (false),
           m_textInitialized (false),
+          m_currentAlgorithm ("dijkstra"),
+          m_currentThread (0),
           m_maxProcessCount (0),
           m_resultsEnabled (false),
           m_showEndPoints (false),
@@ -81,19 +83,22 @@ void WorldViewport::render (SDL_Renderer* renderer)
                 SDL_Texture* renderTexture = m_textTextures[t.getTile().cost];
                 if (m_viewMode == ViewMode::STAT)
                 {
-                    auto statIter = m_stats.find (m_world (x + m_cameraX, y + m_cameraY).id);
-                    if (statIter == m_stats.end ())
+                    if (m_currentThread < m_stats.size ())
                     {
-                        renderTexture = nullptr;
-                    }
-                    else
-                    {
-                        if (m_statTextures[statIter->second.processCount] == nullptr)
+                        auto statIter = m_stats[m_currentThread].find (m_world (x + m_cameraX, y + m_cameraY).id);
+                        if (statIter == m_stats[m_currentThread].end ())
                         {
-                            initializeTexture(renderer, m_statTextures[statIter->second.processCount],
-                                std::to_string (statIter->second.processCount), STAT_TEXT_COLOR);
+                            renderTexture = nullptr;
                         }
-                        renderTexture = m_statTextures[statIter->second.processCount];
+                        else
+                        {
+                            if (m_statTextures[statIter->second.processCount] == nullptr)
+                            {
+                                initializeTexture(renderer, m_statTextures[statIter->second.processCount],
+                                    std::to_string (statIter->second.processCount), STAT_TEXT_COLOR);
+                            }
+                            renderTexture = m_statTextures[statIter->second.processCount];
+                        }
                     }
                 }
                 if (m_showEndPoints)
@@ -117,6 +122,11 @@ void WorldViewport::handleEvent (SDL_Event& e)
 {
     if  (isEnabled ())
     {
+        if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+        {
+            m_rect.w = e.window.data1;
+            m_rect.h = e.window.data2;
+        }
         if (e.type == SDL_KEYDOWN)
         {
             uint moveSpeed = 1;
@@ -202,6 +212,26 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 if (m_mode == VIEW)
                 {
                     m_showEndPoints = true;
+                }
+                break;
+            case SDLK_LEFTBRACKET:
+                if (m_currentThread != 0)
+                {
+                    --m_currentThread;
+                }
+                else
+                {
+                    m_currentThread = m_stats.size () - 1;
+                }
+                break;
+            case SDLK_RIGHTBRACKET:
+                if (m_currentThread + 1 < m_stats.size ())
+                {
+                    ++m_currentThread;
+                }
+                else
+                {
+                    m_currentThread = 0;
                 }
                 break;
             case SDLK_s:
@@ -496,6 +526,11 @@ void WorldViewport::setShowEndPoints(bool showEndPoints)
     m_showEndPoints = showEndPoints;
 }
 
+std::string WorldViewport::getCurrentAlgorithm() const
+{
+    return m_currentAlgorithm;
+}
+
 uint WorldViewport::getCameraX () const
 {
     return m_cameraX;
@@ -584,23 +619,27 @@ SDL_Color WorldViewport::getTileColor (uint vpX, uint vpY) const
     }
     else
     {
-        auto statIter = m_stats.find (m_world (vpX + m_cameraX, vpY + m_cameraY).id);
-        if (statIter == m_stats.end ())
+        if (m_currentThread < m_stats.size ())
         {
-            return DEFAULT_COLOR;
-        }
-        else
-        {
-            float processFactor = 0.0f;
-            if (m_maxProcessCount > 1)
+            auto statIter = m_stats[m_currentThread].find (m_world (vpX + m_cameraX, vpY + m_cameraY).id);
+            if (statIter == m_stats[m_currentThread].end ())
             {
-                processFactor = static_cast<float> (statIter->second.processCount - 1) / (m_maxProcessCount - 1);
+                return DEFAULT_COLOR;
             }
-            return processFactor > 0.5f ?
-                  SDL_Color {255, static_cast<unsigned char> ((255 - 42) * (2.0f - processFactor * 2) + 42), 42, 255}
-                : SDL_Color {static_cast<unsigned char> ((255 - 42) * processFactor * 2 + 42), 255, 42, 255};
+            else
+            {
+                float processFactor = 0.0f;
+                if (m_maxProcessCount > 1)
+                {
+                    processFactor = static_cast<float> (statIter->second.processCount - 1) / (m_maxProcessCount - 1);
+                }
+                return processFactor > 0.5f ?
+                      SDL_Color {255, static_cast<unsigned char> ((255 - 42) * (2.0f - processFactor * 2) + 42), 42, 255}
+                    : SDL_Color {static_cast<unsigned char> ((255 - 42) * processFactor * 2 + 42), 255, 42, 255};
+            }
         }
     }
+    return DEFAULT_COLOR;
 }
 
 uint WorldViewport::getIndex (uint x, uint y) const

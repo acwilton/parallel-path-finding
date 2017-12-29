@@ -6,6 +6,8 @@
 #include <fstream>
 #include <algorithm>
 #include <cmath>
+#include <chrono>
+#include <random>
 
 #include "gui/WorldViewport.h"
 #include "common/Results.h"
@@ -34,6 +36,7 @@ WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
         : Viewport (rect, backgroundColor),
           m_mode (VIEW),
           m_viewMode (COST),
+          m_statMode (INDIVIDUAL),
           m_worldName (" "),
           m_cameraX (0),
           m_cameraY (0),
@@ -83,21 +86,50 @@ void WorldViewport::render (SDL_Renderer* renderer)
                 SDL_Texture* renderTexture = m_textTextures[t.getTile().cost];
                 if (m_viewMode == ViewMode::STAT)
                 {
-                    if (m_currentThread < m_stats.size ())
+                    if (m_statMode == StatMode::INDIVIDUAL)
                     {
-                        auto statIter = m_stats[m_currentThread].find (m_world (x + m_cameraX, y + m_cameraY).id);
-                        if (statIter == m_stats[m_currentThread].end ())
+                        if (m_currentThread < m_stats.size ())
+                        {
+                            auto statIter = m_stats[m_currentThread].find (m_world (x + m_cameraX, y + m_cameraY).id);
+                            if (statIter == m_stats[m_currentThread].end ())
+                            {
+                                renderTexture = nullptr;
+                            }
+                            else
+                            {
+                                if (m_statTextures[statIter->second.processCount] == nullptr)
+                                {
+                                    initializeTexture(renderer, m_statTextures[statIter->second.processCount],
+                                        std::to_string (statIter->second.processCount), STAT_TEXT_COLOR);
+                                }
+                                renderTexture = m_statTextures[statIter->second.processCount];
+                            }
+                        }
+                    }
+                    else
+                    {
+                        uint count = 0;
+                        for (auto& s : m_stats)
+                        {
+                            auto statIter = s.find (m_world (x + m_cameraX, y + m_cameraY).id);
+                            if (statIter != s.end ())
+                            {
+                                count += statIter->second.processCount;
+                            }
+                        }
+
+                        if (count == 0)
                         {
                             renderTexture = nullptr;
                         }
                         else
                         {
-                            if (m_statTextures[statIter->second.processCount] == nullptr)
+                            if (m_statTextures[count] == nullptr)
                             {
-                                initializeTexture(renderer, m_statTextures[statIter->second.processCount],
-                                    std::to_string (statIter->second.processCount), STAT_TEXT_COLOR);
+                                initializeTexture(renderer, m_statTextures[count],
+                                    std::to_string (count), STAT_TEXT_COLOR);
                             }
-                            renderTexture = m_statTextures[statIter->second.processCount];
+                            renderTexture = m_statTextures[count];
                         }
                     }
                 }
@@ -236,7 +268,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 }
                 updateGraphicTilesPos ();
                 break;
-            case SDLK_s:
+            case SDLK_v:
                 if (m_viewMode == COST)
                 {
                     m_viewMode = STAT;
@@ -244,6 +276,17 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 else
                 {
                     m_viewMode = COST;
+                }
+                updateGraphicTilesPos();
+                break;
+            case SDLK_s:
+                if (m_statMode == INDIVIDUAL)
+                {
+                    m_statMode = COLLECTIVE;
+                }
+                else
+                {
+                    m_statMode = INDIVIDUAL;
                 }
                 updateGraphicTilesPos();
                 break;
@@ -418,6 +461,7 @@ void WorldViewport::runAndLoadPathFinding (const std::string& algorithm)
             std::to_string (m_end.x) + " " +
             std::to_string (m_end.y);
     system (command.c_str ());
+    m_threadColors.clear ();
     loadResults (m_currentAlgorithm, m_start, m_end);
 }
 
@@ -442,12 +486,13 @@ void WorldViewport::loadResults (const std::string& algName, const Point& start,
         runAndLoadPathFinding (algName, start.x, start.y, end.x, end.y);
         return;
     }
-    if (m_maxProcessCount > m_statTextures.size ())
+    if (m_threadColors.size () != m_stats.size () + 1)
     {
-        for (uint i = m_statTextures.size (); i <= m_maxProcessCount; ++i)
-        {
-            m_statTextures.push_back(nullptr);
-        }
+        m_threadColors = getRandomColors(m_stats.size () + 1);
+    }
+    if (m_maxProcessCount * m_stats.size () > m_statTextures.size ())
+    {
+        m_statTextures.resize (m_maxProcessCount * m_stats.size (), nullptr);
     }
     if (m_mode == VIEW)
     {
@@ -649,6 +694,23 @@ SDL_Color WorldViewport::getTileColor (uint vpX, uint vpY) const
     return DEFAULT_COLOR;
 }
 
+std::vector<SDL_Color> WorldViewport::getRandomColors (uint numRandomColors) const
+{
+    std::mt19937 generator (0);
+    std::uniform_int_distribution<int> distribution (42, 200);
+
+    std::vector<SDL_Color> colors (numRandomColors);
+    for (auto& c : colors)
+    {
+        c.a = 255;
+        c.r = distribution (generator);
+        c.g = distribution (generator);
+        c.b = distribution (generator);
+    }
+
+    return colors;
+}
+
 uint WorldViewport::getIndex (uint x, uint y) const
 {
     return (ceil (m_rect.w / MIN_TILE_SCALE) * y) + x;
@@ -799,14 +861,60 @@ void WorldViewport::updateTileColors ()
     }
     else
     {
-        for (uint y = 0; y < getCameraHeight (); ++y)
+        if (m_statMode == INDIVIDUAL)
         {
-            for (uint x = 0; x < getCameraWidth (); ++x)
+            for (uint y = 0; y < getCameraHeight (); ++y)
             {
-                GraphicTile& t = m_gTiles[getIndex (x, y)];
-                if (t.getTile().cost != 0)
+                for (uint x = 0; x < getCameraWidth (); ++x)
                 {
-                    t.setRectColor(getTileColor (x, y));
+                    GraphicTile& t = m_gTiles[getIndex (x, y)];
+                    if (t.getTile().cost != 0)
+                    {
+                        t.setRectColor(getTileColor (x, y));
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (uint y = 0; y < getCameraHeight (); ++y)
+            {
+                for (uint x = 0; x < getCameraWidth (); ++x)
+                {
+                    GraphicTile& t = m_gTiles[getIndex (x, y)];
+                    if (t.getTile().cost != 0)
+                    {
+                        bool found = false;
+                        bool multipleFound = false;
+                        uint threadId = 0;
+                        for (uint i = 0; i < m_stats.size (); ++i)
+                        {
+                            auto statIter = m_stats[i].find (m_world (x + m_cameraX, y + m_cameraY).id);
+                            if (statIter != m_stats[i].end ())
+                            {
+                                if (found)
+                                {
+                                    multipleFound = true;
+                                    break;
+                                }
+                                found = true;
+                                threadId = i;
+                            }
+                        }
+                        if (multipleFound)
+                        {
+                            t.setRectColor(m_threadColors[m_stats.size ()]);
+                        }
+                        else if (found)
+                        {
+                            //std::cout << "i: " << threadId << "\n";
+                            t.setRectColor (m_threadColors[threadId]);
+                        }
+                        else
+                        {
+                            t.setRectColor (DEFAULT_COLOR);
+                        }
+                    }
                 }
             }
         }

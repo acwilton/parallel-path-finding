@@ -79,6 +79,7 @@ protected:
 
     std::string m_currentAlgorithm;
 
+    std::vector<SDL_Color> m_threadColors;
     std::vector<std::unordered_map<uint, StatPoint>> m_stats;
     uint m_currentThread;
     uint m_maxProcessCount;
@@ -104,6 +105,7 @@ protected:
 
     virtual SDL_Color getAlgorithmColor () const;
     virtual SDL_Color getTileColor (uint vpX, uint vpY) const;
+    virtual std::vector<SDL_Color> getRandomColors (uint numRandomColors) const;
 
     uint getIndex (uint x, uint y) const;
     bool isNull (const Point& p) const;

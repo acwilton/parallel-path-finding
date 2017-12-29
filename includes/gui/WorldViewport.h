@@ -60,9 +60,11 @@ public:
 protected:
     enum Mode {VIEW, SELECT};
     enum ViewMode {COST, STAT};
+    enum StatMode {INDIVIDUAL, COLLECTIVE};
 
     Mode m_mode;
     ViewMode m_viewMode;
+    StatMode m_statMode;
 
     std::string m_worldName;
     World m_world;

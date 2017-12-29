@@ -223,6 +223,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 {
                     m_currentThread = m_stats.size () - 1;
                 }
+                updateGraphicTilesPos ();
                 break;
             case SDLK_RIGHTBRACKET:
                 if (m_currentThread + 1 < m_stats.size ())
@@ -233,6 +234,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 {
                     m_currentThread = 0;
                 }
+                updateGraphicTilesPos ();
                 break;
             case SDLK_s:
                 if (m_viewMode == COST)

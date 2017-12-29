@@ -43,6 +43,7 @@ public:
     virtual void setResultsEnabled (bool resultsEnabled);
 
     virtual std::string getCurrentAlgorithm () const;
+    virtual uint getCurrentThreadNum () const;
 
     virtual uint getCameraX () const;
     virtual uint getCameraY () const;

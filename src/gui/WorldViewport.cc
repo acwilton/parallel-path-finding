@@ -531,6 +531,11 @@ std::string WorldViewport::getCurrentAlgorithm() const
     return m_currentAlgorithm;
 }
 
+uint WorldViewport::getCurrentThreadNum () const
+{
+    return m_currentThread;
+}
+
 uint WorldViewport::getCameraX () const
 {
     return m_cameraX;

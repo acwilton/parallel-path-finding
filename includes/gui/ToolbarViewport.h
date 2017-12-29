@@ -27,7 +27,7 @@ protected:
     std::shared_ptr<WorldViewport> m_wvp;
 
     Text m_currentAlg;
-    //Text m_currentThread;
+    Text m_currentThreadNum;
 };
 
 } /* gui */

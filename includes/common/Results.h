@@ -37,8 +37,10 @@ struct StatPoint
     uint processCount;
 };
 
-inline void writeResults (const std::vector<Point>& path, const std::vector<std::unordered_map<uint, StatPoint>>& stats,
-                          const std::string& worldName, const std::string& algName, uint ms, uint totalCost)
+inline void writeResults (const std::vector<Point>& path,
+                          const std::vector<std::unordered_map<uint, StatPoint>>& stats,
+                          const std::string& worldName, const std::string& algName, uint ms,
+                          uint totalCost)
 {
     std::stringstream dirName;
     dirName << RESULTS_DIR << "/" << worldName << "_"
@@ -57,7 +59,36 @@ inline void writeResults (const std::vector<Point>& path, const std::vector<std:
     resultFile.close();
 
     std::ofstream performanceFile (dirName.str () + "/" + algName + PERFORMANCE_EXT);
-    performanceFile << "time: " << ms;
+    performanceFile << "time: " << ms << std::endl;
+
+    std::stringstream threadInfo;
+
+    std::unordered_map<uint, StatPoint> combinedStats;
+    uint totalSpread = 0;
+    uint totalWork = 0;
+    for (uint i = 0; i < stats.size (); ++i)
+    {
+        threadInfo << "thread " << std::to_string (i) << std::endl;
+        threadInfo << "----------" << std::endl;
+        totalSpread += stats[i].size ();
+        threadInfo << "tile spread: " << stats[i].size () << std::endl;
+        uint threadTotalWork = 0;
+        for (const auto& s : stats[i])
+        {
+            threadTotalWork += s.second.processCount;
+            combinedStats[s.first] = s.second;
+        }
+        totalWork += threadTotalWork;
+        threadInfo << "total work done: " << threadTotalWork << std::endl << std::endl;
+    }
+
+    performanceFile << "total spread: " << combinedStats.size () << std::endl;
+    performanceFile << "average thread spread: "
+                    << static_cast<float> (totalSpread) / stats.size () << std::endl;
+    performanceFile << "total work: " << totalWork << std::endl;
+    performanceFile << "work per thread: " << static_cast<float> (totalWork) / stats.size ()
+                    << std::endl << std::endl;
+    performanceFile << threadInfo.rdbuf();
     performanceFile.close ();
 
     std::ofstream statFile (dirName.str () + "/" + algName + STAT_EXT);

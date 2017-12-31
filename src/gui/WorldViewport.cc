@@ -253,7 +253,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 }
                 else
                 {
-                    m_currentThread = m_stats.size () - 1;
+                    m_currentThread = m_stats.empty () ? 0 : m_stats.size () - 1;
                 }
                 updateGraphicTilesPos ();
                 break;

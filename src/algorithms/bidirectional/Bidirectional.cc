@@ -48,6 +48,7 @@ int main (int args, char* argv[])
         std::cout << "World file doesn't exist." << std::endl;
         return EXIT_FAILURE;
     }
+
     pathFind::World world;
 
     worldFile >> world;
@@ -65,6 +66,10 @@ int main (int args, char* argv[])
         std::cout << "Start and end points failed to convert to numeric types" << std::endl;
         return EXIT_FAILURE;
     }
+
+    #ifdef GEN_STATS
+        std::vector<std::unordered_map<uint, StatPoint>> stats (1);
+    #endif
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
@@ -84,6 +89,10 @@ int main (int args, char* argv[])
     // A* algorithm
     forwardOpenTiles.push (world (startX, startY), {startX, startY}, 0);
     reverseOpenTiles.push (world (endX, endY), {endX, endY}, 0);
+    #ifdef GEN_STATS
+        stats[0][world (startX, startY).id] = StatPoint {startX, startY};
+        stats[0][world (endX, endY).id] = StatPoint {endX, endY};
+    #endif
 
     std::unordered_map<uint, PathTile> expandedTiles;
     PathTile fTile = forwardOpenTiles.top ();
@@ -112,6 +121,17 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 forwardOpenTiles.tryUpdateBestCost (worldTile, adjPoint, fTile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
+                    {
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
 
@@ -123,6 +143,17 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 forwardOpenTiles.tryUpdateBestCost (worldTile, adjPoint, fTile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
+                    {
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
 
@@ -134,6 +165,17 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 forwardOpenTiles.tryUpdateBestCost (worldTile, adjPoint, fTile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
+                    {
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
 
@@ -145,6 +187,17 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 forwardOpenTiles.tryUpdateBestCost (worldTile, adjPoint, fTile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
+                    {
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
 
@@ -169,6 +222,17 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 reverseOpenTiles.tryUpdateBestCost (worldTile, adjPoint, rTile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
+                    {
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
 
@@ -180,6 +244,17 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 reverseOpenTiles.tryUpdateBestCost (worldTile, adjPoint, rTile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
+                    {
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
 
@@ -191,6 +266,17 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 reverseOpenTiles.tryUpdateBestCost (worldTile, adjPoint, rTile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
+                    {
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
 
@@ -202,6 +288,17 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 reverseOpenTiles.tryUpdateBestCost (worldTile, adjPoint, rTile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
+                    {
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
     }
@@ -227,8 +324,13 @@ int main (int args, char* argv[])
     }
     totalCost -= fTile.getTile().cost;
 
-    writeResults (finalPath, argv[1], ALG_NAME,
-            std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #ifdef GEN_STATS
+        writeResults (finalPath, stats, argv[1], ALG_NAME,
+                std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #else
+        writeResults (finalPath, argv[1], ALG_NAME,
+                std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #endif
 
     return EXIT_SUCCESS;
 }

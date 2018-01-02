@@ -19,15 +19,18 @@ class ToolbarViewport : public Viewport
 {
 public:
     ToolbarViewport (SDL_Rect rect, std::shared_ptr<WorldViewport> wvp,
-        SDL_Color backgroundColor = { 0xFF, 0xFF, 0xFF, 0xFF });
+        uint windowHeight, SDL_Color backgroundColor = { 0xFF, 0xFF, 0xFF, 0xFF });
     virtual ~ToolbarViewport ();
 
     virtual void render (SDL_Renderer* renderer);
+    virtual void handleEvent (SDL_Event& e);
 protected:
     std::shared_ptr<WorldViewport> m_wvp;
 
     Text m_currentAlg;
     Text m_currentThreadNum;
+
+    uint m_yFromBottom;
 };
 
 } /* gui */

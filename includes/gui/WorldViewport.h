@@ -36,8 +36,8 @@ public:
     virtual void setWorld (const std::string& worldFileName);
     virtual void loadWorld ();
 
-    virtual void runAndLoadPathFinding (const std::string& algorithm);
-    virtual void runAndLoadPathFinding (const std::string& algorithm,
+    virtual void runPathFinding (const std::string& algorithm);
+    virtual void runPathFinding (const std::string& algorithm,
                                         uint startX, uint startY, uint endX, uint endY);
     virtual void loadResults (const std::string& algName, const Point& start, const Point& end);
     virtual void setResultsEnabled (bool resultsEnabled);

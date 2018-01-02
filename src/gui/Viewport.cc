@@ -42,12 +42,13 @@ void Viewport::render (SDL_Renderer* renderer)
 
 void Viewport::handleEvent (SDL_Event& e)
 {
+    if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+    {
+        m_rect.w = e.window.data1;
+        m_rect.h = e.window.data2;
+    }
     if (isEnabled ())
     {
-        if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-        {
-            m_rect.w = e.window.data1;
-        }
         for (auto& b : m_buttons)
         {
             b->handleEvent (e);

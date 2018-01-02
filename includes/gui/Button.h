@@ -29,6 +29,8 @@ public:
             { 0x00, 0x00, 0x00, 0xFF });
     virtual ~Button ();
 
+    virtual void updateViewport (uint newX, uint newY);
+
     virtual int getX () const;
     virtual int getY () const;
     virtual int getWidth () const;

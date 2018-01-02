@@ -2,6 +2,8 @@
  * Button.cc
  */
 
+#include <iostream>
+
 #include "gui/Text.h"
 
 namespace pathFind
@@ -44,7 +46,6 @@ void Text::render (SDL_Renderer* renderer)
     SDL_SetRenderDrawColor (renderer, m_textColor.r, m_textColor.g,
             m_textColor.b, m_textColor.a);
     SDL_RenderCopy (renderer, m_textTexture, nullptr, &m_textRect);
-
 }
 
 void Text::enable ()
@@ -123,8 +124,16 @@ void Text::initializeTextTexture (SDL_Renderer* renderer)
     }
 
     TTF_Font* font = TTF_OpenFont ("../resources/FreeSans.ttf", 128);
+    if (font == nullptr)
+    {
+        Log::logError (
+                std::string ("Failed to open font: \"../resources/FreeSans.ttf\" | SDL_ttf Error: ")
+                + TTF_GetError ());
+        return;
+    }
     SDL_Surface* textSurface = TTF_RenderText_Solid (font, m_text.c_str (),
             m_textColor);
+    TTF_CloseFont(font);
     if (textSurface == nullptr)
     {
         Log::logError (

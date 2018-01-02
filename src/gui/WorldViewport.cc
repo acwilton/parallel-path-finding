@@ -53,7 +53,8 @@ WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
           m_startTexture (nullptr),
           m_endTexture (nullptr)
 {
-    m_gTiles.resize ((getWidth () * getHeight ()) / (MIN_TILE_SCALE * MIN_TILE_SCALE));
+    m_gTiles.resize (ceil (static_cast<float> (getHeight ()) / MIN_TILE_SCALE) *
+                    ceil (static_cast<float> (getWidth ()) / MIN_TILE_SCALE));
 
     for (uint i = 0; i < 256; ++i)
     {
@@ -77,6 +78,7 @@ void WorldViewport::render (SDL_Renderer* renderer)
         SDL_SetRenderDrawColor (renderer, m_backgroundColor.r, m_backgroundColor.g,
                         m_backgroundColor.b, m_backgroundColor.a);
         SDL_RenderFillRect (renderer, nullptr);
+
         for (uint y = 0; y < getCameraHeight (); ++y)
         {
             for (uint x = 0; x < getCameraWidth (); ++x)
@@ -152,13 +154,16 @@ void WorldViewport::render (SDL_Renderer* renderer)
 
 void WorldViewport::handleEvent (SDL_Event& e)
 {
+    if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+    {
+        m_rect.w = e.window.data1;
+        m_rect.h = e.window.data2;
+        m_gTiles.resize (ceil (static_cast<float> (getHeight ()) / MIN_TILE_SCALE) *
+                        ceil (static_cast<float> (getWidth ()) / MIN_TILE_SCALE));
+        updateGraphicTilesScaleAndPos();
+    }
     if  (isEnabled ())
     {
-        if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-        {
-            m_rect.w = e.window.data1;
-            m_rect.h = e.window.data2;
-        }
         if (e.type == SDL_KEYDOWN)
         {
             uint moveSpeed = 1;
@@ -293,7 +298,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
             case SDLK_r:
                 if (!isNull (m_start) && !isNull (m_end))
                 {
-                    runAndLoadPathFinding (m_currentAlgorithm);
+                    loadResults (m_currentAlgorithm, m_start, m_end);
                 }
                 break;
             case SDLK_d:
@@ -450,42 +455,43 @@ void WorldViewport::loadWorld ()
     updateGraphicTilesScaleAndPos ();
 }
 
-void WorldViewport::runAndLoadPathFinding (const std::string& algorithm)
+void WorldViewport::runPathFinding (const std::string& algorithm)
 {
-    m_currentAlgorithm = algorithm;
     setMode (VIEW);
     std::string command;
-    command = "./" + m_currentAlgorithm + " " + m_worldName + " " +
+    command = "./" + algorithm + " " + m_worldName + " " +
             std::to_string (m_start.x) + " " +
             std::to_string (m_start.y) + " " +
             std::to_string (m_end.x) + " " +
             std::to_string (m_end.y);
     system (command.c_str ());
     m_threadColors.clear ();
-    loadResults (m_currentAlgorithm, m_start, m_end);
 }
 
-void WorldViewport::runAndLoadPathFinding (const std::string& algorithm,
+void WorldViewport::runPathFinding (const std::string& algorithm,
                                     uint startX, uint startY, uint endX, uint endY)
 {
     m_start.x = startX;
     m_start.y = startY;
     m_end.x = endX;
     m_end.y = endY;
-    runAndLoadPathFinding (algorithm);
+    runPathFinding (algorithm);
 }
 
 void WorldViewport::loadResults (const std::string& algName, const Point& start, const Point& end)
 {
-    m_currentAlgorithm = algName;
     setResultsEnabled (false);
     m_results.clear();
     m_stats.clear();
     if (!readResults (m_results, m_stats, m_maxProcessCount, start, end, m_worldName, algName))
     {
-        runAndLoadPathFinding (algName, start.x, start.y, end.x, end.y);
-        return;
+        runPathFinding (algName, start.x, start.y, end.x, end.y);
+        if (!readResults (m_results, m_stats, m_maxProcessCount, start, end, m_worldName, algName))
+        {
+            return;
+        }
     }
+    m_currentAlgorithm = algName;
     if (m_threadColors.size () != m_stats.size () + 1)
     {
         m_threadColors = getRandomColors(m_stats.size () + 1);
@@ -907,7 +913,6 @@ void WorldViewport::updateTileColors ()
                         }
                         else if (found)
                         {
-                            //std::cout << "i: " << threadId << "\n";
                             t.setRectColor (m_threadColors[threadId]);
                         }
                         else
@@ -940,8 +945,16 @@ void WorldViewport::initializeTexture(SDL_Renderer* renderer, SDL_Texture*& text
                                       const std::string& text, const SDL_Color& color)
 {
     TTF_Font* font = TTF_OpenFont ("../resources/FreeSans.ttf", 128);
+    if (font == nullptr)
+    {
+        Log::logError (
+                std::string ("Failed to open font: \"../resources/FreeSans.ttf\" | SDL_ttf Error: ")
+                + TTF_GetError ());
+        return;
+    }
     SDL_Surface* textSurface = TTF_RenderText_Solid (font, text.c_str(),
                                                      color);
+    TTF_CloseFont (font);
     if (textSurface == nullptr)
     {
         Log::logError (

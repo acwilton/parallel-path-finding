@@ -9,8 +9,8 @@ namespace pathFind
 namespace gui
 {
 
-const size_t SCREEN_WIDTH = 1800;
-const size_t SCREEN_HEIGHT = 1200;
+const size_t SCREEN_WIDTH = 1400;
+const size_t SCREEN_HEIGHT = 900;
 
 } /* gui */
 } /* pathFind */

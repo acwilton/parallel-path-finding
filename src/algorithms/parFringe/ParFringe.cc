@@ -32,6 +32,12 @@ const std::string WORLD_EXT = ".world";
 
 const std::string ALG_NAME = "parFringe";
 
+const uint numThreads = 2;
+
+#ifdef GEN_STATS
+    std::vector<std::unordered_map<uint, StatPoint>> stats (numThreads);
+#endif
+
 uint
 heuristic (uint x, uint y, uint endX, uint endY);
 
@@ -43,7 +49,7 @@ void search (uint id, uint numThreads, uint startX, uint startY, uint endX, uint
              std::vector<uint>& mins, uint threshold, const pathFind::World& world,
              bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint);
 */
-void search (uint id, uint numThreads, uint endX, uint endY,
+void search (uint id, uint endX, uint endY,
              /*std::deque<PathTile>& now,*/ std::vector<std::deque<PathTile>>& localNow,
              std::vector<std::deque<PathTile>>& later,
              tbb::concurrent_unordered_map<uint, bool>& closedTiles,
@@ -99,8 +105,6 @@ int main (int args, char* argv[])
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    const uint numThreads = 1;
-
     // Setup
     //std::vector<PathTile> now;
     uint startHeuristic = (startX < endX ? endX - startX : startX - endX) +
@@ -109,6 +113,9 @@ int main (int args, char* argv[])
     std::vector<std::deque<PathTile>> localNow (numThreads);
     localNow[0].emplace_back (world (startX, startY), Point{startX, startY},
                         Point {startX, startY}, 0, startHeuristic);
+    #ifdef GEN_STATS
+        stats[0][world (startX, startY).id] = StatPoint {startX, startY};
+    #endif
     std::vector<std::deque<PathTile>> later (numThreads);
     std::vector<std::unordered_map<uint, PathTile>> seen (numThreads);
     std::vector<uint> mins (numThreads);
@@ -121,7 +128,7 @@ int main (int args, char* argv[])
     std::vector<std::thread> threads(numThreads);
     for (uint i = 0; i < numThreads; ++i)
     {
-    	threads[i] = std::thread (search, i, numThreads, endX, endY, std::ref (localNow), //std::ref(now),
+    	threads[i] = std::thread (search, i, endX, endY, std::ref (localNow), //std::ref(now),
     			std::ref(later), std::ref(closedTiles), std::ref (seen), startHeuristic,
     			std::cref(world), std::ref(finished), std::ref (finishedLock), std::ref(syncPoint));
     }
@@ -174,8 +181,13 @@ int main (int args, char* argv[])
     }
     finalPath.emplace_back(endTile.xy ());
 
-    writeResults (finalPath, argv[1], ALG_NAME,
-            std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #ifdef GEN_STATS
+        writeResults (finalPath, stats, argv[1], ALG_NAME,
+                std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #else
+        writeResults (finalPath, argv[1], ALG_NAME,
+                std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #endif
 
     return EXIT_SUCCESS;
 }
@@ -187,7 +199,7 @@ heuristic (uint x, uint y, uint endX, uint endY)
 			(y < endY ? endY - y : y - endY);
 }
 
-void search (uint id, uint numThreads, uint endX, uint endY,
+void search (uint id, uint endX, uint endY,
              /*std::deque<PathTile>& now,*/ std::vector<std::deque<PathTile>>& localNow,
              std::vector<std::deque<PathTile>>& later,
              tbb::concurrent_unordered_map<uint, bool>& closedTiles,
@@ -293,6 +305,17 @@ searchNeighbor(const Point& adjPoint, uint id, uint threshold, const PathTile& c
 			auto seenTileIter = seen[id].find(worldTile.id);
 			if (seenTileIter == seen[id].end ())
 			{
+                #ifdef GEN_STATS
+                    auto statIter = stats[id].find (worldTile.id);
+                    if (statIter == stats[id].end ())
+                    {
+                        stats[id][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
 				// If we haven't seen the tile then we need to make sure that no one else had either
 				if (closedTiles.find(worldTile.id) == closedTiles.end())
 				{

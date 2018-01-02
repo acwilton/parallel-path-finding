@@ -69,6 +69,10 @@ int main (int args, char* argv[])
         return EXIT_FAILURE;
     }
 
+    #ifdef GEN_STATS
+        std::vector<std::unordered_map<uint, StatPoint>> stats (1);
+    #endif
+
     auto t1 = std::chrono::high_resolution_clock::now();
 
     std::function<uint (uint, uint)> h = [endX, endY] (uint x, uint y)
@@ -80,6 +84,10 @@ int main (int args, char* argv[])
     std::list<PathTile> now, later;
     now.emplace_front (world (startX, startY), Point{startX, startY},
     		Point {startX, startY}, 0, h (startX, startY));
+
+    #ifdef GEN_STATS
+        stats[0][world (startX, startY).id] = StatPoint {startX, startY};
+    #endif
 
     uint threshold = now.front().getCombinedHeuristic();
     std::unordered_map <uint, PathTile> seen;
@@ -118,6 +126,17 @@ int main (int args, char* argv[])
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
                 if (worldTile.cost != 0)
                 {
+                    #ifdef GEN_STATS
+                        auto statIter = stats[0].find (worldTile.id);
+                        if (statIter == stats[0].end ())
+                        {
+                            stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                        }
+                        else
+                        {
+                            statIter->second.processCount++;
+                        }
+                    #endif
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
@@ -154,6 +173,17 @@ int main (int args, char* argv[])
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
                 if (worldTile.cost != 0)
                 {
+                    #ifdef GEN_STATS
+                        auto statIter = stats[0].find (worldTile.id);
+                        if (statIter == stats[0].end ())
+                        {
+                            stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                        }
+                        else
+                        {
+                            statIter->second.processCount++;
+                        }
+                    #endif
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
@@ -189,6 +219,17 @@ int main (int args, char* argv[])
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
                 if (worldTile.cost != 0)
                 {
+                    #ifdef GEN_STATS
+                        auto statIter = stats[0].find (worldTile.id);
+                        if (statIter == stats[0].end ())
+                        {
+                            stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                        }
+                        else
+                        {
+                            statIter->second.processCount++;
+                        }
+                    #endif
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
@@ -224,6 +265,17 @@ int main (int args, char* argv[])
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
                 if (worldTile.cost != 0)
                 {
+                    #ifdef GEN_STATS
+                        auto statIter = stats[0].find (worldTile.id);
+                        if (statIter == stats[0].end ())
+                        {
+                            stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                        }
+                        else
+                        {
+                            statIter->second.processCount++;
+                        }
+                    #endif
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
@@ -269,8 +321,13 @@ int main (int args, char* argv[])
     }
     finalPath.emplace_back(endTile.xy ());
 
-    writeResults (finalPath, argv[1], ALG_NAME,
-            std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #ifdef GEN_STATS
+        writeResults (finalPath, stats, argv[1], ALG_NAME,
+                std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #else
+        writeResults (finalPath, argv[1], ALG_NAME,
+                std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #endif
 
     return EXIT_SUCCESS;
 }
@@ -361,4 +418,3 @@ void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<
     }
 }
 */
-

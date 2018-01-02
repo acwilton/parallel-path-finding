@@ -32,7 +32,7 @@ const std::string WORLD_EXT = ".world";
 
 const std::string ALG_NAME = "parFringe";
 
-const uint numThreads = 2;
+const uint numThreads = 4;
 
 #ifdef GEN_STATS
     std::vector<std::unordered_map<uint, StatPoint>> stats (numThreads);
@@ -219,10 +219,10 @@ void search (uint id, uint endX, uint endY,
             localNow[id].pop_front ();
 
             // We have already seen and proccessed this tile. No need to continue.
-            if (seen[id].find(current.getTile().id) != seen[id].end() || closedTiles.find (current.getTile().id) != closedTiles.end())
+            /*if (seen[id].find(current.getTile().id) != seen[id].end() || closedTiles.find (current.getTile().id) != closedTiles.end())
             {
                 continue;
-            }
+            }*/
 
             if (current.getCombinedHeuristic () > threshold)
             {

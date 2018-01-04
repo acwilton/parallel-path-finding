@@ -148,12 +148,8 @@ int main (int, char**)
                 std::stringstream input (s);
                 std::string alg;
                 uint sx, sy, ex, ey;
-                std::cout << "wow0\n";
                 input >> alg >> sx >> sy >> ex >> ey;
-                std::cout << "wow1\n";
-                std::cout << "ex: " << ex << " ey: " << ey << "\n";
                 worldViewport->loadResults(alg, Point {sx, sy}, Point {ex, ey});
-                std::cout << "wow2\n";
                 worldViewport->setResultsEnabled(true);
                 viewResult_B->enable ();
             });

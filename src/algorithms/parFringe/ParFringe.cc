@@ -113,9 +113,7 @@ int main (int args, char* argv[])
     std::vector<std::deque<PathTile>> localNow (numThreads);
     localNow[0].emplace_back (world (startX, startY), Point{startX, startY},
                         Point {startX, startY}, 0, startHeuristic);
-    #ifdef GEN_STATS
-        stats[0][world (startX, startY).id] = StatPoint {startX, startY};
-    #endif
+
     std::vector<std::deque<PathTile>> later (numThreads);
     std::vector<std::unordered_map<uint, PathTile>> seen (numThreads);
     std::vector<uint> mins (numThreads);
@@ -217,6 +215,17 @@ void search (uint id, uint endX, uint endY,
         {
             PathTile current = localNow[id].front();
             localNow[id].pop_front ();
+            #ifdef GEN_STATS
+                auto statIter = stats[id].find (current.getTile ().id);
+                if (statIter == stats[id].end ())
+                {
+                    stats[id][current.getTile ().id] = StatPoint {current.xy ().x, current.xy ().y};
+                }
+                else
+                {
+                    statIter->second.processCount++;
+                }
+            #endif
 
             // We have already seen and proccessed this tile. No need to continue.
             /*if (seen[id].find(current.getTile().id) != seen[id].end() || closedTiles.find (current.getTile().id) != closedTiles.end())
@@ -275,7 +284,10 @@ void search (uint id, uint endX, uint endY,
                             idx = 0;
                         }
                 	}
-                	later[id].clear ();
+                }
+                for (uint i = 0; i < numThreads; ++i)
+                {
+                    later[i].clear ();
                 }
             }
             // Find the minimum of the minimums
@@ -305,17 +317,6 @@ searchNeighbor(const Point& adjPoint, uint id, uint threshold, const PathTile& c
 			auto seenTileIter = seen[id].find(worldTile.id);
 			if (seenTileIter == seen[id].end ())
 			{
-                #ifdef GEN_STATS
-                    auto statIter = stats[id].find (worldTile.id);
-                    if (statIter == stats[id].end ())
-                    {
-                        stats[id][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
-                    }
-                    else
-                    {
-                        statIter->second.processCount++;
-                    }
-                #endif
 				// If we haven't seen the tile then we need to make sure that no one else had either
 				if (closedTiles.find(worldTile.id) == closedTiles.end())
 				{
@@ -323,6 +324,7 @@ searchNeighbor(const Point& adjPoint, uint id, uint threshold, const PathTile& c
                     uint costToTile = current.getBestCost () + worldTile.cost;
                     if (costToTile > threshold)
                     {
+
                         later[id].emplace_back (worldTile, adjPoint, current.xy(),
 						    costToTile, heuristic (adjPoint.x, adjPoint.y, endX, endY));
                         seen[id][worldTile.id] = later[id].back ();

@@ -105,6 +105,7 @@ void WorldViewport::render (SDL_Renderer* renderer)
                                         std::to_string (statIter->second.processCount), STAT_TEXT_COLOR);
                                 }
                                 renderTexture = m_statTextures[statIter->second.processCount];
+
                             }
                         }
                     }
@@ -298,6 +299,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
             case SDLK_r:
                 if (!isNull (m_start) && !isNull (m_end))
                 {
+                    runPathFinding(m_currentAlgorithm);
                     loadResults (m_currentAlgorithm, m_start, m_end);
                 }
                 break;
@@ -498,7 +500,7 @@ void WorldViewport::loadResults (const std::string& algName, const Point& start,
     }
     if (m_maxProcessCount * m_stats.size () > m_statTextures.size ())
     {
-        m_statTextures.resize (m_maxProcessCount * m_stats.size (), nullptr);
+        m_statTextures.resize (m_maxProcessCount * m_stats.size () + 1, nullptr);
     }
     if (m_mode == VIEW)
     {

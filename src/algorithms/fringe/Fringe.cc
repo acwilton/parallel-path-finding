@@ -85,10 +85,6 @@ int main (int args, char* argv[])
     now.emplace_front (world (startX, startY), Point{startX, startY},
     		Point {startX, startY}, 0, h (startX, startY));
 
-    #ifdef GEN_STATS
-        stats[0][world (startX, startY).id] = StatPoint {startX, startY};
-    #endif
-
     uint threshold = now.front().getCombinedHeuristic();
     std::unordered_map <uint, PathTile> seen;
     seen[now.front().getTile().id] = now.front ();
@@ -104,6 +100,17 @@ int main (int args, char* argv[])
         {
             PathTile current = now.front();
             now.pop_front();
+            #ifdef GEN_STATS
+                auto statIter = stats[0].find (current.getTile ().id);
+                if (statIter == stats[0].end ())
+                {
+                    stats[0][current.getTile ().id] = StatPoint {current.xy ().x, current.xy ().y};
+                }
+                else
+                {
+                    statIter->second.processCount++;
+                }
+            #endif
 
             if (current.getCombinedHeuristic () > threshold)
             {
@@ -126,17 +133,7 @@ int main (int args, char* argv[])
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
                 if (worldTile.cost != 0)
                 {
-                    #ifdef GEN_STATS
-                        auto statIter = stats[0].find (worldTile.id);
-                        if (statIter == stats[0].end ())
-                        {
-                            stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
-                        }
-                        else
-                        {
-                            statIter->second.processCount++;
-                        }
-                    #endif
+
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
@@ -173,17 +170,7 @@ int main (int args, char* argv[])
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
                 if (worldTile.cost != 0)
                 {
-                    #ifdef GEN_STATS
-                        auto statIter = stats[0].find (worldTile.id);
-                        if (statIter == stats[0].end ())
-                        {
-                            stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
-                        }
-                        else
-                        {
-                            statIter->second.processCount++;
-                        }
-                    #endif
+
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
@@ -219,17 +206,7 @@ int main (int args, char* argv[])
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
                 if (worldTile.cost != 0)
                 {
-                    #ifdef GEN_STATS
-                        auto statIter = stats[0].find (worldTile.id);
-                        if (statIter == stats[0].end ())
-                        {
-                            stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
-                        }
-                        else
-                        {
-                            statIter->second.processCount++;
-                        }
-                    #endif
+
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
@@ -265,17 +242,7 @@ int main (int args, char* argv[])
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
                 if (worldTile.cost != 0)
                 {
-                    #ifdef GEN_STATS
-                        auto statIter = stats[0].find (worldTile.id);
-                        if (statIter == stats[0].end ())
-                        {
-                            stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
-                        }
-                        else
-                        {
-                            statIter->second.processCount++;
-                        }
-                    #endif
+
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {

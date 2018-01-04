@@ -13,7 +13,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
   if (GEN_STATS)
     add_definitions (-DGEN_STATS)
   endif(GEN_STATS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wpedantic -pedantic -pedantic-errors -march=native")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wpedantic -g -pedantic -pedantic-errors -march=native")
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 # Boost (system + filesystem)

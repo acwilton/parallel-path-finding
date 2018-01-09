@@ -78,6 +78,12 @@ void Button::handleEvent (SDL_Event& e)
     }
 }
 
+void Button::updateViewport(uint newX, uint newY)
+{
+    m_viewport_x = newX;
+    m_viewport_y = newY;
+}
+
 void Button::execute ()
 {
     m_funct ();
@@ -168,9 +174,17 @@ void Button::initializeTextTexture (SDL_Renderer* renderer)
         m_text = " ";
     }
 
-    TTF_Font* font = TTF_OpenFont ("resources/FreeSans.ttf", 128);
+    TTF_Font* font = TTF_OpenFont ("../resources/FreeSans.ttf", 128);
+    if (font == nullptr)
+    {
+        Log::logError (
+                std::string ("Failed to open font: \"../resources/FreeSans.ttf\" | SDL_ttf Error: ")
+                + TTF_GetError ());
+        return;
+    }
     SDL_Surface* textSurface = TTF_RenderText_Solid (font, m_text.c_str (),
             m_textColor);
+    TTF_CloseFont(font);
     if (textSurface == nullptr)
     {
         Log::logError (

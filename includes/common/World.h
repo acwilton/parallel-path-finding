@@ -68,6 +68,7 @@ public:
     size_t getWidth () const;
     size_t getHeight () const;
     size_t getNumOpenTiles () const;
+    uint getMaxTileCost () const;
 
     friend std::ostream& operator<< (std::ostream& stream, const World& world);
     friend std::istream& operator>> (std::istream& stream, World& world);
@@ -84,6 +85,7 @@ private:
     size_t m_height;
 
     size_t m_openTiles;
+    uint m_maxTileCost;
 };
 
 } /* namespace pathFind */

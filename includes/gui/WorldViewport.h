@@ -1,6 +1,6 @@
 /**
  * File        : WorldViewport.h
- * Description : 
+ * Description :
  */
 
 #ifndef WORLDVIEWPORT_H_
@@ -36,12 +36,14 @@ public:
     virtual void setWorld (const std::string& worldFileName);
     virtual void loadWorld ();
 
-    virtual void runAndLoadPathFinding (const std::string& algorithm);
-    virtual void runAndLoadPathFinding (const std::string& algorithm,
+    virtual void runPathFinding (const std::string& algorithm);
+    virtual void runPathFinding (const std::string& algorithm,
                                         uint startX, uint startY, uint endX, uint endY);
-    virtual void loadResults (const Point& start, const Point& end,
-                             const std::string& algName);
+    virtual void loadResults (const std::string& algName, const Point& start, const Point& end);
     virtual void setResultsEnabled (bool resultsEnabled);
+
+    virtual std::string getCurrentAlgorithm () const;
+    virtual uint getCurrentThreadNum () const;
 
     virtual uint getCameraX () const;
     virtual uint getCameraY () const;
@@ -57,8 +59,12 @@ public:
 
 protected:
     enum Mode {VIEW, SELECT};
+    enum ViewMode {COST, STAT};
+    enum StatMode {INDIVIDUAL, COLLECTIVE};
 
     Mode m_mode;
+    ViewMode m_viewMode;
+    StatMode m_statMode;
 
     std::string m_worldName;
     World m_world;
@@ -72,6 +78,12 @@ protected:
     bool m_textInitialized;
 
     std::string m_currentAlgorithm;
+
+    std::vector<SDL_Color> m_threadColors;
+    std::vector<std::unordered_map<uint, StatPoint>> m_stats;
+    uint m_currentThread;
+    uint m_maxProcessCount;
+
     std::vector<Point> m_results;
     bool m_resultsEnabled;
 
@@ -83,6 +95,7 @@ protected:
     SDL_Color m_endPrevColor;
 
     SDL_Texture* m_textTextures[256];
+    std::vector<SDL_Texture*> m_statTextures;
     SDL_Texture* m_startTexture;
     SDL_Texture* m_endTexture;
 
@@ -91,6 +104,8 @@ protected:
     virtual Point trySelectTile (int mouseX, int mouseY);
 
     virtual SDL_Color getAlgorithmColor () const;
+    virtual SDL_Color getTileColor (uint vpX, uint vpY) const;
+    virtual std::vector<SDL_Color> getRandomColors (uint numRandomColors) const;
 
     uint getIndex (uint x, uint y) const;
     bool isNull (const Point& p) const;
@@ -108,10 +123,11 @@ protected:
     // Always update scale before position
     virtual void updateGraphicTilesScaleAndPos ();
     virtual void updateGraphicTilesPos ();
+    virtual void updateTileColors ();
 
     virtual void initializeTextures (SDL_Renderer* renderer);
     virtual void initializeTexture (SDL_Renderer* renderer, SDL_Texture*& texture,
-                                    const std::string& text);
+                                    const std::string& text, const SDL_Color& color);
     virtual void destroyResources ();
 };
 

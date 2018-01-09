@@ -26,9 +26,10 @@ gui.log
 /bidir
 /parBidir
 /fringe
-
-# Saved results folder for important results we don't want to lose
-saved_results
+/parFringe
 
 # makefile dependency file
 makefile.deps
+
+# Atom stuff
+.clang_complete

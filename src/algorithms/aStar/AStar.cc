@@ -20,7 +20,7 @@
 
 using namespace pathFind;
 
-const std::string WORLD_DIR = "worlds";
+const std::string WORLD_DIR = "../worlds";
 const std::string WORLD_EXT = ".world";
 
 const std::string ALG_NAME = "aStar";
@@ -66,6 +66,10 @@ int main (int args, char* argv[])
         return EXIT_FAILURE;
     }
 
+    #ifdef GEN_STATS
+        std::vector<std::unordered_map<uint, StatPoint>> stats (1);
+    #endif
+
     auto t1 = std::chrono::high_resolution_clock::now();
 
     // Priority Queue with A* heuristic function added
@@ -78,6 +82,9 @@ int main (int args, char* argv[])
 
     // A* algorithm
     openTiles.push (world (startX, startY), {startX, startY}, 0);
+    #ifdef GEN_STATS
+        stats[0][world (startX, startY).id] = StatPoint {startX, startY};
+    #endif
 
     std::unordered_map<uint, PathTile> expandedTiles;
     PathTile tile = openTiles.top();
@@ -94,6 +101,17 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
+                    {
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
 
@@ -105,6 +123,17 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
+                    {
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
 
@@ -116,6 +145,17 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
+                    {
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
 
@@ -127,6 +167,17 @@ int main (int args, char* argv[])
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[0].find (worldTile.id);
+                    if (statIter == stats[0].end ())
+                    {
+                        stats[0][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
 
@@ -145,8 +196,13 @@ int main (int args, char* argv[])
     }
     finalPath.emplace_back(tile.xy ());
 
-    writeResults (finalPath, argv[1], ALG_NAME,
-            std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #ifdef GEN_STATS
+        writeResults (finalPath, stats, argv[1], ALG_NAME,
+                std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #else
+        writeResults (finalPath, argv[1], ALG_NAME,
+                std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #endif
 
     return EXIT_SUCCESS;
 }

@@ -1,6 +1,6 @@
 /**
- * File        : AStar.cc
- * Description : Implementation of A* algorithm using a specified "world"
+ * File        : Fringe.cc
+ * Description : Implementation of the fringe algorithm using a specified "world"
  *               from the worlds folder.
  */
 
@@ -23,16 +23,10 @@
 
 using namespace pathFind;
 
-const std::string WORLD_DIR = "worlds";
+const std::string WORLD_DIR = "../worlds";
 const std::string WORLD_EXT = ".world";
 
 const std::string ALG_NAME = "fringe";
-/*
-void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<uint>& tileIdsFound,
-             std::unordered_map<uint, PathTile>& expandedTiles,
-             pathFind::PathTile& tile, const pathFind::World& world,
-             std::mutex& m, bool& finished, bool& iFound);
-*/
 
 int main (int args, char* argv[])
 {
@@ -75,6 +69,10 @@ int main (int args, char* argv[])
         return EXIT_FAILURE;
     }
 
+    #ifdef GEN_STATS
+        std::vector<std::unordered_map<uint, StatPoint>> stats (1);
+    #endif
+
     auto t1 = std::chrono::high_resolution_clock::now();
 
     std::function<uint (uint, uint)> h = [endX, endY] (uint x, uint y)
@@ -102,6 +100,17 @@ int main (int args, char* argv[])
         {
             PathTile current = now.front();
             now.pop_front();
+            #ifdef GEN_STATS
+                auto statIter = stats[0].find (current.getTile ().id);
+                if (statIter == stats[0].end ())
+                {
+                    stats[0][current.getTile ().id] = StatPoint {current.xy ().x, current.xy ().y};
+                }
+                else
+                {
+                    statIter->second.processCount++;
+                }
+            #endif
 
             if (current.getCombinedHeuristic () > threshold)
             {
@@ -124,9 +133,11 @@ int main (int args, char* argv[])
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
                 if (worldTile.cost != 0)
                 {
+
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
+                    	// TODO: Check if will exceed threshold here to emplace into later instead?
                         now.emplace_front (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
                         seen[worldTile.id] = now.front();
@@ -159,6 +170,7 @@ int main (int args, char* argv[])
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
                 if (worldTile.cost != 0)
                 {
+
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
@@ -194,6 +206,7 @@ int main (int args, char* argv[])
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
                 if (worldTile.cost != 0)
                 {
+
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
@@ -229,6 +242,7 @@ int main (int args, char* argv[])
                 World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
                 if (worldTile.cost != 0)
                 {
+
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
@@ -274,8 +288,13 @@ int main (int args, char* argv[])
     }
     finalPath.emplace_back(endTile.xy ());
 
-    writeResults (finalPath, argv[1], ALG_NAME,
-            std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #ifdef GEN_STATS
+        writeResults (finalPath, stats, argv[1], ALG_NAME,
+                std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #else
+        writeResults (finalPath, argv[1], ALG_NAME,
+                std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #endif
 
     return EXIT_SUCCESS;
 }
@@ -366,4 +385,3 @@ void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<
     }
 }
 */
-

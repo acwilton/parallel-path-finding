@@ -10,14 +10,17 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 if (CMAKE_COMPILER_IS_GNUCXX)
   message(STATUS "Enabled aggressive warnings")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wpedantic -pedantic -pedantic-errors -march=native")
+  if (GEN_STATS)
+    add_definitions (-DGEN_STATS)
+  endif(GEN_STATS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wpedantic -g -pedantic -pedantic-errors -march=native")
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 # Boost (system + filesystem)
 #########################################
 
 find_package(Boost REQUIRED
-  COMPONENTS "system" "filesystem")
+  COMPONENTS "system" "filesystem" "thread")
 
 add_library(boost-system SHARED IMPORTED)
 set_property(
@@ -34,6 +37,14 @@ set_property(
 set_property(
   TARGET boost-filesystem
   PROPERTY IMPORTED_LOCATION ${Boost_FILESYSTEM_LIBRARY})
+
+add_library(boost-thread SHARED IMPORTED)
+set_property(
+  TARGET boost-thread
+  PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS})
+set_property(
+  TARGET boost-thread
+  PROPERTY IMPORTED_LOCATION ${Boost_THREAD_LIBRARY})
 
 # SDL2 + SDL2_ttf
 #########################################
@@ -63,6 +74,11 @@ set_property(TARGET sdl2-ttf PROPERTY IMPORTED_LOCATION "${SDL2_TTF_LIBRARIES}")
 
 set(THREADS_PREFER_PTHREAD_FLAG On)
 find_package(Threads REQUIRED)
+
+# TBB
+########################################
+
+find_package(TBB REQUIRED)
 
 # Common Sources and Includes
 #########################################
@@ -117,7 +133,9 @@ add_custom_executable(
   src/gui/Button.cc
   src/gui/TextInput.cc
   src/gui/WorldViewport.cc
-  src/gui/GraphicTile.cc)
+  src/gui/GraphicTile.cc
+  src/gui/Text.cc
+  src/gui/ToolbarViewport.cc)
 
 add_custom_executable(
   NAME worldGen
@@ -145,5 +163,13 @@ add_algorithm(
   SOURCE src/algorithms/fringe/Fringe.cc
   LIBRARIES Threads::Threads)
 
-add_custom_target(CopyResources ALL
-  COMMAND ln -s ${CMAKE_SOURCE_DIR}/resources ${CMAKE_BINARY_DIR}/resources)
+add_algorithm(
+  NAME parFringe
+  SOURCE src/algorithms/parFringe/ParFringe.cc
+  LIBRARIES Threads::Threads tbb boost-thread)
+
+add_custom_target(clean_results
+  COMMAND rm -R -f ${CMAKE_SOURCE_DIR}/results/*)
+
+add_custom_target(clean_worlds
+  COMMAND rm -R -f ${CMAKE_SOURCE_DIR}/worlds/*)

@@ -1,7 +1,7 @@
 /**
- * File        : AStar.cc
- * Description : Implementation of A* algorithm using a specified "world"
- *               from the worlds folder.
+ * File        : ParBidirectional.cc
+ * Description : Implementation of the parallel bidirectional A* algorithm
+ *               using a specified "world" from the worlds folder.
  */
 
 #include <iostream>
@@ -23,7 +23,7 @@
 
 using namespace pathFind;
 
-const std::string WORLD_DIR = "worlds";
+const std::string WORLD_DIR = "../worlds";
 const std::string WORLD_EXT = ".world";
 
 const std::string ALG_NAME = "parBidir";
@@ -31,7 +31,15 @@ const std::string ALG_NAME = "parBidir";
 void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<uint>& tileIdsFound,
              std::unordered_map<uint, PathTile>& expandedTiles,
              pathFind::PathTile& tile, const pathFind::World& world,
-             std::mutex& m, bool& finished, bool& iFound);
+             std::mutex& m, bool& finished, bool& iFound
+#ifdef GEN_STATS
+             ,uint id
+#endif
+         );
+
+#ifdef GEN_STATS
+    std::vector<std::unordered_map<uint, StatPoint>> stats (2);
+#endif
 
 int main (int args, char* argv[])
 {
@@ -82,16 +90,24 @@ int main (int args, char* argv[])
     std::unordered_map<uint, PathTile> reverseExpandedTiles;
     std::unordered_set<uint> idsFound;
     std::mutex m;
-    bool finished;
+    bool finished = false;
     bool fFound = false;
     bool rFound = false;
 
     std::thread forward (search, startX, startY, endX, endY, std::ref (idsFound),
             std::ref(forwardExpandedTiles), std::ref(fTile), std::cref(world),
-            std::ref(m), std::ref(finished), std::ref(fFound));
+            std::ref(m), std::ref(finished), std::ref(fFound)
+#ifdef GEN_STATS
+            ,0
+#endif
+        );
     std::thread reverse (search, endX, endY, startX, startY, std::ref(idsFound),
             std::ref(reverseExpandedTiles), std::ref(rTile), std::cref(world),
-            std::ref(m), std::ref(finished), std::ref(rFound));
+            std::ref(m), std::ref(finished), std::ref(rFound)
+#ifdef GEN_STATS
+            ,1
+#endif
+        );
 
     forward.join ();
     reverse.join ();
@@ -126,8 +142,13 @@ int main (int args, char* argv[])
     }
     totalCost -= fTile.getTile().cost;
 
-    writeResults (finalPath, argv[1], ALG_NAME,
-            std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #ifdef GEN_STATS
+        writeResults (finalPath, stats, argv[1], ALG_NAME,
+                std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #else
+        writeResults (finalPath, argv[1], ALG_NAME,
+                std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #endif
 
     return EXIT_SUCCESS;
 }
@@ -135,7 +156,11 @@ int main (int args, char* argv[])
 void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<uint>& tileIdsFound,
              std::unordered_map<uint, PathTile>& expandedTiles,
              pathFind::PathTile& tile, const pathFind::World& world,
-             std::mutex& m, bool& finished, bool& iFound)
+             std::mutex& m, bool& finished, bool& iFound
+#ifdef GEN_STATS
+             ,uint id
+#endif
+         )
 {
     PriorityQueue openTiles (world.getWidth (), world.getHeight (), [endX, endY] (uint x, uint y)
     {
@@ -144,6 +169,9 @@ void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<
     });
 
     openTiles.push (world (startX, startY), {startX, startY}, 0);
+    #ifdef GEN_STATS
+        stats[id][world (startX, startY).id] = StatPoint {startX, startY};
+    #endif
 
     tile = openTiles.top ();
     while (tile.xy ().x != endX || tile.xy ().y != endY)
@@ -179,6 +207,17 @@ void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[id].find (worldTile.id);
+                    if (statIter == stats[id].end ())
+                    {
+                        stats[id][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
 
@@ -190,6 +229,17 @@ void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[id].find (worldTile.id);
+                    if (statIter == stats[id].end ())
+                    {
+                        stats[id][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
 
@@ -201,6 +251,17 @@ void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[id].find (worldTile.id);
+                    if (statIter == stats[id].end ())
+                    {
+                        stats[id][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
 
@@ -212,9 +273,18 @@ void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<
                 expandedTiles.find (worldTile.id) == expandedTiles.end ())
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+                #ifdef GEN_STATS
+                    auto statIter = stats[id].find (worldTile.id);
+                    if (statIter == stats[id].end ())
+                    {
+                        stats[id][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                    }
+                    else
+                    {
+                        statIter->second.processCount++;
+                    }
+                #endif
             }
         }
     }
 }
-
-

@@ -36,7 +36,7 @@ void Window::handleEvent (SDL_Event& e)
 {
     if (isOpen ())
     {
-        if (e.type == SDL_WINDOWEVENT)
+        if (e.type == SDL_WINDOWEVENT && e.window.event != SDL_WINDOWEVENT_SIZE_CHANGED)
         {
             switch (e.window.event)
             {
@@ -127,7 +127,7 @@ void Window::spawnWindow ()
     }
 
     m_window = SDL_CreateWindow (m_title.c_str (), SDL_WINDOWPOS_UNDEFINED,
-    SDL_WINDOWPOS_UNDEFINED, m_width, m_height, SDL_WINDOW_SHOWN);
+    SDL_WINDOWPOS_UNDEFINED, m_width, m_height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     if (m_window == nullptr)
     {
         Log::logError (

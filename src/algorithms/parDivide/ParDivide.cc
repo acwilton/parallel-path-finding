@@ -33,6 +33,8 @@ const std::string WORLD_EXT = ".world";
 
 const std::string ALG_NAME = "parBidir";
 
+const uint numThreads = 4;
+
 Point findStart (uint id, uint numThreads, const Point& start, const Point& end);
 
 void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<uint>& tileIdsFound,
@@ -85,23 +87,25 @@ int main (int args, char* argv[])
 
     pathFind::PathTile fTile, rTile;
 
-    std::unordered_map<uint, PathTile> forwardExpandedTiles;
-    std::unordered_map<uint, PathTile> reverseExpandedTiles;
+    std::vector<std::unordered_map<uint, PathTile>> expandedTiles;
     std::unordered_set<uint> idsFound;
     std::mutex m;
     bool finished = false;
     bool fFound = false;
     bool rFound = false;
 
-    std::thread forward (search, startX, startY, endX, endY, std::ref (idsFound),
-            std::ref(forwardExpandedTiles), std::ref(fTile), std::cref(world),
-            std::ref(m), std::ref(finished), std::ref(fFound));
-    std::thread reverse (search, endX, endY, startX, startY, std::ref(idsFound),
-            std::ref(reverseExpandedTiles), std::ref(rTile), std::cref(world),
-            std::ref(m), std::ref(finished), std::ref(rFound));
+    std::vector<std::thread> threads (numThreads);
+    for (uint i = 0; i < numThreads; ++i)
+    {
+        threads[i] = std::thread (search, startX, startY, endX, endY, std::ref (idsFound),
+                std::ref(expandedTiles), std::ref(fTile), std::cref(world),
+                std::ref(m), std::ref(finished), std::ref(fFound))
+    }
 
-    forward.join ();
-    reverse.join ();
+    for (auto& t : threads)
+    {
+        t.join ();
+    }
 
     if (fFound)
     {
@@ -223,5 +227,3 @@ void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<
         }
     }
 }
-
-

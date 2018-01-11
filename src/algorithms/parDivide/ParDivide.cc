@@ -35,12 +35,16 @@ const std::string ALG_NAME = "parBidir";
 
 const uint numThreads = 4;
 
-Point findStart (uint id, uint numThreads, const Point& start, const Point& end);
+Point findStart (const World& world, uint numThreadsLeft, const Point& start, const Point& end);
 
-void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<uint>& tileIdsFound,
-             std::unordered_map<uint, PathTile>& expandedTiles,
+void search (uint id, uint startX, uint startY, uint endX, uint endY,
+             std::unordered_set<uint>& tileIdsFound,
+             std::vector<std::unordered_map<uint, PathTile>>& expandedTiles,
              pathFind::PathTile& tile, const pathFind::World& world,
              std::mutex& m, bool& finished, bool& iFound);
+
+void searchNeighbor (const Point& adjPoint, const World& world, const PathTile& tile,
+    PriorityQueue& openTiles, const std::unordered_map<uint, PathTile>& expandedTiles);
 
 int main (int args, char* argv[])
 {
@@ -97,7 +101,7 @@ int main (int args, char* argv[])
     std::vector<std::thread> threads (numThreads);
     for (uint i = 0; i < numThreads; ++i)
     {
-        threads[i] = std::thread (search, startX, startY, endX, endY, std::ref (idsFound),
+        threads[i] = std::thread (search, i, startX, startY, endX, endY, std::ref (idsFound),
                 std::ref(expandedTiles), std::ref(fTile), std::cref(world),
                 std::ref(m), std::ref(finished), std::ref(fFound))
     }
@@ -143,8 +147,56 @@ int main (int args, char* argv[])
     return EXIT_SUCCESS;
 }
 
-void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<uint>& tileIdsFound,
-             std::unordered_map<uint, PathTile>& expandedTiles,
+Point findStart (const World& world, uint numThreadsLeft, float sx, float sy, float ex, float ey)
+{
+    int diffX = static_cast<int> (ex) - sx;
+    int diffY = static_cast<int> (ey) - sy;
+    uint forwX = static_cast<float> (diffX) / (numThreadsLeft + 1);
+    uint forwY = static_cast<float> (diffY) / (numThreadsLeft + 1);
+    uint backX = forwX;
+    uint backY = forwY;
+    // TODO: Handle 0 slope and undefined (divide by zero)
+    int slope = diffY / diffX;
+    bool ySlope = true;
+    if (abs (diffY) < abs (diffX))
+    {
+        slope = diffX / diffY;
+        ySlope = false;
+    }
+
+    uint distAlongSlope = 0;
+    while (world (forwX, forwY).cost == 0 && world (backX, backY).cost == 0)
+    {
+        if (distAlongSlope == slope)
+        {
+            distAlongSlope = 0;
+            if (ySlope)
+            {
+                currX++;
+            }
+            else
+            {
+                currY++;
+            }
+        }
+        else
+        {
+            distAlongSlope++;
+            if (ySlope)
+            {
+                currY++;
+            }
+            else
+            {
+                currX++;
+            }
+        }
+    }
+}
+
+void search (uint id, uint startX, uint startY, uint endX, uint endY,
+             std::unordered_set<uint>& tileIdsFound,
+             std::vector<std::unordered_map<uint, PathTile>>& expandedTiles,
              pathFind::PathTile& tile, const pathFind::World& world,
              std::mutex& m, bool& finished, bool& iFound)
 {
@@ -178,20 +230,12 @@ void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<
         tileIdsFound.insert(tile.getTile().id);
         m.unlock ();
 
-        expandedTiles[tile.getTile ().id] = tile;
+        expandedTiles[id][tile.getTile ().id] = tile;
         openTiles.pop ();
 
         // Check each neighbor
         Point adjPoint {tile.xy ().x + 1, tile.xy ().y}; // east
-        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
-        {
-            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-            if (worldTile.cost != 0 &&
-                expandedTiles.find (worldTile.id) == expandedTiles.end ())
-            {
-                openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
-            }
-        }
+        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles[id]);
 
         adjPoint = {tile.xy ().x, tile.xy ().y + 1}; // south
         if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
@@ -224,6 +268,21 @@ void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<
             {
                 openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
             }
+        }
+    }
+}
+
+
+void searchNeighbor (const Point& adjPoint, const World& world, const PathTile& tile,
+    PriorityQueue& openTiles, const std::unordered_map<uint, PathTile>& expandedTiles)
+{
+    if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
+    {
+        World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
+        if (worldTile.cost != 0 &&
+            expandedTiles.find (worldTile.id) == expandedTiles.end ())
+        {
+            openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
         }
     }
 }

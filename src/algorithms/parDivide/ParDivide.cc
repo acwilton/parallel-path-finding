@@ -231,19 +231,19 @@ Point findStart (const World& world, uint numThreadsLeft, const Point& start, co
     return (world (forward.x, forward.y).cost == 0) ? backward : forward;
 }
 
-void search (uint id, uint startX, uint startY, uint endX, uint endY,
+void search (uint id, const Point& start, const Point& predEnd, const Point& succEnd,
              std::unordered_set<uint>& tileIdsFound,
              std::vector<std::unordered_map<uint, PathTile>>& expandedTiles,
              pathFind::PathTile& tile, const pathFind::World& world,
              std::mutex& m, bool& finished, bool& iFound)
 {
-    PriorityQueue openTiles (world.getWidth (), world.getHeight (), [endX, endY] (uint x, uint y)
+    PriorityQueue openTiles (world.getWidth (), world.getHeight (), [predEnd, succEnd] (uint x, uint y)
     {
-        return  (x < endX ? endX - x : x - endX) +
-                (y < endY ? endY - y : y - endY);
+        return  std::min ((x < predEnd.x ? predEnd.x - x : x - predEnd.x) + (y < predEnd.y ? predEnd.y - y : y - predEnd.y),
+            (x < succEnd.x ? succEnd.x - x : x - succEnd.x) + (y < succEnd.y ? succEnd.y - y : y - succEnd.y));
     });
 
-    openTiles.push (world (startX, startY), {startX, startY}, 0);
+    openTiles.push (world (start.x, start.y), {start.x, start.y}, 0);
 
     tile = openTiles.top ();
     while (tile.xy ().x != endX || tile.xy ().y != endY)

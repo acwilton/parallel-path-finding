@@ -90,6 +90,26 @@ int main (int args, char* argv[])
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
+    std::vector<Point> startPoints (numThreads);
+    startPoints[0] = Point {startX, startY};
+    if (numThreads > 1)
+    {
+        startPoints.back() = Point {endX, endY};
+        uint i = 1;
+        uint j = numThreads - 2;
+        while (i < j)
+        {
+            startPoints[i] = findStart (world, j - i + 1, startPoints[i - 1], startPoints[j + 1]);
+            startPoints[j] = findStart (world, j - i, startPoints[j + 1], startPoints[i]);
+            i++;
+            j--;
+        }
+        if (i == j)
+        {
+            startPoints[i] = findStart (world, 1, startPoints[i -1], startPoints[i + 1]);
+        }
+    }
+
     pathFind::PathTile fTile, rTile;
 
     std::vector<std::unordered_map<uint, PathTile>> expandedTiles;

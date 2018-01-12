@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <limits>
 #include <cmath>
 #include <chrono>
 #include <thread>
@@ -147,51 +148,67 @@ int main (int args, char* argv[])
     return EXIT_SUCCESS;
 }
 
-Point findStart (const World& world, uint numThreadsLeft, float sx, float sy, float ex, float ey)
+Point findStart (const World& world, uint numThreadsLeft, const Point& start, const Point& end)
 {
-    int diffX = static_cast<int> (ex) - sx;
-    int diffY = static_cast<int> (ey) - sy;
-    uint forwX = static_cast<float> (diffX) / (numThreadsLeft + 1);
-    uint forwY = static_cast<float> (diffY) / (numThreadsLeft + 1);
-    uint backX = forwX;
-    uint backY = forwY;
-    // TODO: Handle 0 slope and undefined (divide by zero)
-    int slope = diffY / diffX;
-    bool ySlope = true;
-    if (abs (diffY) < abs (diffX))
+    if (start.x == end.x && start.y == end.y)
     {
-        slope = diffX / diffY;
+        return start;
+    }
+    int diffX = static_cast<int> (end.x) - start.x;
+    int diffY = static_cast<int> (end.y) - start.y;
+    Point forward, backward;
+    forward.x = static_cast<float> (diffX) / (numThreadsLeft + 1) + start.x;
+    forward.y = static_cast<float> (diffY) / (numThreadsLeft + 1) + start.y;
+    backward.x = forward.x;
+    backward.y = forward.y;
+
+    int slope;
+    bool ySlope = true;
+    if (abs (diffX) < abs (diffY))
+    {
+        slope = (diffY == 0) ? std::numeric_limits<int>::max () : -diffX / diffY;
+    }
+    else
+    {
+        slope = (diffX == 0) ? std::numeric_limits<int>::max () : -diffY / diffX;
         ySlope = false;
     }
 
     uint distAlongSlope = 0;
-    while (world (forwX, forwY).cost == 0 && world (backX, backY).cost == 0)
+    int slopeDirection = (slope >= 0) ? 1 : -1;
+    while (world (forward.x, forward.y).cost == 0 && world (backward.x, backward.y).cost == 0)
     {
         if (distAlongSlope == slope)
         {
             distAlongSlope = 0;
             if (ySlope)
             {
-                currX++;
+                forward.x++;
+                backward.x++;
             }
             else
             {
-                currY++;
+                forward.y++;
+                backward.y++;
             }
         }
         else
         {
-            distAlongSlope++;
+            distAlongSlope += slopeDirection;
             if (ySlope)
             {
-                currY++;
+                forward.y += slopeDirection;
+                backward.y += slopeDirection;
             }
             else
             {
-                currX++;
+                forward.x += slopeDirection;
+                backward.x += slopeDirection;
             }
         }
     }
+
+    return (world (forward.x, forward.y).cost == 0) ? backward : forward;
 }
 
 void search (uint id, uint startX, uint startY, uint endX, uint endY,

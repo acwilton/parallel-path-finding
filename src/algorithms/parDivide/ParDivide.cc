@@ -23,6 +23,8 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include "tbb/concurrent_unordered_set.h"
+
 #include "algorithms/tools/PathTile.h"
 #include "algorithms/tools/PriorityQueue.h"
 #include "common/Results.h"
@@ -39,7 +41,7 @@ const uint numThreads = 4;
 Point findStart (const World& world, uint numThreadsLeft, const Point& start, const Point& end);
 
 void search (uint id, uint startX, uint startY, uint endX, uint endY,
-             std::unordered_set<uint>& tileIdsFound,
+             tbb::concurrent_unordered_set<uint>& tileIdsFound,
              std::vector<std::unordered_map<uint, PathTile>>& expandedTiles,
              pathFind::PathTile& tile, const pathFind::World& world,
              std::mutex& m, bool& finished, bool& iFound);
@@ -232,7 +234,7 @@ Point findStart (const World& world, uint numThreadsLeft, const Point& start, co
 }
 
 void search (uint id, const Point& start, const Point& predEnd, const Point& succEnd,
-             std::unordered_set<uint>& tileIdsFound,
+             tbb::concurrent_unordered_set<uint>& tileIdsFound,
              std::vector<std::unordered_map<uint, PathTile>>& expandedTiles,
              pathFind::PathTile& tile, const pathFind::World& world,
              std::mutex& m, bool& finished, bool& iFound)
@@ -246,9 +248,20 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
     openTiles.push (world (start.x, start.y), {start.x, start.y}, 0);
 
     tile = openTiles.top ();
-    while (tile.xy ().x != endX || tile.xy ().y != endY)
+    bool foundPred = false;
+    bool foundSucc = false;
+    while (!foundPred && !foundSucc)
     {
+
         tile = openTiles.top ();
+        if (tile.xy().x == predEnd.x && tile.xy().y == predEnd.y)
+        {
+            foundPred = true;
+        }
+        else if(tile.xy().x == succEnd.x && tile.xy().y == succEnd.y)
+        {
+            foundSucc = true;
+        }
 
         m.lock ();
         if (finished)
@@ -275,37 +288,13 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
         searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles[id]);
 
         adjPoint = {tile.xy ().x, tile.xy ().y + 1}; // south
-        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
-        {
-            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-            if (worldTile.cost != 0 &&
-                expandedTiles.find (worldTile.id) == expandedTiles.end ())
-            {
-                openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
-            }
-        }
+        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles[id]);
 
         adjPoint = {tile.xy ().x - 1, tile.xy ().y}; // west
-        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
-        {
-            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-            if (worldTile.cost != 0 &&
-                expandedTiles.find (worldTile.id) == expandedTiles.end ())
-            {
-                openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
-            }
-        }
+        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles[id]);
 
         adjPoint = {tile.xy ().x, tile.xy ().y - 1}; // north
-        if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
-        {
-            World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
-            if (worldTile.cost != 0 &&
-                expandedTiles.find (worldTile.id) == expandedTiles.end ())
-            {
-                openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
-            }
-        }
+        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles[id]);
     }
 }
 

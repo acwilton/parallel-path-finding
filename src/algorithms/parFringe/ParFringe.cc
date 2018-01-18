@@ -165,16 +165,16 @@ int main (int args, char* argv[])
         found = false;
         for (uint i = 0; i < numThreads && !found; ++i)
         {
-        	auto seenTile = seen[i].find((endTile.bestTile ().y * world.getWidth()) + endTile.bestTile ().x);
-        	if (seenTile != seen[i].end ())
-        	{
-        		found = true;
-        		endTile = seenTile->second;
-        	}
+            auto seenTile = seen[i].find((endTile.bestTile ().y * world.getWidth()) + endTile.bestTile ().x);
+            if (seenTile != seen[i].end ())
+            {
+                found = true;
+                endTile = seenTile->second;
+            }
         }
         if (!found)
         {
-        	std::cout << "ERROR\n";
+            std::cout << "ERROR\n";
         }
     }
     finalPath.emplace_back(endTile.xy ());

@@ -42,7 +42,7 @@ Point findStart (const World& world, uint numThreadsLeft, const Point& start, co
 
 void search (uint id, uint startX, uint startY, uint endX, uint endY,
              tbb::concurrent_unordered_set<uint>& tileIdsFound,
-             std::vector<std::unordered_map<uint, PathTile>>& expandedTiles,
+             std::unordered_map<uint, PathTile>& expandedTiles,
              pathFind::PathTile& tile, const pathFind::World& world,
              std::mutex& m, bool& finished, bool& iFound);
 
@@ -235,7 +235,7 @@ Point findStart (const World& world, uint numThreadsLeft, const Point& start, co
 
 void search (uint id, const Point& start, const Point& predEnd, const Point& succEnd,
              tbb::concurrent_unordered_set<uint>& tileIdsFound,
-             std::vector<std::unordered_map<uint, PathTile>>& expandedTiles,
+             std::unordered_map<uint, PathTile>& expandedTiles,
              pathFind::PathTile& tile, const pathFind::World& world,
              std::mutex& m, bool& finished, bool& iFound)
 {
@@ -248,21 +248,12 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
     openTiles.push (world (start.x, start.y), {start.x, start.y}, 0);
 
     tile = openTiles.top ();
-    bool foundPred = false;
-    bool foundSucc = false;
+    openTiles.pop ();
+    bool foundPred = (tile.xy().x == predEnd.x && tile.xy().y == predEnd.y);
+    bool foundSucc = (tile.xy().x == succEnd.x && tile.xy().y == succEnd.y);
     while (!foundPred && !foundSucc)
     {
-
-        tile = openTiles.top ();
-        if (tile.xy().x == predEnd.x && tile.xy().y == predEnd.y)
-        {
-            foundPred = true;
-        }
-        else if(tile.xy().x == succEnd.x && tile.xy().y == succEnd.y)
-        {
-            foundSucc = true;
-        }
-
+        /*
         m.lock ();
         if (finished)
         {
@@ -279,22 +270,33 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
         }
         tileIdsFound.insert(tile.getTile().id);
         m.unlock ();
+        */
 
-        expandedTiles[id][tile.getTile ().id] = tile;
-        openTiles.pop ();
+        expandedTiles[tile.getTile ().id] = tile;
 
         // Check each neighbor
         Point adjPoint {tile.xy ().x + 1, tile.xy ().y}; // east
-        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles[id]);
+        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles);
 
         adjPoint = {tile.xy ().x, tile.xy ().y + 1}; // south
-        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles[id]);
+        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles);
 
         adjPoint = {tile.xy ().x - 1, tile.xy ().y}; // west
-        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles[id]);
+        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles);
 
         adjPoint = {tile.xy ().x, tile.xy ().y - 1}; // north
-        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles[id]);
+        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles);
+
+        tile = openTiles.top ();
+        openTiles.pop ();
+        if (tile.xy().x == predEnd.x && tile.xy().y == predEnd.y)
+        {
+            foundPred = true;
+        }
+        else if(tile.xy().x == succEnd.x && tile.xy().y == succEnd.y)
+        {
+            foundSucc = true;
+        }
     }
 }
 

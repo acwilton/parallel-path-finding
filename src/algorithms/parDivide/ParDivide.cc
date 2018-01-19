@@ -24,6 +24,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include "tbb/concurrent_unordered_map.h"
+#include "tbb/concurrent_vector.h"
 
 #include "algorithms/tools/PathTile.h"
 #include "algorithms/tools/PriorityQueue.h"
@@ -43,7 +44,7 @@ Point findStart (const World& world, uint numThreadsLeft, const Point& start, co
 void search (uint id, uint startX, uint startY, uint endX, uint endY,
              tbb::concurrent_unordered_map<uint, uint>& tileIdsFound,
              std::unordered_map<uint, PathTile>& expandedTiles,
-             std::vector<pathFind::PathTile>& tile, std::vector<std::pair<bool, uint>>& meetingTilesFound,
+             std::vector<pathFind::PathTile>& tile, tbb::concurrent_vector<std::pair<bool, uint>>& meetingTilesFound,
              const pathFind::World& world, std::mutex& m);
 
 void searchNeighbor (const Point& adjPoint, const World& world, const PathTile& tile,
@@ -114,8 +115,9 @@ int main (int args, char* argv[])
 
     pathFind::PathTile fTile, rTile;
 
-    std::vector<std::unordered_map<uint, PathTile>> expandedTiles;
-    std::unordered_set<uint> idsFound;
+    std::vector<std::unordered_map<uint, PathTile>> expandedTiles (numThreads);
+    tbb::concurrent_unordered_map<uint, uint> idsFound;
+    std::vector<PathTile> meetingTiles (numThreads + 1);
     std::mutex m;
     bool finished = false;
     bool fFound = false;
@@ -124,8 +126,10 @@ int main (int args, char* argv[])
     std::vector<std::thread> threads (numThreads);
     for (uint i = 0; i < numThreads; ++i)
     {
-        threads[i] = std::thread (search, i, startX, startY, endX, endY, std::ref (idsFound),
-                std::ref(expandedTiles), std::ref(fTile), std::cref(world),
+        Point pred = (i == 0) ? startPoints[0] : startPoints[i - 1];
+        Point succ = (i == numThreads - 1) ? startPoints[i] : startPoints[i + 1];
+        threads[i] = std::thread (search, i, startPoints[i], pred, succ, std::ref (idsFound),
+                std::ref(expandedTiles[i]), std::ref(meetingTiles), std::cref(world),
                 std::ref(m), std::ref(finished), std::ref(fFound))
     }
 
@@ -236,7 +240,7 @@ Point findStart (const World& world, uint numThreadsLeft, const Point& start, co
 void search (uint id, const Point& start, const Point& predEnd, const Point& succEnd,
              tbb::concurrent_unordered_map<uint, uint>& tileIdsFound,
              std::unordered_map<uint, PathTile>& expandedTiles,
-             std::vector<pathFind::PathTile>& meetingTiles, std::vector<std::pair<bool, uint>>& meetingTilesFound,
+             std::vector<pathFind::PathTile>& meetingTiles, tbb::concurrent_vector<std::pair<bool, uint>>& meetingTilesFound,
              const pathFind::World& world, std::mutex& m)
 {
     PriorityQueue openTiles (world.getWidth (), world.getHeight (), [predEnd, succEnd] (uint x, uint y)
@@ -244,29 +248,56 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
         return  std::min ((x < predEnd.x ? predEnd.x - x : x - predEnd.x) + (y < predEnd.y ? predEnd.y - y : y - predEnd.y),
             (x < succEnd.x ? succEnd.x - x : x - succEnd.x) + (y < succEnd.y ? succEnd.y - y : y - succEnd.y));
     });
-
     openTiles.push (world (start.x, start.y), {start.x, start.y}, 0);
 
-    PathTile tile = openTiles.top ();
-    openTiles.pop ();
-    if (tile.xy().x == predEnd.x && tile.xy().y == predEnd.y)
+    // Used to determine the "farthest" thread that we have met
+    // uint predIdMet = id, succIdMet = id;
+
+    while (!meetingTilesFound[id].first || !meetingTilesFound[id + 1].first)
     {
-        meetingTilesFound[id].first = true;
-        meetingTilesFound[id].second = id;
-    }
-    else if(tile.xy().x == succEnd.x && tile.xy().y == succEnd.y)
-    {
-        meetingTilesFound[id + 1].first = true;
-        meetingTilesFound[id + 1].second = id;
-    }
-    while (!meetingTilesFound[id].first && !meetingTilesFound[id + 1].first)
-    {
-        if (tileIdsFound.find(tile.getTile().id) == tileIdsFound.end ())
+        PathTile tile = openTiles.top ();
+        openTiles.pop ();
+        if (tile.xy().x == predEnd.x && tile.xy().y == predEnd.y)
         {
-
+            meetingTilesFound[id].first = true;
+            meetingTilesFound[id].second = id;
+            m.lock ();
+            meetingTiles[id] = tile;
+            m.unlock ();
         }
-        tileIdsFound[tile.getTile().id] = id;
+        else if(tile.xy().x == succEnd.x && tile.xy().y == succEnd.y)
+        {
+            meetingTilesFound[id + 1].first = true;
+            meetingTilesFound[id + 1].second = id;
+            m.lock ();
+            meetingTiles[id + 1] = tile;
+            m.unlock ();
+        }
 
+        auto tileFound = tileIdsFound.find(tile.getTile().id);
+        if (tileFound != tileIdsFound.end ())
+        {
+            if ((tileFound->second == id || tileFound->second == id - 1) && !meetingTilesFound[id].first)
+            {
+                m.lock ();
+                meetingTiles[id] = tile;
+                m.unlock ();
+                meetingTilesFound[id].first = true;
+                meetingTilesFound[id].second = id; // Set who the author was for this discovery
+            }
+            else if (tileFound->second == id + 1 && !meetingTilesFound[id + 1].first)
+            {
+                m.lock ();
+                meetingTiles[id + 1] = tile;
+                m.unlock ();
+                meetingTilesFound[id + 1].first = true;
+                meetingTilesFound[id + 1].second = id; // Set who the author was for this discovery
+            }
+        }
+        else
+        {
+            tileIdsFound[tile.getTile().id] = id;
+        }
         expandedTiles[tile.getTile ().id] = tile;
 
         // Check each neighbor
@@ -281,22 +312,8 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
 
         adjPoint = {tile.xy ().x, tile.xy ().y - 1}; // north
         searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles);
-
-        tile = openTiles.top ();
-        openTiles.pop ();
-        if (tile.xy().x == predEnd.x && tile.xy().y == predEnd.y)
-        {
-            meetingTilesFound[id].first = true;
-            meetingTilesFound[id].second = id;
-        }
-        else if(tile.xy().x == succEnd.x && tile.xy().y == succEnd.y)
-        {
-            meetingTilesFound[id + 1].first = true;
-            meetingTilesFound[id + 1].second = id;
-        }
     }
 }
-
 
 void searchNeighbor (const Point& adjPoint, const World& world, const PathTile& tile,
     PriorityQueue& openTiles, const std::unordered_map<uint, PathTile>& expandedTiles)

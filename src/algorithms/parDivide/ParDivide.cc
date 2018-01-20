@@ -35,16 +35,16 @@ using namespace pathFind;
 const std::string WORLD_DIR = "worlds";
 const std::string WORLD_EXT = ".world";
 
-const std::string ALG_NAME = "parBidir";
+const std::string ALG_NAME = "parDivide";
 
 const uint numThreads = 4;
 
 Point findStart (const World& world, uint numThreadsLeft, const Point& start, const Point& end);
 
-void search (uint id, uint startX, uint startY, uint endX, uint endY,
+void search (uint id, const Point& start, const Point& predEnd, const Point& succEnd,
              tbb::concurrent_unordered_map<uint, uint>& tileIdsFound,
              std::unordered_map<uint, PathTile>& expandedTiles,
-             std::vector<pathFind::PathTile>& tile, tbb::concurrent_vector<std::pair<bool, uint>>& meetingTilesFound,
+             std::vector<pathFind::PathTile>& meetingTiles, tbb::concurrent_vector<std::pair<bool, uint>>& meetingTilesFound,
              const pathFind::World& world, std::mutex& m);
 
 void searchNeighbor (const Point& adjPoint, const World& world, const PathTile& tile,
@@ -118,19 +118,18 @@ int main (int args, char* argv[])
     std::vector<std::unordered_map<uint, PathTile>> expandedTiles (numThreads);
     tbb::concurrent_unordered_map<uint, uint> idsFound;
     std::vector<PathTile> meetingTiles (numThreads + 1);
+    tbb::concurrent_vector<std::pair<bool, uint>> meetingTilesFound (numThreads + 1);
     std::mutex m;
-    bool finished = false;
-    bool fFound = false;
-    bool rFound = false;
 
     std::vector<std::thread> threads (numThreads);
     for (uint i = 0; i < numThreads; ++i)
     {
         Point pred = (i == 0) ? startPoints[0] : startPoints[i - 1];
         Point succ = (i == numThreads - 1) ? startPoints[i] : startPoints[i + 1];
-        threads[i] = std::thread (search, i, startPoints[i], pred, succ, std::ref (idsFound),
-                std::ref(expandedTiles[i]), std::ref(meetingTiles), std::cref(world),
-                std::ref(m), std::ref(finished), std::ref(fFound))
+        threads[i] = std::thread (search, i, std::cref(startPoints[i]), std::cref(pred),
+                std::cref(succ), std::ref (idsFound), std::ref(expandedTiles[i]),
+                std::ref(meetingTiles), std::ref (meetingTilesFound),
+                std::cref(world), std::ref(m));
     }
 
     for (auto& t : threads)
@@ -138,33 +137,36 @@ int main (int args, char* argv[])
         t.join ();
     }
 
-    if (fFound)
-    {
-        rTile = reverseExpandedTiles.at (fTile.getTile ().id);
-    }
-    else
-    {
-        fTile = forwardExpandedTiles.at (rTile.getTile ().id);
-    }
     auto t2 = std::chrono::high_resolution_clock::now();
 
     // Parse reverse results
     uint totalCost = 0;
-    std::vector <Point> reversePath;
-    while (rTile.xy ().x != endX || rTile.xy ().y != endY)
+    std::vector<Point> finalPath;
+    uint j = expandedTiles.size () - 1, i = meetingTiles.size () - 1;
+    while (i > 0)
     {
-        totalCost += rTile.getTile().cost;
-        reversePath.emplace_back (rTile.xy ());
-        rTile = reverseExpandedTiles[(rTile.bestTile ().y * world.getWidth ()) + rTile.bestTile ().x];
-    }
-    reversePath.emplace_back (rTile.xy ());
+        PathTile fTile = meetingTiles[i];
+        while (fTile.xy ().x != startPoints[j].x || fTile.xy ().y != startPoints[j].y)
+        {
+            fTile = expandedTiles[j][(fTile.bestTile ().y * world.getWidth()) + fTile.bestTile ().x];
+            totalCost += fTile.getTile().cost;
+            finalPath.emplace_back(fTile.xy ());
+        }
 
-    std::vector<Point> finalPath (reversePath.rbegin (), reversePath.rend ());
-    while (fTile.xy ().x != startX || fTile.xy ().y != startY)
-    {
-        fTile = forwardExpandedTiles[(fTile.bestTile ().y * world.getWidth()) + fTile.bestTile ().x];
-        totalCost += fTile.getTile().cost;
-        finalPath.emplace_back(fTile.xy ());
+        --i;
+
+        std::vector <Point> reversePath;
+        PathTile rTile = meetingTiles[i];
+        while (rTile.xy ().x != startPoints[j].x || rTile.xy ().y != startPoints[j].y)
+        {
+            totalCost += rTile.getTile().cost;
+            reversePath.emplace_back (rTile.xy ());
+            rTile = expandedTiles[j][(rTile.bestTile ().y * world.getWidth ()) + rTile.bestTile ().x];
+        }
+        reversePath.emplace_back (rTile.xy ());
+        finalPath.insert(finalPath.end (), reversePath.rbegin (), reversePath.rend ());
+
+        --j;
     }
     totalCost -= fTile.getTile().cost;
 
@@ -200,7 +202,7 @@ Point findStart (const World& world, uint numThreadsLeft, const Point& start, co
         ySlope = false;
     }
 
-    uint distAlongSlope = 0;
+    int distAlongSlope = 0;
     int slopeDirection = (slope >= 0) ? 1 : -1;
     while (world (forward.x, forward.y).cost == 0 && world (backward.x, backward.y).cost == 0)
     {

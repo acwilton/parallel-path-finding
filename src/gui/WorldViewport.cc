@@ -29,6 +29,7 @@ const SDL_Color BIDIR_COLOR = {0xCB, 0x6B, 0xFF, 0xFF};
 const SDL_Color PAR_BIDIR_COLOR = {0xFF, 0x75, 0xF1, 0xFF};
 const SDL_Color FRINGE_COLOR = {0x84, 0xB9, 0xFF, 0xFF};
 const SDL_Color PAR_FRINGE_COLOR = {0xFF, 0x4B, 0x3A, 0xFF};
+const SDL_Color PAR_DIVIDE_COLOR = {0xFF, 0x00, 0x77, 0xFF};
 const SDL_Color STAT_TEXT_COLOR = {0x00, 0x00, 0x00, 0xFF};
 const SDL_Color STAT_TILE_COLOR = {0x2A, 0x2E, 0xFC, 0xFF};
 
@@ -363,6 +364,16 @@ void WorldViewport::handleEvent (SDL_Event& e)
                     setResultsEnabled (!m_resultsEnabled);
                 }
                 break;
+            case SDLK_e:
+                if (!isNull (m_start) && !isNull (m_end))
+                {
+                    loadResults ("parDivide", m_start, m_end);
+                }
+                else
+                {
+                    setResultsEnabled (!m_resultsEnabled);
+                }
+                break;
             }
         }
         else if (e.type == SDL_KEYUP)
@@ -666,6 +677,10 @@ SDL_Color WorldViewport::getAlgorithmColor () const
     else if (m_currentAlgorithm == "parFringe")
     {
         return PAR_FRINGE_COLOR;
+    }
+    else if (m_currentAlgorithm == "parDivide")
+    {
+        return PAR_DIVIDE_COLOR;
     }
 
     return DEFAULT_COLOR;

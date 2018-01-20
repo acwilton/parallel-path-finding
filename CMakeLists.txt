@@ -168,6 +168,11 @@ add_algorithm(
   SOURCE src/algorithms/parFringe/ParFringe.cc
   LIBRARIES Threads::Threads tbb boost-thread)
 
+add_algorithm(
+  NAME parDivide
+  SOURCE src/algorithms/parDivide/ParDivide.cc
+  LIBRARIES Threads::Threads tbb boost-thread)
+
 add_custom_target(clean_results
   COMMAND rm -R -f ${CMAKE_SOURCE_DIR}/results/*)
 

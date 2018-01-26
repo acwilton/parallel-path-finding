@@ -168,7 +168,7 @@ int main (int args, char* argv[])
 
         --j;
     }
-    totalCost -= fTile.getTile().cost;
+    totalCost -= world (startX, startY).cost;
 
     writeResults (finalPath, argv[1], ALG_NAME,
             std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);

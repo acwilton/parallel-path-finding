@@ -33,6 +33,8 @@ const SDL_Color PAR_DIVIDE_COLOR = {0xFF, 0x00, 0x77, 0xFF};
 const SDL_Color STAT_TEXT_COLOR = {0x00, 0x00, 0x00, 0xFF};
 const SDL_Color STAT_TILE_COLOR = {0x2A, 0x2E, 0xFC, 0xFF};
 
+const SDL_Color MULITPLE_THREAD_COLOR = {0xFC, 0xF8, 0x05, 0xFF};
+
 WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
         : Viewport (rect, backgroundColor),
           m_mode (VIEW),
@@ -505,9 +507,9 @@ void WorldViewport::loadResults (const std::string& algName, const Point& start,
         }
     }
     m_currentAlgorithm = algName;
-    if (m_threadColors.size () != m_stats.size () + 1)
+    if (m_threadColors.size () != m_stats.size ())
     {
-        m_threadColors = getRandomColors(m_stats.size () + 1);
+        m_threadColors = getRandomColors(m_stats.size ());
     }
     if (m_maxProcessCount * m_stats.size () > m_statTextures.size ())
     {
@@ -926,7 +928,7 @@ void WorldViewport::updateTileColors ()
                         }
                         if (multipleFound)
                         {
-                            t.setRectColor(m_threadColors[m_stats.size ()]);
+                            t.setRectColor(MULITPLE_THREAD_COLOR);
                         }
                         else if (found)
                         {

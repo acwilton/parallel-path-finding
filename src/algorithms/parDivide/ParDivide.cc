@@ -44,7 +44,7 @@ Point findStart (const World& world, uint numThreadsLeft, const Point& start, co
 void search (uint id, const Point& start, const Point& predEnd, const Point& succEnd,
              tbb::concurrent_unordered_map<uint, uint>& tileIdsFound,
              std::unordered_map<uint, PathTile>& expandedTiles,
-             std::vector<pathFind::PathTile>& meetingTiles, tbb::concurrent_vector<std::pair<bool, uint>>& meetingTilesFound,
+             std::vector<Point>& meetingTiles, tbb::concurrent_vector<std::pair<bool, uint>>& meetingTilesFound,
              const pathFind::World& world, std::mutex& m);
 
 void searchNeighbor (const Point& adjPoint, const World& world, const PathTile& tile,
@@ -117,17 +117,15 @@ int main (int args, char* argv[])
 
     std::vector<std::unordered_map<uint, PathTile>> expandedTiles (numThreads);
     tbb::concurrent_unordered_map<uint, uint> idsFound;
-    std::vector<PathTile> meetingTiles (numThreads + 1);
+    std::vector<Point> meetingTiles (numThreads + 1);
     tbb::concurrent_vector<std::pair<bool, uint>> meetingTilesFound (numThreads + 1);
     std::mutex m;
 
     std::vector<std::thread> threads (numThreads);
     for (uint i = 0; i < numThreads; ++i)
     {
-        Point pred = (i == 0) ? startPoints[0] : startPoints[i - 1];
-        Point succ = (i == numThreads - 1) ? startPoints[i] : startPoints[i + 1];
-        threads[i] = std::thread (search, i, std::cref(startPoints[i]), std::cref(pred),
-                std::cref(succ), std::ref (idsFound), std::ref(expandedTiles[i]),
+        threads[i] = std::thread (search, i, std::cref(startPoints[i]), std::cref((i == 0) ? startPoints[0] : startPoints[i - 1]),
+                std::cref((i == numThreads - 1) ? startPoints[i] : startPoints[i + 1]), std::ref (idsFound), std::ref(expandedTiles[i]),
                 std::ref(meetingTiles), std::ref (meetingTilesFound),
                 std::cref(world), std::ref(m));
     }
@@ -142,28 +140,30 @@ int main (int args, char* argv[])
     // Parse reverse results
     uint totalCost = 0;
     std::vector<Point> finalPath;
+    finalPath.emplace_back (endX, endY);
     uint j = expandedTiles.size () - 1, i = meetingTiles.size () - 1;
     while (i > 0)
     {
-        PathTile fTile = meetingTiles[i];
+        PathTile fTile = expandedTiles[j][(meetingTiles[i].y * world.getWidth ()) + meetingTiles[i].x];
         while (fTile.xy ().x != startPoints[j].x || fTile.xy ().y != startPoints[j].y)
         {
             fTile = expandedTiles[j][(fTile.bestTile ().y * world.getWidth()) + fTile.bestTile ().x];
-            totalCost += fTile.getTile().cost;
-            finalPath.emplace_back(fTile.xy ());
+            if (finalPath.back().x != fTile.xy().x || finalPath.back().y != fTile.xy().y)
+            {
+                totalCost += fTile.getTile().cost;
+                finalPath.emplace_back(fTile.xy());
+            }
         }
 
         --i;
-
         std::vector <Point> reversePath;
-        PathTile rTile = meetingTiles[i];
+        PathTile rTile = expandedTiles[j][(meetingTiles[i].y * world.getWidth ()) + meetingTiles[i].x];
         while (rTile.xy ().x != startPoints[j].x || rTile.xy ().y != startPoints[j].y)
         {
             totalCost += rTile.getTile().cost;
             reversePath.emplace_back (rTile.xy ());
             rTile = expandedTiles[j][(rTile.bestTile ().y * world.getWidth ()) + rTile.bestTile ().x];
         }
-        reversePath.emplace_back (rTile.xy ());
         finalPath.insert(finalPath.end (), reversePath.rbegin (), reversePath.rend ());
 
         --j;
@@ -242,7 +242,7 @@ Point findStart (const World& world, uint numThreadsLeft, const Point& start, co
 void search (uint id, const Point& start, const Point& predEnd, const Point& succEnd,
              tbb::concurrent_unordered_map<uint, uint>& tileIdsFound,
              std::unordered_map<uint, PathTile>& expandedTiles,
-             std::vector<pathFind::PathTile>& meetingTiles, tbb::concurrent_vector<std::pair<bool, uint>>& meetingTilesFound,
+             std::vector<Point>& meetingTiles, tbb::concurrent_vector<std::pair<bool, uint>>& meetingTilesFound,
              const pathFind::World& world, std::mutex& m)
 {
     PriorityQueue openTiles (world.getWidth (), world.getHeight (), [predEnd, succEnd] (uint x, uint y)
@@ -254,7 +254,6 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
 
     // Used to determine the "farthest" thread that we have met
     // uint predIdMet = id, succIdMet = id;
-
     while (!meetingTilesFound[id].first || !meetingTilesFound[id + 1].first)
     {
         PathTile tile = openTiles.top ();
@@ -264,15 +263,15 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
             meetingTilesFound[id].first = true;
             meetingTilesFound[id].second = id;
             m.lock ();
-            meetingTiles[id] = tile;
+            meetingTiles[id] = tile.xy ();
             m.unlock ();
         }
-        else if(tile.xy().x == succEnd.x && tile.xy().y == succEnd.y)
+        if(tile.xy().x == succEnd.x && tile.xy().y == succEnd.y)
         {
             meetingTilesFound[id + 1].first = true;
             meetingTilesFound[id + 1].second = id;
             m.lock ();
-            meetingTiles[id + 1] = tile;
+            meetingTiles[id + 1] = tile.xy ();
             m.unlock ();
         }
 
@@ -282,7 +281,7 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
             if ((tileFound->second == id || tileFound->second == id - 1) && !meetingTilesFound[id].first)
             {
                 m.lock ();
-                meetingTiles[id] = tile;
+                meetingTiles[id] = tile.xy ();
                 m.unlock ();
                 meetingTilesFound[id].first = true;
                 meetingTilesFound[id].second = id; // Set who the author was for this discovery
@@ -290,7 +289,7 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
             else if (tileFound->second == id + 1 && !meetingTilesFound[id + 1].first)
             {
                 m.lock ();
-                meetingTiles[id + 1] = tile;
+                meetingTiles[id + 1] = tile.xy ();
                 m.unlock ();
                 meetingTilesFound[id + 1].first = true;
                 meetingTilesFound[id + 1].second = id; // Set who the author was for this discovery

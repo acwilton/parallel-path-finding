@@ -48,7 +48,15 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
              const pathFind::World& world, std::mutex& m);
 
 void searchNeighbor (const Point& adjPoint, const World& world, const PathTile& tile,
-    PriorityQueue& openTiles, const std::unordered_map<uint, PathTile>& expandedTiles);
+    PriorityQueue& openTiles, const std::unordered_map<uint, PathTile>& expandedTiles
+#ifdef GEN_STATS
+    , uint id
+#endif
+    );
+
+#ifdef GEN_STATS
+    std::vector<std::unordered_map<uint, StatPoint>> stats (numThreads);
+#endif
 
 int main (int args, char* argv[])
 {
@@ -170,8 +178,13 @@ int main (int args, char* argv[])
     }
     totalCost -= world (startX, startY).cost;
 
-    writeResults (finalPath, argv[1], ALG_NAME,
-            std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #ifdef GEN_STATS
+        writeResults (finalPath, stats, argv[1], ALG_NAME,
+                std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #else
+        writeResults (finalPath, argv[1], ALG_NAME,
+                std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(), totalCost);
+    #endif
 
     return EXIT_SUCCESS;
 }
@@ -303,21 +316,41 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
 
         // Check each neighbor
         Point adjPoint {tile.xy ().x + 1, tile.xy ().y}; // east
-        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles);
+        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles
+        #ifdef GEN_STATS
+            , id
+        #endif
+        );
 
         adjPoint = {tile.xy ().x, tile.xy ().y + 1}; // south
-        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles);
+        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles
+        #ifdef GEN_STATS
+            , id
+        #endif
+        );
 
         adjPoint = {tile.xy ().x - 1, tile.xy ().y}; // west
-        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles);
+        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles
+        #ifdef GEN_STATS
+            , id
+        #endif
+        );
 
         adjPoint = {tile.xy ().x, tile.xy ().y - 1}; // north
-        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles);
+        searchNeighbor (adjPoint, world, tile, openTiles, expandedTiles
+        #ifdef GEN_STATS
+            , id
+        #endif
+        );
     }
 }
 
 void searchNeighbor (const Point& adjPoint, const World& world, const PathTile& tile,
-    PriorityQueue& openTiles, const std::unordered_map<uint, PathTile>& expandedTiles)
+    PriorityQueue& openTiles, const std::unordered_map<uint, PathTile>& expandedTiles
+#ifdef GEN_STATS
+    , uint id
+#endif
+    )
 {
     if (adjPoint.x < world.getWidth() && adjPoint.y < world.getHeight ())
     {
@@ -326,6 +359,17 @@ void searchNeighbor (const Point& adjPoint, const World& world, const PathTile& 
             expandedTiles.find (worldTile.id) == expandedTiles.end ())
         {
             openTiles.tryUpdateBestCost (worldTile, adjPoint, tile);
+            #ifdef GEN_STATS
+                auto statIter = stats[id].find (worldTile.id);
+                if (statIter == stats[id].end ())
+                {
+                    stats[id][worldTile.id] = StatPoint {adjPoint.x, adjPoint.y};
+                }
+                else
+                {
+                    statIter->second.processCount++;
+                }
+            #endif
         }
     }
 }

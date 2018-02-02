@@ -164,14 +164,34 @@ add_algorithm(
   LIBRARIES Threads::Threads)
 
 add_algorithm(
-  NAME parFringe
+  NAME parFringe_2
   SOURCE src/algorithms/parFringe/ParFringe.cc
   LIBRARIES Threads::Threads tbb boost-thread)
+target_compile_definitions (parFringe_2 PRIVATE NUMBER_OF_THREADS=2)
 
 add_algorithm(
-  NAME parDivide
+  NAME parFringe_4
+  SOURCE src/algorithms/parFringe/ParFringe.cc
+  LIBRARIES Threads::Threads tbb boost-thread)
+target_compile_definitions (parFringe_4 PRIVATE NUMBER_OF_THREADS=4)
+
+add_algorithm(
+  NAME parFringe_8
+  SOURCE src/algorithms/parFringe/ParFringe.cc
+  LIBRARIES Threads::Threads tbb boost-thread)
+target_compile_definitions (parFringe_8 PRIVATE NUMBER_OF_THREADS=8)
+
+add_algorithm(
+  NAME parDivide_4
   SOURCE src/algorithms/parDivide/ParDivide.cc
   LIBRARIES Threads::Threads tbb boost-thread)
+target_compile_definitions (parDivide_4 PRIVATE NUMBER_OF_THREADS=4)
+
+add_algorithm(
+  NAME parDivide_8
+  SOURCE src/algorithms/parDivide/ParDivide.cc
+  LIBRARIES Threads::Threads tbb boost-thread)
+target_compile_definitions (parDivide_8 PRIVATE NUMBER_OF_THREADS=8)
 
 add_custom_target(clean_results
   COMMAND rm -R -f ${CMAKE_SOURCE_DIR}/results/*)

@@ -6,6 +6,7 @@ worlds/
 
 # Result files
 results/
+saved_results/
 
 # Eclipse files
 .settings/

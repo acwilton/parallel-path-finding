@@ -148,8 +148,16 @@ int main (int, char**)
                 std::stringstream input (s);
                 std::string alg;
                 uint sx, sy, ex, ey;
-                input >> alg >> sx >> sy >> ex >> ey;
-                worldViewport->loadResults(alg, Point {sx, sy}, Point {ex, ey});
+                input >> alg;
+                if (input.peek () == EOF)
+                {
+                    worldViewport->loadResults (alg);
+                }
+                else
+                {
+                    input >> sx >> sy >> ex >> ey;
+                    worldViewport->loadResults(alg, Point {sx, sy}, Point {ex, ey});
+                }
                 worldViewport->setResultsEnabled(true);
                 viewResult_B->enable ();
             });

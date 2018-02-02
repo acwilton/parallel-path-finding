@@ -46,6 +46,7 @@ WorldViewport::WorldViewport (SDL_Rect rect, SDL_Color backgroundColor)
           m_tileScale (DEFAULT_TILE_SCALE),
           m_textEnabled (false),
           m_textInitialized (false),
+          m_keyboardOn (true),
           m_currentAlgorithm ("dijkstra"),
           m_currentThread (0),
           m_maxProcessCount (0),
@@ -277,105 +278,114 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 }
                 updateGraphicTilesPos ();
                 break;
-            case SDLK_v:
-                if (m_viewMode == COST)
-                {
-                    m_viewMode = STAT;
-                }
-                else
-                {
-                    m_viewMode = COST;
-                }
-                updateGraphicTilesPos();
+            case SDLK_PERIOD:
+                m_keyboardOn = !m_keyboardOn;
                 break;
-            case SDLK_s:
-                if (m_statMode == INDIVIDUAL)
-                {
-                    m_statMode = COLLECTIVE;
+            default:
+                if (m_keyboardOn) {
+                    switch (e.key.keysym.sym)
+                    {
+                    case SDLK_v:
+                        if (m_viewMode == COST)
+                        {
+                            m_viewMode = STAT;
+                        }
+                        else
+                        {
+                            m_viewMode = COST;
+                        }
+                        updateGraphicTilesPos();
+                        break;
+                    case SDLK_s:
+                        if (m_statMode == INDIVIDUAL)
+                        {
+                            m_statMode = COLLECTIVE;
+                        }
+                        else
+                        {
+                            m_statMode = INDIVIDUAL;
+                        }
+                        updateGraphicTilesPos();
+                        break;
+                    case SDLK_r:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            runPathFinding(m_currentAlgorithm);
+                            loadResults (m_currentAlgorithm, m_start, m_end);
+                        }
+                        break;
+                    case SDLK_d:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            loadResults ("dijkstra", m_start, m_end);
+                        }
+                        else
+                        {
+                            setResultsEnabled (!m_resultsEnabled);
+                        }
+                        break;
+                    case SDLK_a:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            loadResults ("aStar", m_start, m_end);
+                        }
+                        else
+                        {
+                            setResultsEnabled (!m_resultsEnabled);
+                        }
+                        break;
+                    case SDLK_b:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            loadResults ("bidir", m_start, m_end);
+                        }
+                        else
+                        {
+                            setResultsEnabled (!m_resultsEnabled);
+                        }
+                        break;
+                    case SDLK_p:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            loadResults ("parBidir", m_start, m_end);
+                        }
+                        else
+                        {
+                            setResultsEnabled (!m_resultsEnabled);
+                        }
+                        break;
+                    case SDLK_f:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            loadResults ("fringe", m_start, m_end);
+                        }
+                        else
+                        {
+                            setResultsEnabled (!m_resultsEnabled);
+                        }
+                        break;
+                    case SDLK_g:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            loadResults ("parFringe_4", m_start, m_end);
+                        }
+                        else
+                        {
+                            setResultsEnabled (!m_resultsEnabled);
+                        }
+                        break;
+                    case SDLK_e:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            loadResults ("parDivide_8", m_start, m_end);
+                        }
+                        else
+                        {
+                            setResultsEnabled (!m_resultsEnabled);
+                        }
+                        break;
+                    }
                 }
-                else
-                {
-                    m_statMode = INDIVIDUAL;
-                }
-                updateGraphicTilesPos();
-                break;
-            case SDLK_r:
-                if (!isNull (m_start) && !isNull (m_end))
-                {
-                    runPathFinding(m_currentAlgorithm);
-                    loadResults (m_currentAlgorithm, m_start, m_end);
-                }
-                break;
-            case SDLK_d:
-                if (!isNull (m_start) && !isNull (m_end))
-                {
-                    loadResults ("dijkstra", m_start, m_end);
-                }
-                else
-                {
-                    setResultsEnabled (!m_resultsEnabled);
-                }
-                break;
-            case SDLK_a:
-                if (!isNull (m_start) && !isNull (m_end))
-                {
-                    loadResults ("aStar", m_start, m_end);
-                }
-                else
-                {
-                    setResultsEnabled (!m_resultsEnabled);
-                }
-                break;
-            case SDLK_b:
-                if (!isNull (m_start) && !isNull (m_end))
-                {
-                    loadResults ("bidir", m_start, m_end);
-                }
-                else
-                {
-                    setResultsEnabled (!m_resultsEnabled);
-                }
-                break;
-            case SDLK_p:
-                if (!isNull (m_start) && !isNull (m_end))
-                {
-                    loadResults ("parBidir", m_start, m_end);
-                }
-                else
-                {
-                    setResultsEnabled (!m_resultsEnabled);
-                }
-                break;
-            case SDLK_f:
-                if (!isNull (m_start) && !isNull (m_end))
-                {
-                    loadResults ("fringe", m_start, m_end);
-                }
-                else
-                {
-                    setResultsEnabled (!m_resultsEnabled);
-                }
-                break;
-            case SDLK_g:
-                if (!isNull (m_start) && !isNull (m_end))
-                {
-                    loadResults ("parFringe", m_start, m_end);
-                }
-                else
-                {
-                    setResultsEnabled (!m_resultsEnabled);
-                }
-                break;
-            case SDLK_e:
-                if (!isNull (m_start) && !isNull (m_end))
-                {
-                    loadResults ("parDivide", m_start, m_end);
-                }
-                else
-                {
-                    setResultsEnabled (!m_resultsEnabled);
-                }
-                break;
             }
         }
         else if (e.type == SDL_KEYUP)
@@ -524,6 +534,11 @@ void WorldViewport::loadResults (const std::string& algName, const Point& start,
         }
     }
     setResultsEnabled (true);
+}
+
+void WorldViewport::loadResults (const std::string& algName)
+{
+    loadResults (algName, m_start, m_end);
 }
 
 void WorldViewport::setResultsEnabled (bool resultsEnabled)
@@ -676,11 +691,11 @@ SDL_Color WorldViewport::getAlgorithmColor () const
     {
         return FRINGE_COLOR;
     }
-    else if (m_currentAlgorithm == "parFringe")
+    else if (m_currentAlgorithm.find ("parFringe") != std::string::npos)
     {
         return PAR_FRINGE_COLOR;
     }
-    else if (m_currentAlgorithm == "parDivide")
+    else if (m_currentAlgorithm.find ("parDivide") != std::string::npos)
     {
         return PAR_DIVIDE_COLOR;
     }

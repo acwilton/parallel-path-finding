@@ -35,9 +35,9 @@ using namespace pathFind;
 const std::string WORLD_DIR = "worlds";
 const std::string WORLD_EXT = ".world";
 
-const std::string ALG_NAME = "parDivide";
+const std::string ALG_NAME = "parDivide_" + std::to_string (NUMBER_OF_THREADS);
 
-const uint numThreads = 4;
+const uint numThreads = NUMBER_OF_THREADS;
 
 Point findStart (const World& world, uint numThreadsLeft, const Point& start, const Point& end);
 
@@ -132,15 +132,38 @@ int main (int args, char* argv[])
     std::vector<std::thread> threads (numThreads);
     for (uint i = 0; i < numThreads; ++i)
     {
-        threads[i] = std::thread (search, i, std::cref(startPoints[i]), std::cref((i == 0) ? startPoints[0] : startPoints[i - 1]),
-                std::cref((i == numThreads - 1) ? startPoints[i] : startPoints[i + 1]), std::ref (idsFound), std::ref(expandedTiles[i]),
-                std::ref(meetingTiles), std::ref (meetingTilesFound),
-                std::cref(world), std::ref(m));
+        threads[i] = std::thread (search, i, std::cref(startPoints[i]),
+            std::cref((i == 0) ? startPoints[0] : startPoints[i - 1]),
+            std::cref((i == numThreads - 1) ? startPoints[i] : startPoints[i + 1]),
+            std::ref (idsFound), std::ref(expandedTiles[i]), std::ref(meetingTiles),
+            std::ref (meetingTilesFound), std::cref(world), std::ref(m));
     }
 
     for (auto& t : threads)
     {
         t.join ();
+    }
+
+    std::vector<std::unordered_map<uint, PathTile>> smooth_expandedTiles (numThreads - 1);
+    tbb::concurrent_unordered_map<uint, uint> smooth_idsFound;
+    std::vector<Point> smooth_meetingTiles (numThreads);
+    tbb::concurrent_vector<std::pair<bool, uint>> smooth_meetingTilesFound (numThreads);
+
+    if (numThreads > 2)
+    {
+        for (uint i = 0; i < numThreads - 1; ++i)
+        {
+            threads[i] = std::thread (search, i, std::cref (meetingTiles[i + 1]),
+            std::cref ((i == 0) ? meetingTiles[1] : meetingTiles[i]),
+            std::cref((i == numThreads - 2) ? meetingTiles[i + 1] : meetingTiles[i + 2]),
+            std::ref (smooth_idsFound), std::ref(smooth_expandedTiles[i]), std::ref(smooth_meetingTiles),
+            std::ref (smooth_meetingTilesFound), std::cref(world), std::ref(m));
+        }
+    }
+
+    for (uint i = 0; i < numThreads -1; ++i)
+    {
+        threads[i].join ();
     }
 
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -149,32 +172,63 @@ int main (int args, char* argv[])
     uint totalCost = 0;
     std::vector<Point> finalPath;
     finalPath.emplace_back (endX, endY);
-    uint j = expandedTiles.size () - 1, i = meetingTiles.size () - 1;
-    while (i > 0)
+
+    uint j = expandedTiles.size () - 1, i = meetingTiles.size () - 2;
+
+    // Parse Last segment of path
+    std::vector <Point> tailPath;
+    PathTile tailTile = expandedTiles[j][(meetingTiles[i].y * world.getWidth ()) + meetingTiles[i].x];
+    while (tailTile.xy ().x != startPoints[j].x || tailTile.xy ().y != startPoints[j].y)
     {
-        PathTile fTile = expandedTiles[j][(meetingTiles[i].y * world.getWidth ()) + meetingTiles[i].x];
-        while (fTile.xy ().x != startPoints[j].x || fTile.xy ().y != startPoints[j].y)
+        totalCost += tailTile.getTile().cost;
+        tailPath.emplace_back (tailTile.xy ());
+        tailTile = expandedTiles[j][(tailTile.bestTile ().y * world.getWidth ()) + tailTile.bestTile ().x];
+    }
+    finalPath.insert(finalPath.end (), tailPath.rbegin (), tailPath.rend ());
+
+    --j;
+
+    if (numThreads > 2)
+    {
+        // Parse all smoothed middle segments
+        while (i > 0)
         {
-            fTile = expandedTiles[j][(fTile.bestTile ().y * world.getWidth()) + fTile.bestTile ().x];
-            if (finalPath.back().x != fTile.xy().x || finalPath.back().y != fTile.xy().y)
+            PathTile fTile = smooth_expandedTiles[j][(smooth_meetingTiles[i].y * world.getWidth ()) + smooth_meetingTiles[i].x];
+            while (fTile.xy ().x != meetingTiles[j + 1].x || fTile.xy ().y != meetingTiles[j + 1].y)
             {
-                totalCost += fTile.getTile().cost;
-                finalPath.emplace_back(fTile.xy());
+                fTile = smooth_expandedTiles[j][(fTile.bestTile ().y * world.getWidth()) + fTile.bestTile ().x];
+                if (finalPath.back().x != fTile.xy().x || finalPath.back().y != fTile.xy().y)
+                {
+                    totalCost += fTile.getTile().cost;
+                    finalPath.emplace_back(fTile.xy());
+                }
             }
-        }
 
-        --i;
-        std::vector <Point> reversePath;
-        PathTile rTile = expandedTiles[j][(meetingTiles[i].y * world.getWidth ()) + meetingTiles[i].x];
-        while (rTile.xy ().x != startPoints[j].x || rTile.xy ().y != startPoints[j].y)
+            --i;
+            std::vector <Point> reversePath;
+            PathTile rTile = smooth_expandedTiles[j][(smooth_meetingTiles[i].y * world.getWidth ()) + smooth_meetingTiles[i].x];
+            while (rTile.xy ().x != meetingTiles[j + 1].x || rTile.xy ().y != meetingTiles[j + 1].y)
+            {
+                totalCost += rTile.getTile().cost;
+                reversePath.emplace_back (rTile.xy ());
+                rTile = smooth_expandedTiles[j][(rTile.bestTile ().y * world.getWidth ()) + rTile.bestTile ().x];
+            }
+            finalPath.insert(finalPath.end (), reversePath.rbegin (), reversePath.rend ());
+
+            --j;
+        }
+    }
+
+    // Parse first segment of path
+    PathTile headTile = expandedTiles[0][(meetingTiles[1].y * world.getWidth ()) + meetingTiles[1].x];
+    while (headTile.xy ().x != startX || headTile.xy ().y != startY)
+    {
+        headTile = expandedTiles[0][(headTile.bestTile ().y * world.getWidth()) + headTile.bestTile ().x];
+        if (finalPath.back().x != headTile.xy().x || finalPath.back().y != headTile.xy().y)
         {
-            totalCost += rTile.getTile().cost;
-            reversePath.emplace_back (rTile.xy ());
-            rTile = expandedTiles[j][(rTile.bestTile ().y * world.getWidth ()) + rTile.bestTile ().x];
+            totalCost += headTile.getTile().cost;
+            finalPath.emplace_back(headTile.xy());
         }
-        finalPath.insert(finalPath.end (), reversePath.rbegin (), reversePath.rend ());
-
-        --j;
     }
     totalCost -= world (startX, startY).cost;
 

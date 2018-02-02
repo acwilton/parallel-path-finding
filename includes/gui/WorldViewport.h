@@ -40,6 +40,7 @@ public:
     virtual void runPathFinding (const std::string& algorithm,
                                         uint startX, uint startY, uint endX, uint endY);
     virtual void loadResults (const std::string& algName, const Point& start, const Point& end);
+    virtual void loadResults (const std::string& algName);
     virtual void setResultsEnabled (bool resultsEnabled);
 
     virtual std::string getCurrentAlgorithm () const;
@@ -76,6 +77,8 @@ protected:
 
     bool m_textEnabled;
     bool m_textInitialized;
+
+    bool m_keyboardOn;
 
     std::string m_currentAlgorithm;
 

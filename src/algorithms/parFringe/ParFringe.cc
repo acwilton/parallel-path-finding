@@ -30,9 +30,9 @@ using namespace pathFind;
 const std::string WORLD_DIR = "../worlds";
 const std::string WORLD_EXT = ".world";
 
-const std::string ALG_NAME = "parFringe";
+const std::string ALG_NAME = "parFringe_" + std::to_string(NUMBER_OF_THREADS);
 
-const uint numThreads = 4;
+const uint numThreads = NUMBER_OF_THREADS;
 
 #ifdef GEN_STATS
     std::vector<std::unordered_map<uint, StatPoint>> stats (numThreads);

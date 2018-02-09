@@ -185,99 +185,6 @@ void WorldViewport::handleEvent (SDL_Event& e)
             }
             switch (e.key.keysym.sym)
             {
-            case SDLK_UP:
-                if (getCameraY () >= moveSpeed)
-                {
-                    setCameraY (getCameraY () - moveSpeed);
-                }
-                else
-                {
-                    setCameraY (0);
-                }
-                break;
-            case SDLK_DOWN:
-                if (getCameraOppY () + moveSpeed <= m_world.getHeight ())
-                {
-                    setCameraY (getCameraY () + moveSpeed);
-                }
-                else
-                {
-                    setCameraY (m_cameraY + (m_world.getHeight () - getCameraOppY()));
-                }
-                break;
-            case SDLK_LEFT:
-                if (getCameraX () >= moveSpeed)
-                {
-                    setCameraX (getCameraX () - moveSpeed);
-                }
-                else
-                {
-                    setCameraX (0);
-                }
-                break;
-            case SDLK_RIGHT:
-                if (getCameraOppX () + moveSpeed <= m_world.getWidth ())
-                {
-                    setCameraX (getCameraX () + moveSpeed);
-                }
-                else
-                {
-                    setCameraX (m_cameraX + (m_world.getWidth () - getCameraOppX()));
-                }
-                break;
-            case SDLK_PLUS:
-            case SDLK_EQUALS:
-                if (m_tileScale + scaleSpeed < MAX_TILE_SCALE)
-                {
-                    setTileScale (getTileScale () + scaleSpeed);
-                }
-                else
-                {
-                    setTileScale (MAX_TILE_SCALE);
-                }
-                break;
-            case SDLK_MINUS:
-                // If below zero it wraps around to uint::max so just check that it doesn't do that either
-                if (m_tileScale - scaleSpeed > MIN_TILE_SCALE && m_tileScale - scaleSpeed < MAX_TILE_SCALE)
-                {
-                    setTileScale (getTileScale () - scaleSpeed);
-                }
-                else
-                {
-                    setTileScale (MIN_TILE_SCALE);
-                }
-                break;
-            case SDLK_t:
-                setTextEnabled (!m_textEnabled);
-                break;
-            case SDLK_LALT:
-                if (m_mode == VIEW)
-                {
-                    m_showEndPoints = true;
-                }
-                break;
-            case SDLK_LEFTBRACKET:
-                if (m_currentThread != 0)
-                {
-                    --m_currentThread;
-                }
-                else
-                {
-                    m_currentThread = m_stats.empty () ? 0 : m_stats.size () - 1;
-                }
-                updateGraphicTilesPos ();
-                break;
-            case SDLK_RIGHTBRACKET:
-                if (m_currentThread + 1 < m_stats.size ())
-                {
-                    ++m_currentThread;
-                }
-                else
-                {
-                    m_currentThread = 0;
-                }
-                updateGraphicTilesPos ();
-                break;
             case SDLK_PERIOD:
                 m_keyboardOn = !m_keyboardOn;
                 break;
@@ -285,7 +192,100 @@ void WorldViewport::handleEvent (SDL_Event& e)
                 if (m_keyboardOn) {
                     switch (e.key.keysym.sym)
                     {
+                    case SDLK_UP:
+                        if (getCameraY () >= moveSpeed)
+                        {
+                            setCameraY (getCameraY () - moveSpeed);
+                        }
+                        else
+                        {
+                            setCameraY (0);
+                        }
+                        break;
+                    case SDLK_DOWN:
+                        if (getCameraOppY () + moveSpeed <= m_world.getHeight ())
+                        {
+                            setCameraY (getCameraY () + moveSpeed);
+                        }
+                        else
+                        {
+                            setCameraY (m_cameraY + (m_world.getHeight () - getCameraOppY()));
+                        }
+                        break;
+                    case SDLK_LEFT:
+                        if (getCameraX () >= moveSpeed)
+                        {
+                            setCameraX (getCameraX () - moveSpeed);
+                        }
+                        else
+                        {
+                            setCameraX (0);
+                        }
+                        break;
+                    case SDLK_RIGHT:
+                        if (getCameraOppX () + moveSpeed <= m_world.getWidth ())
+                        {
+                            setCameraX (getCameraX () + moveSpeed);
+                        }
+                        else
+                        {
+                            setCameraX (m_cameraX + (m_world.getWidth () - getCameraOppX()));
+                        }
+                        break;
+                    case SDLK_PLUS:
+                    case SDLK_EQUALS:
+                        if (m_tileScale + scaleSpeed < MAX_TILE_SCALE)
+                        {
+                            setTileScale (getTileScale () + scaleSpeed);
+                        }
+                        else
+                        {
+                            setTileScale (MAX_TILE_SCALE);
+                        }
+                        break;
+                    case SDLK_MINUS:
+                        // If below zero it wraps around to uint::max so just check that it doesn't do that either
+                        if (m_tileScale - scaleSpeed > MIN_TILE_SCALE && m_tileScale - scaleSpeed < MAX_TILE_SCALE)
+                        {
+                            setTileScale (getTileScale () - scaleSpeed);
+                        }
+                        else
+                        {
+                            setTileScale (MIN_TILE_SCALE);
+                        }
+                        break;
                     case SDLK_v:
+                        setTextEnabled (!m_textEnabled);
+                        break;
+                    case SDLK_LALT:
+                        if (m_mode == VIEW)
+                        {
+                            m_showEndPoints = true;
+                        }
+                        break;
+                    case SDLK_LEFTBRACKET:
+                        if (m_currentThread != 0)
+                        {
+                            --m_currentThread;
+                        }
+                        else
+                        {
+                            m_currentThread = m_stats.empty () ? 0 : m_stats.size () - 1;
+                        }
+                        updateGraphicTilesPos ();
+                        break;
+                    case SDLK_RIGHTBRACKET:
+                        if (m_currentThread + 1 < m_stats.size ())
+                        {
+                            ++m_currentThread;
+                        }
+                        else
+                        {
+                            m_currentThread = 0;
+                        }
+                        updateGraphicTilesPos ();
+                        break;
+                    case SDLK_z:
                         if (m_viewMode == COST)
                         {
                             m_viewMode = STAT;
@@ -296,7 +296,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
                         }
                         updateGraphicTilesPos();
                         break;
-                    case SDLK_s:
+                    case SDLK_x:
                         if (m_statMode == INDIVIDUAL)
                         {
                             m_statMode = COLLECTIVE;
@@ -307,14 +307,14 @@ void WorldViewport::handleEvent (SDL_Event& e)
                         }
                         updateGraphicTilesPos();
                         break;
-                    case SDLK_r:
+                    case SDLK_c:
                         if (!isNull (m_start) && !isNull (m_end))
                         {
                             runPathFinding(m_currentAlgorithm);
                             loadResults (m_currentAlgorithm, m_start, m_end);
                         }
                         break;
-                    case SDLK_d:
+                    case SDLK_q:
                         if (!isNull (m_start) && !isNull (m_end))
                         {
                             loadResults ("dijkstra", m_start, m_end);
@@ -324,7 +324,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
                             setResultsEnabled (!m_resultsEnabled);
                         }
                         break;
-                    case SDLK_a:
+                    case SDLK_w:
                         if (!isNull (m_start) && !isNull (m_end))
                         {
                             loadResults ("aStar", m_start, m_end);
@@ -334,7 +334,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
                             setResultsEnabled (!m_resultsEnabled);
                         }
                         break;
-                    case SDLK_b:
+                    case SDLK_e:
                         if (!isNull (m_start) && !isNull (m_end))
                         {
                             loadResults ("bidir", m_start, m_end);
@@ -344,7 +344,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
                             setResultsEnabled (!m_resultsEnabled);
                         }
                         break;
-                    case SDLK_p:
+                    case SDLK_r:
                         if (!isNull (m_start) && !isNull (m_end))
                         {
                             loadResults ("parBidir", m_start, m_end);
@@ -354,7 +354,7 @@ void WorldViewport::handleEvent (SDL_Event& e)
                             setResultsEnabled (!m_resultsEnabled);
                         }
                         break;
-                    case SDLK_f:
+                    case SDLK_t:
                         if (!isNull (m_start) && !isNull (m_end))
                         {
                             loadResults ("fringe", m_start, m_end);
@@ -364,7 +364,17 @@ void WorldViewport::handleEvent (SDL_Event& e)
                             setResultsEnabled (!m_resultsEnabled);
                         }
                         break;
-                    case SDLK_g:
+                    case SDLK_y:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            loadResults ("parFringe_2", m_start, m_end);
+                        }
+                        else
+                        {
+                            setResultsEnabled (!m_resultsEnabled);
+                        }
+                        break;
+                    case SDLK_u:
                         if (!isNull (m_start) && !isNull (m_end))
                         {
                             loadResults ("parFringe_4", m_start, m_end);
@@ -374,10 +384,80 @@ void WorldViewport::handleEvent (SDL_Event& e)
                             setResultsEnabled (!m_resultsEnabled);
                         }
                         break;
-                    case SDLK_e:
+                    case SDLK_i:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            loadResults ("parFringe_6", m_start, m_end);
+                        }
+                        else
+                        {
+                            setResultsEnabled (!m_resultsEnabled);
+                        }
+                        break;
+                    case SDLK_o:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            loadResults ("parFringe_8", m_start, m_end);
+                        }
+                        else
+                        {
+                            setResultsEnabled (!m_resultsEnabled);
+                        }
+                        break;
+                    case SDLK_a:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            loadResults ("parDivide_4", m_start, m_end);
+                        }
+                        else
+                        {
+                            setResultsEnabled (!m_resultsEnabled);
+                        }
+                        break;
+                    case SDLK_s:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            loadResults ("parDivide_6", m_start, m_end);
+                        }
+                        else
+                        {
+                            setResultsEnabled (!m_resultsEnabled);
+                        }
+                        break;
+                    case SDLK_d:
                         if (!isNull (m_start) && !isNull (m_end))
                         {
                             loadResults ("parDivide_8", m_start, m_end);
+                        }
+                        else
+                        {
+                            setResultsEnabled (!m_resultsEnabled);
+                        }
+                        break;
+                    case SDLK_f:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            loadResults ("parDivideUnsmooth_4", m_start, m_end);
+                        }
+                        else
+                        {
+                            setResultsEnabled (!m_resultsEnabled);
+                        }
+                        break;
+                    case SDLK_g:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            loadResults ("parDivideUnsmooth_6", m_start, m_end);
+                        }
+                        else
+                        {
+                            setResultsEnabled (!m_resultsEnabled);
+                        }
+                        break;
+                    case SDLK_h:
+                        if (!isNull (m_start) && !isNull (m_end))
+                        {
+                            loadResults ("parDivideUnsmooth_8", m_start, m_end);
                         }
                         else
                         {

@@ -176,6 +176,12 @@ add_algorithm(
 target_compile_definitions (parFringe_4 PRIVATE NUMBER_OF_THREADS=4)
 
 add_algorithm(
+  NAME parFringe_6
+  SOURCE src/algorithms/parFringe/ParFringe.cc
+  LIBRARIES Threads::Threads tbb boost-thread)
+target_compile_definitions (parFringe_6 PRIVATE NUMBER_OF_THREADS=6)
+
+add_algorithm(
   NAME parFringe_8
   SOURCE src/algorithms/parFringe/ParFringe.cc
   LIBRARIES Threads::Threads tbb boost-thread)
@@ -188,10 +194,34 @@ add_algorithm(
 target_compile_definitions (parDivide_4 PRIVATE NUMBER_OF_THREADS=4)
 
 add_algorithm(
+  NAME parDivide_6
+  SOURCE src/algorithms/parDivide/ParDivide.cc
+  LIBRARIES Threads::Threads tbb boost-thread)
+target_compile_definitions (parDivide_6 PRIVATE NUMBER_OF_THREADS=6)
+
+add_algorithm(
   NAME parDivide_8
   SOURCE src/algorithms/parDivide/ParDivide.cc
   LIBRARIES Threads::Threads tbb boost-thread)
 target_compile_definitions (parDivide_8 PRIVATE NUMBER_OF_THREADS=8)
+
+add_algorithm(
+  NAME parDivideUnsmooth_4
+  SOURCE src/algorithms/parDivide/parDivideUnsmooth.cc
+  LIBRARIES Threads::Threads tbb boost-thread)
+target_compile_definitions (parDivideUnsmooth_4 PRIVATE NUMBER_OF_THREADS=4)
+
+add_algorithm(
+  NAME parDivideUnsmooth_6
+  SOURCE src/algorithms/parDivide/parDivideUnsmooth.cc
+  LIBRARIES Threads::Threads tbb boost-thread)
+target_compile_definitions (parDivideUnsmooth_6 PRIVATE NUMBER_OF_THREADS=6)
+
+add_algorithm(
+  NAME parDivideUnsmooth_8
+  SOURCE src/algorithms/parDivide/parDivideUnsmooth.cc
+  LIBRARIES Threads::Threads tbb boost-thread)
+target_compile_definitions (parDivideUnsmooth_8 PRIVATE NUMBER_OF_THREADS=8)
 
 add_custom_target(clean_results
   COMMAND rm -R -f ${CMAKE_SOURCE_DIR}/results/*)

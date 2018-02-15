@@ -174,6 +174,9 @@ void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<
     #endif
 
     tile = openTiles.top ();
+
+    expandedTiles[tile.getTile().id] = tile;
+
     while (tile.xy ().x != endX || tile.xy ().y != endY)
     {
         tile = openTiles.top ();

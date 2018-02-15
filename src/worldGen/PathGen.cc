@@ -13,6 +13,7 @@
 
 const std::string WORLD_DIR = "../worlds";
 const std::string WORLD_EXT = ".world";
+const std::string PATH_EXT = ".path";
 
 int main (int args, char* argv[])
 {
@@ -33,10 +34,84 @@ int main (int args, char* argv[])
     pathFind::World world;
     worldFile >> world;
 
-    uint maxThreshold = world.getWidth() + getHeight ();
+    uint maxThreshold = world.getWidth() + world.getHeight ();
     // Find Start Point
     pathFind::Point start;
-    for (uint i = 0; i <)
+    start.x = 0;
+    start.y = 0;
+    for (uint i = 1; i < maxThreshold; ++i)
+    {
+        bool foundStart = false;
+        pathFind::Point temp = start;
+        while(temp.x < world.getWidth () && temp.y < world.getHeight())
+        {
+            if (world(temp.x, temp.y).cost != 0)
+            {
+                foundStart = true;
+                break;
+            }
+            --temp.x;
+            ++temp.y;
+        }
+
+        if (foundStart)
+        {
+            start = temp;
+            break;
+        }
+
+        if (i < world.getWidth())
+        {
+            ++start.x;
+        }
+        else
+        {
+            ++start.y;
+        }
+    }
+
+    pathFind::Point end;
+    end.x = world.getWidth() - 1;
+    end.y = world.getHeight() - 1;
+    for (uint i = 1; i < maxThreshold; ++i)
+    {
+        bool foundEnd = false;
+        pathFind::Point temp = end;
+        while(temp.x < world.getWidth () && temp.y < world.getHeight())
+        {
+            if (world(temp.x, temp.y).cost != 0)
+            {
+                foundEnd = true;
+                break;
+            }
+            --temp.x;
+            ++temp.y;
+        }
+
+        if (foundEnd)
+        {
+            end = temp;
+            break;
+        }
+
+        if (i < world.getHeight())
+        {
+            --end.y;
+        }
+        else
+        {
+            --end.x;
+        }
+    }
+
+    std::stringstream pathFileName;
+    pathFileName << argv[1] << PATH_EXT;
+    std::ofstream pathFile (pathFileName.str ());
+
+    pathFile << start.x << std::endl
+        << start.y << std::endl
+        << end.x << std::endl
+        << end.y;
 
     return EXIT_SUCCESS;
 }

@@ -141,6 +141,10 @@ add_custom_executable(
   NAME worldGen
   SOURCES src/worldGen/WorldGen.cc)
 
+add_custom_executable(
+  NAME pathGen
+  SOURCES src/worldGen/PathGen.cc)
+
 add_algorithm(
   NAME dijkstra
   SOURCE src/algorithms/dijkstra/Dijkstra.cc)

@@ -219,6 +219,7 @@ int main (int args, char* argv[])
         }
     }
 
+
     // Parse first segment of path
     PathTile headTile = expandedTiles[0][(meetingTiles[1].y * world.getWidth ()) + meetingTiles[1].x];
     while (headTile.xy ().x != startX || headTile.xy ().y != startY)
@@ -278,13 +279,25 @@ Point findStart (const World& world, uint numThreadsLeft, const Point& start, co
             distAlongSlope = 0;
             if (ySlope)
             {
-                forward.x++;
-                backward.x++;
+                if (forward.x + 1 < world.getWidth())
+                {
+                    forward.x++;
+                }
+                if (backward.x - 1 < world.getWidth())
+                {
+                    backward.x--;
+                }
             }
             else
             {
-                forward.y++;
-                backward.y++;
+                if (forward.y + 1 < world.getHeight())
+                {
+                    forward.y++;
+                }
+                if (backward.y - 1 < world.getHeight())
+                {
+                    backward.y--;
+                }
             }
         }
         else
@@ -292,13 +305,13 @@ Point findStart (const World& world, uint numThreadsLeft, const Point& start, co
             distAlongSlope += slopeDirection;
             if (ySlope)
             {
-                forward.y += slopeDirection;
-                backward.y += slopeDirection;
+                forward.y += (forward.y + slopeDirection < world.getHeight ()) ? slopeDirection : 0;
+                backward.y -= (backward.y - slopeDirection < world.getHeight ()) ? slopeDirection : 0;
             }
             else
             {
-                forward.x += slopeDirection;
-                backward.x += slopeDirection;
+                forward.x += (forward.x + slopeDirection < world.getWidth ()) ? slopeDirection : 0;
+                backward.x -= (backward.x - slopeDirection < world.getHeight ()) ? slopeDirection : 0;
             }
         }
     }
@@ -318,6 +331,8 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
             (x < succEnd.x ? succEnd.x - x : x - succEnd.x) + (y < succEnd.y ? succEnd.y - y : y - succEnd.y));
     });
     openTiles.push (world (start.x, start.y), {start.x, start.y}, 0);
+
+    expandedTiles[openTiles.top ().getTile().id] = openTiles.top ();
 
     // Used to determine the "farthest" thread that we have met
     // uint predIdMet = id, succIdMet = id;

@@ -25,6 +25,7 @@ using namespace pathFind;
 
 const std::string WORLD_DIR = "../worlds";
 const std::string WORLD_EXT = ".world";
+const std::string PATH_EXT = ".path";
 
 const std::string ALG_NAME = "parBidir";
 
@@ -43,12 +44,12 @@ void search (uint startX, uint startY, uint endX, uint endY, std::unordered_set<
 
 int main (int args, char* argv[])
 {
-    // Program should be started with 5 command line parameter
-    // that specifies the name of the world file to read from,
+    // Program should be started with 5 command line parameters (or 1)
+    // that specifies the name of the world file to read from and then optionallys
     // the start x, start y, end x, and end y
-    if (args != 6 )
+    if (args != 6  && args != 2)
     {
-        std::cout << "Incorrect inputs. Usage: <filename> <start x> <start y> <end x> <end y>" << std::endl;
+        std::cout << "Incorrect inputs. Usage: <filename> (start x) (start y) (end x) (end y)" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -67,19 +68,44 @@ int main (int args, char* argv[])
     pathFind::World world;
 
     worldFile >> world;
+    worldFile.close ();
 
-    // Parse the start and end points
     uint startX, startY, endX, endY;
-    try
+
+    if (args == 6)
     {
-        startX = boost::lexical_cast<uint> (argv[2]);
-        startY = boost::lexical_cast<uint> (argv[3]);
-        endX = boost::lexical_cast<uint> (argv[4]);
-        endY = boost::lexical_cast<uint> (argv[5]);
-    } catch (boost::bad_lexical_cast &e)
+        // Parse the start and end points
+        try
+        {
+            startX = boost::lexical_cast<uint> (argv[2]);
+            startY = boost::lexical_cast<uint> (argv[3]);
+            endX = boost::lexical_cast<uint> (argv[4]);
+            endY = boost::lexical_cast<uint> (argv[5]);
+        } catch (boost::bad_lexical_cast &e)
+        {
+            std::cout << "Start and end points failed to convert to numeric types" << std::endl;
+            return EXIT_FAILURE;
+        }
+    }
+    else
     {
-        std::cout << "Start and end points failed to convert to numeric types" << std::endl;
-        return EXIT_FAILURE;
+        std::stringstream pathFilename;
+        pathFilename << WORLD_DIR << "/" << argv[1] << PATH_EXT;
+        std::ifstream pathIn (pathFilename.str ());
+        if (!pathIn)
+        {
+            std::string pathCommand = "./pathGen " + std::string (argv[1]);
+            system (pathCommand.c_str());
+            pathIn.close ();
+            pathIn.open (pathFilename.str ());
+            if (!pathIn)
+            {
+                std::cout << "Could not construct path." << std::endl;
+                return EXIT_FAILURE;
+            }
+        }
+        pathIn >> startX >> startY >> endX >> endY;
+
     }
 
     auto t1 = std::chrono::high_resolution_clock::now();

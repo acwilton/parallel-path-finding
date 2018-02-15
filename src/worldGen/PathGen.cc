@@ -222,7 +222,7 @@ int main (int args, char* argv[])
     }
 
     std::stringstream pathFileName;
-    pathFileName << argv[1] << PATH_EXT;
+    pathFileName << WORLD_DIR << "/" << argv[1] << PATH_EXT;
     std::ofstream pathFile (pathFileName.str ());
 
     pathFile << start.x << std::endl

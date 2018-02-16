@@ -34,6 +34,7 @@ using namespace pathFind;
 
 const std::string WORLD_DIR = "worlds";
 const std::string WORLD_EXT = ".world";
+const std::string PATH_EXT = ".path";
 
 const std::string ALG_NAME = "parDivideUnsmooth_" + std::to_string (NUMBER_OF_THREADS);
 
@@ -60,12 +61,12 @@ void searchNeighbor (const Point& adjPoint, const World& world, const PathTile& 
 
 int main (int args, char* argv[])
 {
-    // Program should be started with 5 command line parameter
-    // that specifies the name of the world file to read from,
+    // Program should be started with 5 command line parameters (or 1)
+    // that specifies the name of the world file to read from and then optionallys
     // the start x, start y, end x, and end y
-    if (args != 6 )
+    if (args != 6  && args != 2)
     {
-        std::cout << "Incorrect inputs. Usage: <filename> <start x> <start y> <end x> <end y>" << std::endl;
+        std::cout << "Incorrect inputs. Usage: <filename> (start x) (start y) (end x) (end y)" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -84,19 +85,44 @@ int main (int args, char* argv[])
     pathFind::World world;
 
     worldFile >> world;
+    worldFile.close ();
 
-    // Parse the start and end points
     uint startX, startY, endX, endY;
-    try
+
+    if (args == 6)
     {
-        startX = boost::lexical_cast<uint> (argv[2]);
-        startY = boost::lexical_cast<uint> (argv[3]);
-        endX = boost::lexical_cast<uint> (argv[4]);
-        endY = boost::lexical_cast<uint> (argv[5]);
-    } catch (boost::bad_lexical_cast &e)
+        // Parse the start and end points
+        try
+        {
+            startX = boost::lexical_cast<uint> (argv[2]);
+            startY = boost::lexical_cast<uint> (argv[3]);
+            endX = boost::lexical_cast<uint> (argv[4]);
+            endY = boost::lexical_cast<uint> (argv[5]);
+        } catch (boost::bad_lexical_cast &e)
+        {
+            std::cout << "Start and end points failed to convert to numeric types" << std::endl;
+            return EXIT_FAILURE;
+        }
+    }
+    else
     {
-        std::cout << "Start and end points failed to convert to numeric types" << std::endl;
-        return EXIT_FAILURE;
+        std::stringstream pathFilename;
+        pathFilename << WORLD_DIR << "/" << argv[1] << PATH_EXT;
+        std::ifstream pathIn (pathFilename.str ());
+        if (!pathIn)
+        {
+            std::string pathCommand = "./pathGen " + std::string (argv[1]);
+            system (pathCommand.c_str());
+            pathIn.close ();
+            pathIn.open (pathFilename.str ());
+            if (!pathIn)
+            {
+                std::cout << "Could not construct path." << std::endl;
+                return EXIT_FAILURE;
+            }
+        }
+        pathIn >> startX >> startY >> endX >> endY;
+
     }
 
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -224,13 +250,25 @@ Point findStart (const World& world, uint numThreadsLeft, const Point& start, co
             distAlongSlope = 0;
             if (ySlope)
             {
-                forward.x++;
-                backward.x++;
+                if (forward.x + 1 < world.getWidth())
+                {
+                    forward.x++;
+                }
+                if (backward.x - 1 < world.getWidth())
+                {
+                    backward.x--;
+                }
             }
             else
             {
-                forward.y++;
-                backward.y++;
+                if (forward.y + 1 < world.getHeight())
+                {
+                    forward.y++;
+                }
+                if (backward.y - 1 < world.getHeight())
+                {
+                    backward.y--;
+                }
             }
         }
         else
@@ -238,13 +276,13 @@ Point findStart (const World& world, uint numThreadsLeft, const Point& start, co
             distAlongSlope += slopeDirection;
             if (ySlope)
             {
-                forward.y += slopeDirection;
-                backward.y += slopeDirection;
+                forward.y += (forward.y + slopeDirection < world.getHeight ()) ? slopeDirection : 0;
+                backward.y -= (backward.y - slopeDirection < world.getHeight ()) ? slopeDirection : 0;
             }
             else
             {
-                forward.x += slopeDirection;
-                backward.x += slopeDirection;
+                forward.x += (forward.x + slopeDirection < world.getWidth ()) ? slopeDirection : 0;
+                backward.x -= (backward.x - slopeDirection < world.getHeight ()) ? slopeDirection : 0;
             }
         }
     }
@@ -264,6 +302,8 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
             (x < succEnd.x ? succEnd.x - x : x - succEnd.x) + (y < succEnd.y ? succEnd.y - y : y - succEnd.y));
     });
     openTiles.push (world (start.x, start.y), {start.x, start.y}, 0);
+
+    expandedTiles[openTiles.top ().getTile().id] = openTiles.top ();
 
     // Used to determine the "farthest" thread that we have met
     // uint predIdMet = id, succIdMet = id;

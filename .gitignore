@@ -37,3 +37,4 @@ makefile.deps
 
 # Python stuff
 __pycache__/
+.ropeproject/

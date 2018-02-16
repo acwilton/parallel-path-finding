@@ -34,3 +34,6 @@ makefile.deps
 
 # Atom stuff
 .clang_complete
+
+# Python stuff
+__pycache__/

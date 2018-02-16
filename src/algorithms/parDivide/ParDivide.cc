@@ -245,7 +245,6 @@ int main (int args, char* argv[])
         }
     }
 
-
     // Parse first segment of path
     PathTile headTile = expandedTiles[0][(meetingTiles[1].y * world.getWidth ()) + meetingTiles[1].x];
     while (headTile.xy ().x != startX || headTile.xy ().y != startY)
@@ -386,7 +385,7 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
         auto tileFound = tileIdsFound.find(tile.getTile().id);
         if (tileFound != tileIdsFound.end ())
         {
-            if ((tileFound->second == id || tileFound->second == id - 1) && !meetingTilesFound[id].first)
+            if (tileFound->second == id && !meetingTilesFound[id].first)
             {
                 m.lock ();
                 meetingTiles[id] = tile.xy ();
@@ -394,7 +393,7 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
                 meetingTilesFound[id].first = true;
                 meetingTilesFound[id].second = id; // Set who the author was for this discovery
             }
-            else if (tileFound->second == id + 1 && !meetingTilesFound[id + 1].first)
+            else if (tileFound->second == id + 2 && !meetingTilesFound[id + 1].first)
             {
                 m.lock ();
                 meetingTiles[id + 1] = tile.xy ();
@@ -405,7 +404,7 @@ void search (uint id, const Point& start, const Point& predEnd, const Point& suc
         }
         else
         {
-            tileIdsFound[tile.getTile().id] = id;
+            tileIdsFound[tile.getTile().id] = id + 1;
         }
         expandedTiles[tile.getTile ().id] = tile;
 

@@ -9,11 +9,13 @@
 #include <sstream>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/filesystem.hpp>
 
 #include "common/World.h"
 
 const std::string WORLD_DIR = "../worlds";
 const std::string WORLD_EXT = ".world";
+const std::string PATH_EXT = ".path";
 
 int main (int args, char* argv[])
 {
@@ -82,6 +84,8 @@ int main (int args, char* argv[])
     worldFile << world;
 
     worldFile.close ();
+
+    boost::filesystem::remove (WORLD_DIR + "/" + argv[1] + PATH_EXT);
 
     return EXIT_SUCCESS;
 }

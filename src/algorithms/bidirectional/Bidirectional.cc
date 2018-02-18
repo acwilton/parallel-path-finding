@@ -118,8 +118,8 @@ int main (int args, char* argv[])
         stats[0][world (startX, startY).id] = StatPoint {startX, startY};
         stats[0][world (endX, endY).id] = StatPoint {endX, endY};
     #endif
-
-    std::unordered_map<uint, PathTile> expandedTiles;
+    std::unordered_map<uint, PathTile> fExpandedTiles;
+    std::unordered_map<uint, PathTile> rExpandedTiles;
     PathTile fTile = forwardOpenTiles.top ();
     PathTile rTile = reverseOpenTiles.top ();
     while ((fTile.xy ().x != endX || fTile.xy ().y != endY) &&
@@ -127,15 +127,15 @@ int main (int args, char* argv[])
     {
         // forward search
         fTile = forwardOpenTiles.top ();
-        auto overlapTile = expandedTiles.find(fTile.getTile ().id);
-        if (overlapTile != expandedTiles.end ())
+        auto overlapTile = rExpandedTiles.find(fTile.getTile ().id);
+        if (overlapTile != rExpandedTiles.end ())
         {
             // Best path found
             rTile = overlapTile->second;
             break;
         }
         forwardOpenTiles.pop ();
-        expandedTiles[fTile.getTile ().id] = fTile;
+        fExpandedTiles[fTile.getTile ().id] = fTile;
 
         // Check each neighbor
         Point adjPoint {fTile.xy ().x + 1, fTile.xy ().y}; // east
@@ -143,7 +143,7 @@ int main (int args, char* argv[])
         {
             World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
             if (worldTile.cost != 0 &&
-                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+                fExpandedTiles.find (worldTile.id) == fExpandedTiles.end ())
             {
                 forwardOpenTiles.tryUpdateBestCost (worldTile, adjPoint, fTile);
                 #ifdef GEN_STATS
@@ -165,7 +165,7 @@ int main (int args, char* argv[])
         {
             World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
             if (worldTile.cost != 0 &&
-                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+                fExpandedTiles.find (worldTile.id) == fExpandedTiles.end ())
             {
                 forwardOpenTiles.tryUpdateBestCost (worldTile, adjPoint, fTile);
                 #ifdef GEN_STATS
@@ -187,7 +187,7 @@ int main (int args, char* argv[])
         {
             World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
             if (worldTile.cost != 0 &&
-                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+                fExpandedTiles.find (worldTile.id) == fExpandedTiles.end ())
             {
                 forwardOpenTiles.tryUpdateBestCost (worldTile, adjPoint, fTile);
                 #ifdef GEN_STATS
@@ -209,7 +209,7 @@ int main (int args, char* argv[])
         {
             World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
             if (worldTile.cost != 0 &&
-                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+                fExpandedTiles.find (worldTile.id) == fExpandedTiles.end ())
             {
                 forwardOpenTiles.tryUpdateBestCost (worldTile, adjPoint, fTile);
                 #ifdef GEN_STATS
@@ -228,15 +228,15 @@ int main (int args, char* argv[])
 
         // reverse search
         rTile = reverseOpenTiles.top ();
-        overlapTile = expandedTiles.find(rTile.getTile ().id);
-        if (overlapTile != expandedTiles.end ())
+        overlapTile = rExpandedTiles.find(rTile.getTile ().id);
+        if (overlapTile != rExpandedTiles.end ())
         {
             fTile = overlapTile->second;
             // Best path found
             break;
         }
         reverseOpenTiles.pop ();
-        expandedTiles [rTile.getTile ().id] = rTile;
+        rExpandedTiles [rTile.getTile ().id] = rTile;
 
         // Check each neighbor
         adjPoint = {rTile.xy ().x + 1, rTile.xy ().y}; // east
@@ -244,7 +244,7 @@ int main (int args, char* argv[])
         {
             World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
             if (worldTile.cost != 0 &&
-                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+                rExpandedTiles.find (worldTile.id) == rExpandedTiles.end ())
             {
                 reverseOpenTiles.tryUpdateBestCost (worldTile, adjPoint, rTile);
                 #ifdef GEN_STATS
@@ -266,7 +266,7 @@ int main (int args, char* argv[])
         {
             World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
             if (worldTile.cost != 0 &&
-                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+                rExpandedTiles.find (worldTile.id) == rExpandedTiles.end ())
             {
                 reverseOpenTiles.tryUpdateBestCost (worldTile, adjPoint, rTile);
                 #ifdef GEN_STATS
@@ -288,7 +288,7 @@ int main (int args, char* argv[])
         {
             World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
             if (worldTile.cost != 0 &&
-                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+                rExpandedTiles.find (worldTile.id) == rExpandedTiles.end ())
             {
                 reverseOpenTiles.tryUpdateBestCost (worldTile, adjPoint, rTile);
                 #ifdef GEN_STATS
@@ -310,7 +310,7 @@ int main (int args, char* argv[])
         {
             World::tile_t worldTile = world (adjPoint.x, adjPoint.y);
             if (worldTile.cost != 0 &&
-                expandedTiles.find (worldTile.id) == expandedTiles.end ())
+                rExpandedTiles.find (worldTile.id) == rExpandedTiles.end ())
             {
                 reverseOpenTiles.tryUpdateBestCost (worldTile, adjPoint, rTile);
                 #ifdef GEN_STATS
@@ -336,14 +336,14 @@ int main (int args, char* argv[])
     {
         totalCost += rTile.getTile().cost;
         reversePath.emplace_back (rTile.xy ());
-        rTile = expandedTiles[(rTile.bestTile ().y * world.getWidth ()) + rTile.bestTile ().x];
+        rTile = rExpandedTiles[(rTile.bestTile ().y * world.getWidth ()) + rTile.bestTile ().x];
     }
     reversePath.emplace_back (rTile.xy ());
 
     std::vector<Point> finalPath (reversePath.rbegin (), reversePath.rend ());
     while (fTile.xy ().x != startX || fTile.xy ().y != startY)
     {
-        fTile = expandedTiles[(fTile.bestTile ().y * world.getWidth()) + fTile.bestTile ().x];
+        fTile = fExpandedTiles[(fTile.bestTile ().y * world.getWidth()) + fTile.bestTile ().x];
         totalCost += fTile.getTile().cost;
         finalPath.emplace_back(fTile.xy ());
     }

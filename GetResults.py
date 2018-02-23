@@ -15,10 +15,10 @@ class Size:
         return self.width + "x" + self.height
 
 
-numRuns = 3
-worldPerSize = 2
-sizes = [Size(100, 100)]  # [Size(100, 100), Size(1000, 1000), Size(10000, 10000)]
-costs = [1, 255]
+numRuns = 6
+worldPerSize = 3
+sizes = [Size(10000, 10000)]# [Size(100, 100), Size(1000, 1000), Size(10000, 10000)]
+costs = [5, 25, 75, 175]
 algorithms = ["dijkstra",
               "aStar",
               "bidir",
@@ -64,15 +64,26 @@ def testWorld(size, cost):
                    + " " + size.height + " " + costStr)
 
         for algorithm in algorithms:
+            perfs = np.zeros(numRuns, dtype=int)
+            dists = np.zeros(numRuns, dtype=int)
+            costs = np.zeros(numRuns, dtype=int)
+
             with open(finalResultsDirName + "/" + algorithm + ".data",
                       'a') as dataFile:
                 for j in range(0, numRuns):
-                    perf, dist, cost = runAlgorithm(algorithm, worldName)
+                    perfs[j], dists[j], costs[j] = runAlgorithm(algorithm,
+                                                                worldName)
                     # Append the stats for this run to the dataFile
-                    dataFile.write(str(perf) + " " + str(dist) + " "
-                                   + str(cost) + "\n")
+                    dataFile.write(str(perfs[j]) + " " + str(dists[j]) + " "
+                                   + str(costs[j]) + "\n")
+            with open(finalResultsDirName + "/" + algorithm + ".stddata",
+                      'a') as runFile:
+                runFile.write(str(perfs.std()) + " " + str(dists.std())
+                              + " " + str(costs.std()) + "\n")
 
     meanPerfs = np.zeros(len(algorithms), dtype=float)
+    distPerfs = np.zeros(len(algorithms), dtype=float)
+    costPerfs = np.zeros(len(algorithms), dtype=float)
     with open(finalResultsDirName + "/stats.txt", 'w') as statsFile:
         for i in range(0, len(algorithms)):
             algorithm = algorithms[i]
@@ -83,35 +94,61 @@ def testWorld(size, cost):
                                for line in open(finalResultsDirName + "/"
                                                 + algorithm + ".data")])
 
+            stdData = np.array([np.fromstring(line.strip(),
+                                              dtype=float, sep=' ') for line in
+                                open(finalResultsDirName + "/" + algorithm
+                                     + ".stddata")])
+
             # Splits the data into seperate arrays for each type of data
             perfData = algData[np.arange(len(algData)), 0]
             distData = algData[np.arange(len(algData)), 1]
             costData = algData[np.arange(len(algData)), 2]
 
+            perfStdData = stdData[np.arange(len(stdData)), 0]
+            distStdData = stdData[np.arange(len(stdData)), 1]
+            costStdData = stdData[np.arange(len(stdData)), 2]
+
             statsFile.write(algorithm + "\n")
             statsFile.write("".join(['-']*len(algorithm)) + "\n")
-            statsFile.write("Average execution: " + str(perfData.mean())
+            statsFile.write("Number of runs: " + str(len(algData)) + "\n\n")
+
+            statsFile.write("Average execution time: " + str(perfData.mean())
                             + "\n")
-            statsFile.write("Average distance: " + str(distData.mean())
-                            + "\n")
+            statsFile.write("Std execution time: " + str(perfStdData.mean())
+                            + "\n\n")
+
             statsFile.write("Average path cost: " + str(costData.mean())
                             + "\n")
+            statsFile.write("Std path cost: " + str(costStdData.mean())
+                            + "\n\n")
+
+            statsFile.write("Average distance: " + str(distData.mean())
+                            + "\n")
+            statsFile.write("Std distance: " + str(distStdData.mean())
+                            + "\n\n")
+
             statsFile.write("\n")
 
             meanPerfs[i] = perfData.mean()
+            distPerfs[i] = distData.mean()
+            costPerfs[i] = costData.mean()
 
     # Setup plot
-    barWidth = 0.8
-    figure, perfAx = plt.subplots()
+    figure, (perfAx, costAx, distAx) = plt.subplots(sharey='row', ncols=3)
 
     indexes = np.arange(len(algorithms))
-    perfAx.bar(indexes, meanPerfs, barWidth)
-    perfAx.set_xticks(indexes)
-    perfAx.set_xticklabels(algorithms)
 
+    perfAx.barh(indexes, meanPerfs)
+    perfAx.set_yticks(indexes)
+    perfAx.set_yticklabels(algorithms)
+
+    costAx.barh(indexes, costPerfs)
+
+    distAx.barh(indexes, distPerfs)
+
+    figure.tight_layout()
     figure.set_figwidth(12.8)
     figure.savefig(finalResultsDirName + "/graphs.png")
-
 
 
 def runAlgorithm(algorithm, world):

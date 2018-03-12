@@ -13,7 +13,8 @@ if (CMAKE_COMPILER_IS_GNUCXX)
   if (GEN_STATS)
     add_definitions (-DGEN_STATS)
   endif(GEN_STATS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wpedantic -pedantic -pedantic-errors -march=native")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -march=native")
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wpedantic -pedantic -pedantic-errors -march=native")
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 # Boost (system + filesystem)
@@ -21,6 +22,8 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 
 find_package(Boost REQUIRED
   COMPONENTS "system" "filesystem" "thread")
+
+find_package (CUDA REQUIRED)
 
 add_library(boost-system SHARED IMPORTED)
 set_property(
@@ -226,6 +229,17 @@ add_algorithm(
   SOURCE src/algorithms/parDivide/parDivideUnsmooth.cc
   LIBRARIES Threads::Threads tbb boost-thread)
 target_compile_definitions (parDivideUnsmooth_8 PRIVATE NUMBER_OF_THREADS=8)
+
+include_directories (includes)
+set (CUDA_NVCC_FLAGS "--expt-relaxed-constexpr")
+cuda_add_executable (
+  netSearch
+  src/algorithms/netSearch/NetSearch.cu
+)
+target_link_libraries (
+  netSearch
+  algorithm
+)
 
 add_custom_target(clean_results
   COMMAND rm -R -f ${CMAKE_SOURCE_DIR}/results/*)

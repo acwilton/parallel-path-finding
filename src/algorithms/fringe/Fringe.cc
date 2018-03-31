@@ -9,7 +9,7 @@
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
-#include <list>
+#include <deque>
 #include <vector>
 #include <cmath>
 #include <chrono>
@@ -107,7 +107,7 @@ int main (int args, char* argv[])
                 (y < endY ? endY - y : y - endY);
     };
 
-    std::list<PathTile> now, later;
+    std::deque<PathTile> now, later;
     now.emplace_front (world (startX, startY), Point{startX, startY},
     		Point {startX, startY}, 0, h (startX, startY));
 
@@ -299,7 +299,8 @@ int main (int args, char* argv[])
             }
         }
         threshold = min;
-        now.splice(now.end(), std::move (later));
+        now = std::move(later);
+        later.clear ();
     }
 
     auto t2 = std::chrono::high_resolution_clock::now();

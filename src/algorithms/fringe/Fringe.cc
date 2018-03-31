@@ -107,13 +107,13 @@ int main (int args, char* argv[])
                 (y < endY ? endY - y : y - endY);
     };
 
-    std::deque<PathTile> now, later;
-    now.emplace_front (world (startX, startY), Point{startX, startY},
+    std::vector<PathTile> now, later;
+    now.emplace_back (world (startX, startY), Point{startX, startY},
     		Point {startX, startY}, 0, h (startX, startY));
 
-    uint threshold = now.front().getCombinedHeuristic();
+    uint threshold = now.back().getCombinedHeuristic();
     std::unordered_map <uint, PathTile> seen;
-    seen[now.front().getTile().id] = now.front ();
+    seen[now.back().getTile().id] = now.back ();
 
     bool found = false;
     PathTile endTile;
@@ -124,8 +124,8 @@ int main (int args, char* argv[])
 
         while (!now.empty ())
         {
-            PathTile current = now.front();
-            now.pop_front();
+            PathTile current = now.back();
+            now.pop_back();
             #ifdef GEN_STATS
                 auto statIter = stats[0].find (current.getTile ().id);
                 if (statIter == stats[0].end ())
@@ -164,9 +164,9 @@ int main (int args, char* argv[])
                     if (seenTileIter == seen.end ())
                     {
                     	// TODO: Check if will exceed threshold here to emplace into later instead?
-                        now.emplace_front (worldTile, adjPoint, current.xy(),
+                        now.emplace_back (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        seen[worldTile.id] = now.front();
+                        seen[worldTile.id] = now.back();
                     }
                     else
                     {
@@ -183,7 +183,7 @@ int main (int args, char* argv[])
                             }
                             else
                             {
-                                now.push_front(seenTile);
+                                now.push_back(seenTile);
                             }
                         }
                     }
@@ -200,9 +200,9 @@ int main (int args, char* argv[])
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
-                        now.emplace_front (worldTile, adjPoint, current.xy(),
+                        now.emplace_back (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        seen[worldTile.id] = now.front();
+                        seen[worldTile.id] = now.back();
                     }
                     else
                     {
@@ -219,7 +219,7 @@ int main (int args, char* argv[])
                             }
                             else
                             {
-                                now.push_front(seenTile);
+                                now.push_back(seenTile);
                             }
                         }
                     }
@@ -236,9 +236,9 @@ int main (int args, char* argv[])
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
-                        now.emplace_front (worldTile, adjPoint, current.xy(),
+                        now.emplace_back (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        seen[worldTile.id] = now.front();
+                        seen[worldTile.id] = now.back();
                     }
                     else
                     {
@@ -255,7 +255,7 @@ int main (int args, char* argv[])
                             }
                             else
                             {
-                                now.push_front(seenTile);
+                                now.push_back(seenTile);
                             }
                         }
                     }
@@ -272,9 +272,9 @@ int main (int args, char* argv[])
                     auto seenTileIter = seen.find(worldTile.id);
                     if (seenTileIter == seen.end ())
                     {
-                        now.emplace_front (worldTile, adjPoint, current.xy(),
+                        now.emplace_back (worldTile, adjPoint, current.xy(),
                                           current.getBestCost () + worldTile.cost, h (adjPoint.x, adjPoint.y));
-                        seen[worldTile.id] = now.front();
+                        seen[worldTile.id] = now.back();
                     }
                     else
                     {
@@ -291,7 +291,7 @@ int main (int args, char* argv[])
                             }
                             else
                             {
-                                now.push_front(seenTile);
+                                now.push_back(seenTile);
                             }
                         }
                     }

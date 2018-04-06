@@ -4,6 +4,8 @@
  *               it in a temporary .path file
  */
 
+#include <deque>
+#include <unordered_map>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -33,6 +35,28 @@ int main (int args, char* argv[])
 
     pathFind::World world;
     worldFile >> world;
+
+    pathFind::Point middle;
+    middle.x = world.getWidth() / 2;
+    middle.y = world.getHeight() / 2;
+    std::deque<pathFind::Point> openList;
+    openList.push_back(middle);
+    std::unordered_map<uint, pathFind::Point> closedList;
+    while(world(middle.x, middle.y).cost == 0)
+    {
+        openList.pop_front();
+        std::cout << "middle x: " << middle.x << " y: " << middle.y << "\n";
+        if (closedList.find(world(middle.x, middle.y).id) == closedList.end())
+        {
+            closedList[world(middle.x, middle.y).id] = middle;
+            openList.emplace_back(middle.x + 1, middle.y);
+            openList.emplace_back(middle.x, middle.y + 1);
+            openList.emplace_back(middle.x - 1, middle.y);
+            openList.emplace_back(middle.x, middle.y - 1);
+        }
+        middle = openList.front ();
+    }
+    std::cout << "final middle x: " << middle.x << " y: " << middle.y << "\n";
 
     uint maxThreshold = world.getWidth() + world.getHeight ();
     // Find Start Point
@@ -172,61 +196,41 @@ int main (int args, char* argv[])
         }
     }
 
-    pathFind::Point start, end;
-    start = topLeft;
+    pathFind::Point end;
     end = botRight;
-    uint maxDist = abs (static_cast<int> (start.x) - static_cast<int> (end.x))
-        + abs (static_cast<int> (start.y) - static_cast<int> (end.y));
+    uint maxDist = abs (static_cast<int> (middle.x) - static_cast<int> (end.x))
+        + abs (static_cast<int> (middle.y) - static_cast<int> (end.y));
 
-    uint trtl = abs (static_cast<int> (topRight.x) - static_cast<int> (topLeft.x))
-        + abs (static_cast<int> (topRight.y) - static_cast<int> (topLeft.y));
-    if (trtl > maxDist)
+    uint tl = abs (static_cast<int> (middle.x) - static_cast<int> (topLeft.x))
+        + abs (static_cast<int> (middle.y) - static_cast<int> (topLeft.y));
+    if (tl > maxDist)
     {
-        maxDist = trtl;
+        maxDist = tl;
+        end = topLeft;
+    }
+
+    uint tr = abs (static_cast<int> (middle.x) - static_cast<int> (topRight.x))
+        + abs (static_cast<int> (middle.y) - static_cast<int> (topRight.y));
+    if (tr > maxDist)
+    {
+        maxDist = tr;
         end = topRight;
     }
 
-    uint bltl = abs (static_cast<int> (botLeft.x) - static_cast<int> (topLeft.x))
-        + abs (static_cast<int> (botLeft.y) - static_cast<int> (topLeft.y));
-    if (bltl > maxDist)
+    uint bl = abs (static_cast<int> (middle.x) - static_cast<int> (botLeft.x))
+        + abs (static_cast<int> (middle.y) - static_cast<int> (botLeft.y));
+    if (bl > maxDist)
     {
-        maxDist = bltl;
+        maxDist = bl;
         end = botLeft;
-    }
-
-    uint brtr = abs (static_cast<int> (botRight.x) - static_cast<int> (topRight.x))
-        + abs (static_cast<int> (botRight.y) - static_cast<int> (topRight.y));
-    if (brtr > maxDist)
-    {
-        maxDist = brtr;
-        start = botRight;
-        end = topRight;
-    }
-
-    uint brbl = abs (static_cast<int> (botRight.x) - static_cast<int> (botLeft.x))
-        + abs (static_cast<int> (botRight.y) - static_cast<int> (botLeft.y));
-    if (brbl > maxDist)
-    {
-        maxDist = brbl;
-        start = botRight;
-        end = botLeft;
-    }
-
-    uint bltr = abs (static_cast<int> (botLeft.x) - static_cast<int> (topRight.x))
-        + abs (static_cast<int> (botLeft.y) - static_cast<int> (topRight.y));
-    if (bltr > maxDist)
-    {
-        maxDist = bltr;
-        start = botLeft;
-        end = topRight;
     }
 
     std::stringstream pathFileName;
     pathFileName << WORLD_DIR << "/" << argv[1] << PATH_EXT;
     std::ofstream pathFile (pathFileName.str ());
 
-    pathFile << start.x << std::endl
-        << start.y << std::endl
+    pathFile << middle.x << std::endl
+        << middle.y << std::endl
         << end.x << std::endl
         << end.y;
 

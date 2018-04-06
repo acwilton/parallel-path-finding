@@ -4,6 +4,7 @@ import time
 import numpy as np
 import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
+import CustomGraph.CustomGraph as graph
 
 
 class Size:
@@ -15,10 +16,10 @@ class Size:
         return self.width + "x" + self.height
 
 
-numRuns = 6
+numRuns = 5
 worldPerSize = 3
-sizes = [Size(10000, 10000)]# [Size(100, 100), Size(1000, 1000), Size(10000, 10000)]
-costs = [5, 25, 75, 175]
+sizes = #[Size(200, 200), Size(2000, 2000), Size(20000, 20000)]
+costs = [1, 255]
 algorithms = ["dijkstra",
               "aStar",
               "bidir",
@@ -28,12 +29,32 @@ algorithms = ["dijkstra",
               "parFringe_4",
               "parFringe_6",
               "parFringe_8",
-              "parDivideUnsmooth_4",
-              "parDivideUnsmooth_6",
-              "parDivideUnsmooth_8",
               "parDivide_4",
               "parDivide_6",
-              "parDivide_8"]
+              "parDivide_8",
+              "parDivideUnsmooth_4",
+              "parDivideUnsmooth_6",
+              "parDivideUnsmooth_8"
+              ]
+
+
+algorithmLabels = ["Dijkstra",
+                   "A*",
+                   "BA*",
+                   "PBA*",
+                   "FS",
+                   "DFS: 2",
+                   "DFS: 4",
+                   "DFS: 6",
+                   "DFS: 8",
+                   "PDS: 4",
+                   "PDS: 6",
+                   "PDS: 8",
+                   "Unsmoothed PDS: 4",
+                   "Unsmoothed PDS: 6",
+                   "Unsmoothed PDS: 8"
+                   ]
+
 worldNamePre = "run"
 
 
@@ -50,7 +71,7 @@ class Path:
 """
 
 
-def testWorld(size, cost):
+def testWorld(size, cost, startWorldId):
     costStr = str(cost)
     baseWorldName = worldNamePre + "_" + size.getStr() + "_" + costStr
 
@@ -58,32 +79,32 @@ def testWorld(size, cost):
     if not os.path.exists(finalResultsDirName):
         os.makedirs(finalResultsDirName)
 
-    for i in range(0, worldPerSize):
+    for i in range(startWorldId, startWorldId + worldPerSize):
         worldName = baseWorldName + "_" + str(i)
-        runCommand("./worldGen " + worldName + " " + size.width
-                   + " " + size.height + " " + costStr)
+        if not os.path.isfile("worlds/" + worldName + ".world"):
+            runCommand("./worldGen " + worldName + " " + size.width
+                       + " " + size.height + " " + costStr)
 
-        for algorithm in algorithms:
-            perfs = np.zeros(numRuns, dtype=int)
-            dists = np.zeros(numRuns, dtype=int)
-            costs = np.zeros(numRuns, dtype=int)
+            for algorithm in algorithms:
+                perfs = np.zeros(numRuns, dtype=int)
+                dists = np.zeros(numRuns, dtype=int)
+                costs = np.zeros(numRuns, dtype=int)
 
-            with open(finalResultsDirName + "/" + algorithm + ".data",
-                      'a') as dataFile:
-                for j in range(0, numRuns):
-                    perfs[j], dists[j], costs[j] = runAlgorithm(algorithm,
-                                                                worldName)
-                    # Append the stats for this run to the dataFile
-                    dataFile.write(str(perfs[j]) + " " + str(dists[j]) + " "
-                                   + str(costs[j]) + "\n")
-            with open(finalResultsDirName + "/" + algorithm + ".stddata",
-                      'a') as runFile:
-                runFile.write(str(perfs.std()) + " " + str(dists.std())
-                              + " " + str(costs.std()) + "\n")
+                with open(finalResultsDirName + "/" + algorithm + ".data",
+                          'a') as dataFile:
+                    for j in range(0, numRuns):
+                        perfs[j], dists[j], costs[j] = runAlgorithm(algorithm,
+                                                                    worldName)
+                        # Append the stats for this run to the dataFile
+                        dataFile.write(str(perfs[j]) + " " + str(dists[j])
+                                       + " " + str(costs[j]) + "\n")
+                with open(finalResultsDirName + "/" + algorithm + ".stddata",
+                          'a') as runFile:
+                    runFile.write(str(perfs.std()) + " " + str(dists.std())
+                                  + " " + str(costs.std()) + "\n")
+        else:
+            print(time.asctime() + ": " + worldName + " already exists")
 
-    meanPerfs = np.zeros(len(algorithms), dtype=float)
-    distPerfs = np.zeros(len(algorithms), dtype=float)
-    costPerfs = np.zeros(len(algorithms), dtype=float)
     with open(finalResultsDirName + "/stats.txt", 'w') as statsFile:
         for i in range(0, len(algorithms)):
             algorithm = algorithms[i]
@@ -129,26 +150,7 @@ def testWorld(size, cost):
 
             statsFile.write("\n")
 
-            meanPerfs[i] = perfData.mean()
-            distPerfs[i] = distData.mean()
-            costPerfs[i] = costData.mean()
-
-    # Setup plot
-    figure, (perfAx, costAx, distAx) = plt.subplots(sharey='row', ncols=3)
-
-    indexes = np.arange(len(algorithms))
-
-    perfAx.barh(indexes, meanPerfs)
-    perfAx.set_yticks(indexes)
-    perfAx.set_yticklabels(algorithms)
-
-    costAx.barh(indexes, costPerfs)
-
-    distAx.barh(indexes, distPerfs)
-
-    figure.tight_layout()
-    figure.set_figwidth(12.8)
-    figure.savefig(finalResultsDirName + "/graphs.png")
+    graph(finalResultsDirName, "graph", algorithms, algorithmLabels)
 
 
 def runAlgorithm(algorithm, world):
@@ -194,5 +196,5 @@ def runCommand(command):
 os.chdir("build")
 for cost in costs:
     for size in sizes:
-        testWorld(size, cost)
+        testWorld(size, cost, 0)
 os.chdir("..")

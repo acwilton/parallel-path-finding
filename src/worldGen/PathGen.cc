@@ -45,7 +45,6 @@ int main (int args, char* argv[])
     while(world(middle.x, middle.y).cost == 0)
     {
         openList.pop_front();
-        std::cout << "middle x: " << middle.x << " y: " << middle.y << "\n";
         if (closedList.find(world(middle.x, middle.y).id) == closedList.end())
         {
             closedList[world(middle.x, middle.y).id] = middle;
@@ -56,7 +55,6 @@ int main (int args, char* argv[])
         }
         middle = openList.front ();
     }
-    std::cout << "final middle x: " << middle.x << " y: " << middle.y << "\n";
 
     uint maxThreshold = world.getWidth() + world.getHeight ();
     // Find Start Point

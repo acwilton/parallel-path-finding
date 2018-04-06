@@ -4,7 +4,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
-def CustomGraph(location, graphName, algorithms, algorithmLabels):
+def CustomGraph(location, graphName, algorithms, algorithmLabels, graphTitle):
     meanPerfs = np.zeros(len(algorithms), dtype=float)
     meanDists = np.zeros(len(algorithms), dtype=float)
     meanCosts = np.zeros(len(algorithms), dtype=float)
@@ -23,18 +23,18 @@ def CustomGraph(location, graphName, algorithms, algorithmLabels):
         distData = algData[np.arange(len(algData)), 1]
         costData = algData[np.arange(len(algData)), 2]
 
-        meanPerfs[i] = perfData.mean()
-        meanDists[i] = distData.mean()
-        meanCosts[i] = costData.mean()
+        meanPerfs[i] = int(round(perfData.mean(), 0))
+        meanDists[i] = int(round(distData.mean(), 0))
+        meanCosts[i] = int(round(costData.mean(), 0))
 
     # Make Graph
     figure, perfAx = plt.subplots()
 
     indexes = np.arange(len(algorithmLabels))
 
-    figure.set_size_inches(14, 8)
+    figure.set_size_inches(8, 8)
     perfAx.set_title(
-        'Algorithm Performances Over a 10,000 x 10,000 Weighted Grid', y=1.01,
+        graphTitle, y=1.01,
         size='x-large')
 
     perfAx.set_xlabel('Algorithms', labelpad=10.0, size='large')
@@ -47,20 +47,20 @@ def CustomGraph(location, graphName, algorithms, algorithmLabels):
     barWidth = 0.35
     barColor = 'LightBlue'
     labelColor = 'SteelBlue'
-    perfRects = perfAx.bar(indexes - barWidth/2, meanPerfs / 1000, barWidth,
+    perfRects = perfAx.bar(indexes - barWidth/2, meanPerfs, barWidth,
                            color=barColor,
-                           label='Average Execution Time (sec)')
-    perfAx.set_ylabel('Average Execution Time (sec)', color=labelColor,
+                           label='Average Execution Time (ms)')
+    perfAx.set_ylabel('Average Execution Time (ms)', color=labelColor,
                       labelpad=10.0, size='large')
     perfAx.tick_params(axis='y', labelcolor=labelColor)
-    perfAx.set_ybound(0, 120)
+    #perfAx.set_ybound(0, 120)
 
     for rect in perfRects:
-        height = '{:.3f}'.format(rect.get_height())
-        if (rect.get_height() < 108):
-            yPos = rect.get_height() + perfAx.get_ylim()[1] * .01
-        else:
-            yPos = 108
+        height = format(int(round(rect.get_height(), 0)))
+        #if (rect.get_height() < 108):
+        yPos = rect.get_height() + perfAx.get_ylim()[1] * .01
+        #else:
+            #yPos = 108
             # perfAx.arrow(rect.get_x() + rect.get_width(), yPos, 0, 10000)
         perfAx.text(rect.get_x() + rect.get_width()/2,
                     yPos,
@@ -90,8 +90,8 @@ def CustomGraph(location, graphName, algorithms, algorithmLabels):
 
     figure.tight_layout()
     # figure.set_figwidth(12.8)
-    # figure.savefig(location + "/" + graphName + ".png")
-    plt.show()
+    figure.savefig(location + "/" + graphName + ".png")
+    # plt.show()
 
 
 """

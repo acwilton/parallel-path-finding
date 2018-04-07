@@ -31,7 +31,16 @@ const std::string WORLD_DIR = "../worlds";
 const std::string WORLD_EXT = ".world";
 const std::string PATH_EXT = ".path";
 
-const std::string ALG_NAME = "parFringe_" + std::to_string(NUMBER_OF_THREADS);
+#ifndef OPTIMAL
+    #ifdef THRESHOLD_FACTOR
+        const std::string ALG_NAME = "parFringe_" + std::to_string(NUMBER_OF_THREADS)
+                + "_" + std::to_string(THRESHOLD_FACTOR).substr (0,4);
+    #else
+        const std::string ALG_NAME = "parFringe_" + std::to_string(NUMBER_OF_THREADS);
+    #endif
+#else
+    const std::string ALG_NAME = "parFringe_optimal";
+#endif
 
 const uint numThreads = NUMBER_OF_THREADS;
 
@@ -56,12 +65,20 @@ void search (uint id, uint endX, uint endY,
              tbb::concurrent_unordered_map<uint, bool>& closedTiles,
              std::vector<std::unordered_map<uint, PathTile>>& seen,
              uint threshold, const pathFind::World& world,
-             bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint);
+             bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint
+#ifdef OPTIMAL
+            ,std::vector<uint>& mins
+#endif
+         );
 
  void
  searchNeighbor(const Point& adjPoint, uint id, uint threshold, const PathTile& current, const World& world, uint endX, uint endY,
  		 tbb::concurrent_unordered_map<uint, bool>& closedTiles, std::vector<std::unordered_map<uint, PathTile>>& seen,
- 		 std::vector<std::deque<PathTile>>& later, std::vector<std::deque<PathTile>>& localNow);
+ 		 std::vector<std::deque<PathTile>>& later, std::vector<std::deque<PathTile>>& localNow
+#ifdef OPTIMAL
+         ,std::vector<uint>& mins
+#endif
+     );
 
 int main (int args, char* argv[])
 {
@@ -154,7 +171,11 @@ int main (int args, char* argv[])
     {
     	threads[i] = std::thread (search, i, endX, endY, std::ref (localNow), //std::ref(now),
     			std::ref(later), std::ref(closedTiles), std::ref (seen), startHeuristic,
-    			std::cref(world), std::ref(finished), std::ref (finishedLock), std::ref(syncPoint));
+    			std::cref(world), std::ref(finished), std::ref (finishedLock), std::ref(syncPoint)
+#ifdef OPTIMAL
+            ,std::ref(mins)
+#endif
+            );
     }
 
     for (auto& t : threads)
@@ -219,8 +240,8 @@ int main (int args, char* argv[])
 uint
 heuristic (uint x, uint y, uint endX, uint endY)
 {
-	return  (x < endX ? endX - x : x - endX) +
-			(y < endY ? endY - y : y - endY);
+    return  (x < endX ? endX - x : x - endX) +
+            (y < endY ? endY - y : y - endY);
 }
 
 void search (uint id, uint endX, uint endY,
@@ -229,14 +250,26 @@ void search (uint id, uint endX, uint endY,
              tbb::concurrent_unordered_map<uint, bool>& closedTiles,
              std::vector<std::unordered_map<uint, PathTile>>& seen,
              uint threshold, const pathFind::World& world,
-             bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint)
+             bool& finished, std::mutex& finishedLock, boost::barrier& syncPoint
+#ifdef OPTIMAL
+            ,std::vector<uint>& mins
+#endif
+         )
 {
-    uint maxTileCost = std::ceil(static_cast<float>(world.getMaxTileCost()));
+    #ifndef THRESHOLD_FACTOR
+    #define THRESHOLD_FACTOR 1
+    #endif
+
+    #ifndef OPTIMAL
+        uint maxTileCost = std::ceil(static_cast<float>(world.getMaxTileCost()) * THRESHOLD_FACTOR);
+    #endif
     bool found = false;
 
     while (!found)
     {
-        //mins[id] = PathTile::INF;
+        #ifdef OPTIMAL
+            mins[id] = PathTile::INF;
+        #endif
         while (!localNow[id].empty ())
         {
             PathTile current = localNow[id].front();
@@ -261,7 +294,9 @@ void search (uint id, uint endX, uint endY,
 
             if (current.getCombinedHeuristic () > threshold)
             {
-                //mins[id] = std::min(current.getCombinedHeuristic (), mins[id]);
+                #ifdef OPTIMAL
+                    mins[id] = std::min(current.getCombinedHeuristic (), mins[id]);
+                #endif
                 later[id].push_back(current);
                 continue;
             }
@@ -275,16 +310,32 @@ void search (uint id, uint endX, uint endY,
             }
 
             Point adjPoint {current.xy ().x + 1, current.xy ().y}; // east
-            searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
+            searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow
+            #ifdef OPTIMAL
+                ,mins
+            #endif
+            );
 
             adjPoint = {current.xy ().x, current.xy ().y + 1}; // south
-            searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
+            searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow
+            #ifdef OPTIMAL
+                ,mins
+            #endif
+            );
 
             adjPoint = {current.xy ().x - 1, current.xy ().y}; // west
-            searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
+            searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow
+            #ifdef OPTIMAL
+                ,mins
+            #endif
+            );
 
             adjPoint = {current.xy ().x, current.xy ().y - 1}; // north
-            searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow);
+            searchNeighbor (adjPoint, id, threshold, current, world, endX, endY, closedTiles, seen, later, localNow
+            #ifdef OPTIMAL
+                ,mins
+            #endif
+            );
         }
 
         syncPoint.wait();
@@ -316,15 +367,20 @@ void search (uint id, uint endX, uint endY,
                     later[i].clear ();
                 }
             }
-            // Find the minimum of the minimums
-            threshold += maxTileCost;//mins[0];
-            /*for (uint i = 1; i < numThreads; ++i)
-            {
-                    if (mins[i] < threshold)
-                    {
-                              threshold = mins[i];
-                    }
-            }*/
+
+            #ifdef OPTIMAL
+                // Find the minimum of the minimums
+                threshold = mins[0];
+                for (uint i = 1; i < numThreads; ++i)
+                {
+                        if (mins[i] < threshold)
+                        {
+                                  threshold = mins[i];
+                        }
+                }
+            #else
+                threshold += maxTileCost;
+            #endif
         }
         syncPoint.wait();
     }
@@ -333,7 +389,11 @@ void search (uint id, uint endX, uint endY,
 void
 searchNeighbor(const Point& adjPoint, uint id, uint threshold, const PathTile& current, const World& world, uint endX, uint endY,
 		 tbb::concurrent_unordered_map<uint, bool>& closedTiles, std::vector<std::unordered_map<uint, PathTile>>& seen,
-		 std::vector<std::deque<PathTile>>& later, std::vector<std::deque<PathTile>>& localNow)
+		 std::vector<std::deque<PathTile>>& later, std::vector<std::deque<PathTile>>& localNow
+#ifdef OPTIMAL
+        ,std::vector<uint>& mins
+#endif
+     )
 {
 	if (adjPoint.x < world.getWidth () && adjPoint.y < world.getHeight ())
 	{
@@ -350,9 +410,11 @@ searchNeighbor(const Point& adjPoint, uint id, uint threshold, const PathTile& c
                     uint costToTile = current.getBestCost () + worldTile.cost;
                     if (costToTile > threshold)
                     {
-
                         later[id].emplace_back (worldTile, adjPoint, current.xy(),
 						    costToTile, heuristic (adjPoint.x, adjPoint.y, endX, endY));
+                        #ifdef OPTIMAL
+                            mins[id] = std::min(later[id].back ().getCombinedHeuristic (), mins[id]);
+                        #endif
                         seen[id][worldTile.id] = later[id].back ();
                     }
                     else

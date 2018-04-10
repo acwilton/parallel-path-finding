@@ -120,7 +120,6 @@ int main (int args, char* argv[])
     seen[now.back().getTile().id] = now.back ();
 
     bool found = false;
-    PathTile endTile;
 
     while (!found)
     {
@@ -142,6 +141,11 @@ int main (int args, char* argv[])
                 }
             #endif
 
+            if (seen.find(current.getTile().id) != seen.end())
+            {
+                continue;
+            }
+
             if (current.getCombinedHeuristic () > threshold)
             {
                 min = std::min(current.getCombinedHeuristic (), min);
@@ -152,7 +156,6 @@ int main (int args, char* argv[])
             if (current.xy().x == endX && current.xy().y == endY)
             {
                 found = true;
-                endTile = current;
                 break;
             }
 
@@ -178,6 +181,7 @@ int main (int args, char* argv[])
     auto t2 = std::chrono::high_resolution_clock::now();
 
     // Parse reverse results
+    PathTile endTile = seen.at((endY * world.getWidth())+ endX);
     uint totalCost = endTile.getBestCost() - endTile.getTile().cost;
     std::vector<Point> finalPath;
     while (endTile.xy ().x != startX || endTile.xy ().y != startY)

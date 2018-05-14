@@ -8,6 +8,7 @@ worlds/
 results/
 saved_results/
 compiledResults/
+graphs/
 
 # Eclipse files
 .settings/

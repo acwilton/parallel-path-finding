@@ -198,24 +198,6 @@ add_algorithm(
 target_compile_definitions (parFringe_optimal PRIVATE NUMBER_OF_THREADS=8 OPTIMAL=true)
 
 add_algorithm(
-  NAME parFringe_8_0.25
-  SOURCE src/algorithms/parFringe/ParFringe.cc
-  LIBRARIES Threads::Threads tbb boost-thread)
-target_compile_definitions (parFringe_8_0.25 PRIVATE NUMBER_OF_THREADS=8 THRESHOLD_FACTOR=0.25)
-
-add_algorithm(
-  NAME parFringe_8_0.50
-  SOURCE src/algorithms/parFringe/ParFringe.cc
-  LIBRARIES Threads::Threads tbb boost-thread)
-target_compile_definitions (parFringe_8_0.50 PRIVATE NUMBER_OF_THREADS=8 THRESHOLD_FACTOR=0.5)
-
-add_algorithm(
-  NAME parFringe_8_0.75
-  SOURCE src/algorithms/parFringe/ParFringe.cc
-  LIBRARIES Threads::Threads tbb boost-thread)
-target_compile_definitions (parFringe_8_0.75 PRIVATE NUMBER_OF_THREADS=8 THRESHOLD_FACTOR=0.75)
-
-add_algorithm(
   NAME parDivide_4
   SOURCE src/algorithms/parDivide/ParDivide.cc
   LIBRARIES Threads::Threads tbb boost-thread)

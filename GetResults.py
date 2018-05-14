@@ -22,11 +22,9 @@ sizes = [Size(10000, 10000)]
 costs = [1, 15, 105, 195, 255]
 algorithms = ["dijkstra",
               "aStar",
-              "fringe"]
-"""
               "bidir",
               "parBidir",
-              "fringe"]
+              "fringe",
               "parFringe_2",
               "parFringe_4",
               "parFringe_6",
@@ -38,42 +36,8 @@ algorithms = ["dijkstra",
               "parDivideUnsmooth_6",
               "parDivideUnsmooth_8"
               ]
-"""
-
-algorithmLabels = ["Dijkstra",
-                   "A*",
-                   "FS"]
-"""
-                   "BA*",
-                   "PBA*",
-                   "FS"]
-                   "DFS: 2",
-                   "DFS: 4",
-                   "DFS: 6",
-                   "DFS: 8",
-                   "PDS: 4",
-                   "PDS: 6",
-                   "PDS: 8",
-                   "Unsmoothed PDS: 4",
-                   "Unsmoothed PDS: 6",
-                   "Unsmoothed PDS: 8"
-                   ]
-"""
 
 worldNamePre = "run"
-
-
-"""
-class Path:
-    class Point:
-        def __init__(self, x=0, y=0):
-            self.x = x
-            self.y = y
-
-    def __init__(self, start=Point(), end=Point()):
-        self.start = start
-        self.end = end
-"""
 
 
 def testWorld(size, cost, startWorldId):

@@ -33,8 +33,8 @@ const std::string PATH_EXT = ".path";
 
 #ifndef OPTIMAL
     #ifdef THRESHOLD_FACTOR
-        const std::string ALG_NAME = "parFringe_" + std::to_string(NUMBER_OF_THREADS)
-                + "_" + std::to_string(THRESHOLD_FACTOR).substr (0,4);
+        const std::string ALG_NAME = "parFringe_" + std::to_string(NUMBER_OF_THREADS);
+                //+ "_" + std::to_string(THRESHOLD_FACTOR).substr (0,4);
     #else
         const std::string ALG_NAME = "parFringe_" + std::to_string(NUMBER_OF_THREADS);
     #endif
@@ -260,9 +260,6 @@ void search (uint id, uint endX, uint endY,
     #define THRESHOLD_FACTOR 1
     #endif
 
-    #ifndef OPTIMAL
-        uint maxTileCost = std::ceil(static_cast<float>(world.getMaxTileCost()) * THRESHOLD_FACTOR);
-    #endif
     bool found = false;
 
     while (!found)
@@ -379,7 +376,7 @@ void search (uint id, uint endX, uint endY,
                         }
                 }
             #else
-                threshold += maxTileCost;
+                threshold += THRESHOLD_FACTOR;
             #endif
         }
         syncPoint.wait();
